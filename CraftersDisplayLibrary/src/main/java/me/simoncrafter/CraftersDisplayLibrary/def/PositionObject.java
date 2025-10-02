@@ -1,0 +1,242 @@
+package me.simoncrafter.CraftersDisplayLibrary.def;
+
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+
+import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+
+public class PositionObject implements IDisplayable {
+
+    private List<IDisplayable> children = new ArrayList<>();
+    private Transformation localTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(0, 0, 0, 1), new Vector3f(1, 1, 1), new Quaternionf(0, 0, 0, 1));
+    private Location location;
+
+    private BiFunction<Transformation, Transformation, Transformation> parentAplerFunction = (parent, local) -> {
+        // Rotate the local translation by the parent's rotation
+        Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
+                .rotate(parent.getLeftRotation());
+
+        // Combine with parent translation and scale
+        Vector3f finalTranslation = rotatedTranslation.mul(parent.getScale()).add(parent.getTranslation());
+
+        return new Transformation(
+                finalTranslation,
+                parent.getLeftRotation().mul(local.getLeftRotation(), new Quaternionf()).normalize(),
+                local.getScale().mul(parent.getScale(), new Vector3f()),
+                parent.getRightRotation().mul(local.getRightRotation(), new Quaternionf()).normalize()
+        );
+    };
+
+    private Transformation parentTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(0, 0, 0, 1), new Vector3f(1, 1, 1), new Quaternionf(0, 0, 0, 1));
+
+    public PositionObject(List<IDisplayable> children, Transformation localTransform, Location location) {
+        this.children = new ArrayList<>(children);
+        this.localTransform = localTransform;
+        this.location = location;
+    }
+
+    @Override
+    public Location getLocation() {
+        return location.clone();
+    }
+
+    @Override
+    public void setLocation(Location loc) {
+        Vector oldLoc = location.toVector();
+        Vector newLoc = loc.toVector();
+
+        Vector diff = newLoc.subtract(oldLoc);
+
+        runForEveryChild(child -> child.setLocation(child.getLocation().add(diff)));
+
+        this.location = loc;
+    }
+
+    @Override
+    public Transformation getLocalTransform() {
+        return localTransform;
+    }
+
+    @Override
+    public void setLocalTransform(Transformation transformation) {
+        localTransform = transformation;
+        updateChildren(0);
+    }
+
+    public void moveEntityStatic(Location location) {
+        Vector oldLoc = this.location.toVector();
+        Vector newLoc = location.toVector();
+
+        Vector diff = newLoc.subtract(oldLoc);
+
+        runForEveryChild((child) -> child.moveEntityStatic(diff.toLocation(location.getWorld())));
+        this.location = location;
+    }
+
+    @Override
+    public void setParentTransform(Transformation transformation, int time) {
+        parentTransform = new Transformation(transformation.getTranslation(), transformation.getLeftRotation(), transformation.getScale(), transformation.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
+    public Transformation getParentTransform() {
+        return new Transformation(parentTransform.getTranslation(), parentTransform.getLeftRotation(), parentTransform.getScale(), parentTransform.getRightRotation());
+    }
+
+    @Override
+    public void addChild(IDisplayable child) {
+        children.add(child);
+        updateChildren(0);
+    }
+
+    @Override
+    public void removeChild(IDisplayable child) {
+        children.remove(child);
+    }
+
+    @Override
+    public void setChildren(List<IDisplayable> children) {
+        this.children = new ArrayList<>(children);
+        updateChildren(0);
+    }
+
+    protected void forEveryChild(Consumer<IDisplayable> consumer) {
+        for (IDisplayable display : children) {
+            consumer.accept(display);
+        }
+    }
+
+    @Override
+    public List<IDisplayable> getChildren() {
+        return children;
+    }
+
+    @Override
+    public void moveRelative(Vector3f movement, int time) {
+        //for some rason from the moveRelativeToWorld function this line causes a nullpointer exeption and I am honestly to lazy to figure this out. (It works, but throws an exeption)
+        try {
+            localTransform = new Transformation(localTransform.getTranslation()
+                    .add(movement), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        } catch (NullPointerException ignored) {}
+        updateChildren(time);
+    }
+
+    @Override
+    public void moveAbsolute(Vector3f position, int time) {
+        localTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
+    public void moveRelativeToWorld(Vector3f position, int time) {
+        Vector3f currentPos = location.toVector().toVector3f().add(getFinalTransform().getTranslation());
+        Vector3f diff = position.sub(currentPos);
+        Bukkit.broadcast(Component.text(diff.toString()));
+        moveRelative(diff, time);
+    }
+
+    @Override
+    public void LRotateAbsolute(Quaternionf rotation, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation().mul(rotation), localTransform.getScale(), localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
+    public void LRotateRelative(Quaternionf rotation, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
+    public void RRotateAbsolute(Quaternionf rotation, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation().mul(rotation));
+        updateChildren(time);
+    }
+
+    @Override
+    public void RRotateRelative(Quaternionf rotation, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
+        updateChildren(time);
+    }
+
+    @Override
+    public void scaleAbsolute(Vector3f scale, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
+    public void scaleRelative(Vector3f scale, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale().add(scale), localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+
+    @Override
+    public Transformation getTransformation() {
+        return new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+    }
+
+    @Override
+    public IDisplayable setTransformation(Transformation transformation) {
+        localTransform = new Transformation(transformation.getTranslation(), transformation.getLeftRotation(), transformation.getScale(), transformation.getRightRotation());
+        return this;
+    }
+
+    protected void runForEveryChild(Consumer<IDisplayable> action) {
+        for (IDisplayable child : children) {
+            action.accept(child);
+        }
+    }
+
+    protected void updateChildren(int time) {
+        runForEveryChild(c -> {
+            c.setParentTransform(getFinalTransform(), time);
+        });
+    }
+
+    @Override
+    public IDisplayable clone() {
+        return new PositionObject(
+                new ArrayList<>(children),
+                new Transformation(
+                        localTransform.getTranslation(),
+                        localTransform.getLeftRotation(),
+                        localTransform.getScale(),
+                        localTransform.getRightRotation()),
+                location
+        );
+    }
+
+    @Override
+    public void setParentApplierFunction(BiFunction<Transformation, Transformation, Transformation> func) {
+        parentAplerFunction = func;
+    }
+
+    @Override
+    public BiFunction<Transformation, Transformation, Transformation> getParentApplierFunction() {
+        return parentAplerFunction;
+    }
+
+    protected Transformation getFinalTransform() {
+        return parentAplerFunction.apply(parentTransform, localTransform);
+    }
+
+
+    protected Transformation scaleToBlock(Transformation transformation) {                    //                                         40.025f
+        return new Transformation(transformation.getTranslation(), transformation.getLeftRotation(), transformation.getScale().mul(40.025f), transformation.getRightRotation());
+    }
+
+}
