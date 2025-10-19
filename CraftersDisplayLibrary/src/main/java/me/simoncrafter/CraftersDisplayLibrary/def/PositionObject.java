@@ -64,15 +64,25 @@ public class PositionObject implements IDisplayable {
     }
 
     @Override
+    public void setLocationNoUpdate(Location loc) {
+        this.location = loc;
+    }
+
+    @Override
     public Transformation getLocalTransform() {
         return localTransform;
     }
 
     @Override
     public void setLocalTransform(Transformation transformation) {
-        localTransform = transformation;
-        updateChildren(0);
+        setLocalTransform(transformation, 0);
     }
+    @Override
+    public void setLocalTransform(Transformation transformation, int time) {
+        localTransform = transformation;
+        updateChildren(time);
+    }
+
 
     public void moveEntityStatic(Location location) {
         Vector oldLoc = this.location.toVector();

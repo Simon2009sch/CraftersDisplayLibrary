@@ -62,13 +62,13 @@ public class ColorDisplay extends PositionObject implements IHidable {
     @Override
     public void moveEntityStatic(Location location) {
 
-        Vector oldLoc = getLocation().toVector();
+        /*Vector oldLoc = getLocation().toVector();
         Vector newLoc = location.toVector();
 
         Vector diff = newLoc.subtract(oldLoc);
         Vector3f diff3f = diff.toVector3f().div(getLocalTransform().getScale());
 
-        moveRelative(diff3f.mul(-1f), 0);
+        moveRelative(diff3f, 0);*/
         entity.teleport(location);
 
         super.moveEntityStatic(location);

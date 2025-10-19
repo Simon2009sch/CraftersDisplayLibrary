@@ -41,11 +41,13 @@ public interface IDisplayable {
 
     IDisplayable clone();
 
+    void setLocationNoUpdate(Location loc);
     void setLocation(Location loc);
     Location getLocation();
 
     Transformation getLocalTransform();
     void setLocalTransform(Transformation transformation);
+    void setLocalTransform(Transformation transformation, int time);
 
     void moveEntityStatic(Location location);
 }

@@ -126,6 +126,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
             player.addPassenger(left.getEntity());
             player.addPassenger(right.getEntity());
 
+        } else if (args[0].equals("line")) {
+            cube.setLocalTransform(CubeColorDisplay.makeTransformBetween(new Vector3f(37, 72, -300), loc.toVector().toVector3f()), 50);
         }
 
 
