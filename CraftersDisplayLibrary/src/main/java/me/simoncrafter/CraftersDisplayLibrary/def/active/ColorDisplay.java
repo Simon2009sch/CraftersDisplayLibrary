@@ -1,5 +1,6 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.active;
 
+import me.simoncrafter.CraftersDisplayLibrary.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
@@ -10,6 +11,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.QuaterniondInterpolator;
@@ -41,10 +43,21 @@ public class ColorDisplay extends PositionObject implements IHidable {
         entity.setBillboard(billboard);
         entity.setBackgroundColor(color);
         entity.setSeeThrough(seeTrough);
+        entity.text(Component.text("\n"));
         Transformation transform = scaleToBlock(getFinalTransform());
         entity.setTransformation(transform);
+        entity.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 
         return entity;
+    }
+
+    public TextDisplay respawnEntity() {
+        if (entity == null) {
+            return spawnDisplay();
+        }
+        entity.remove();
+        entity = null;
+        return spawnDisplay();
     }
 
     public static ColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, Color color, boolean seeTrough, Display.Billboard billboard) {

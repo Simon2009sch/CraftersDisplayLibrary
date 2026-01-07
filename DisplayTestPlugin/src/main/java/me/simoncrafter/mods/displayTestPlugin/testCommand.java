@@ -1,5 +1,6 @@
 package me.simoncrafter.mods.displayTestPlugin;
 
+import me.simoncrafter.CraftersDisplayLibrary.DisplayPacketListener;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
@@ -49,7 +50,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
             Vector3f vector3f = parseVector(args[1]);
 
             if (args[1].equals("here")) {
-                cube.moveRelativeToWorld(loc.toVector().toVector3f(), 20);
+                if (cube != null)cube.moveRelativeToWorld(loc.toVector().toVector3f(), 20);
+                if (colorDisplay != null)colorDisplay.moveRelativeToWorld(loc.toVector().toVector3f(), 20);
             } else if (vector3f == null) {
                 sender.sendMessage("Invalid vector");
                 return true;
@@ -64,9 +66,11 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
 
             if (args[args.length - 1].equals("abs")) {
-                cube.moveAbsolute(vector3f, time);
+                if (cube != null)cube.moveAbsolute(vector3f, time);
+                if (colorDisplay != null)colorDisplay.moveAbsolute(vector3f, time);
             } else {
-                cube.moveRelative(vector3f, time);
+                if (cube != null)cube.moveRelative(vector3f, time);
+                if (colorDisplay != null)colorDisplay.moveRelative(vector3f, time);
             }
         } else if (args[0].equals("scale")) {
             Vector3f vector3f = parseVector(args[1]);
@@ -83,9 +87,11 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
 
             if (args[args.length - 1].equals("abs")) {
-                cube.scaleAbsolute(vector3f, time);
+                if (cube != null)cube.scaleAbsolute(vector3f, time);
+                if (colorDisplay != null)colorDisplay.scaleAbsolute(vector3f, time);
             } else {
-                cube.scaleRelative(vector3f, time);
+                if (cube != null)cube.scaleRelative(vector3f, time);
+                if (colorDisplay != null)colorDisplay.scaleRelative(vector3f, time);
             }
         } else if (args[0].equals("rotate")) {
             Quaternionf quaternionf = parseQuaternion(args[1]);
@@ -102,12 +108,15 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
 
             if (args[args.length - 1].equals("abs")) {
-                cube.LRotateAbsolute(quaternionf, time);
+                if (cube != null)cube.LRotateAbsolute(quaternionf, time);
+                if (colorDisplay != null)colorDisplay.LRotateAbsolute(quaternionf, time);
             } else {
-                cube.LRotateRelative(quaternionf, time);
+                if (cube != null)cube.LRotateRelative(quaternionf, time);
+                if (colorDisplay != null)colorDisplay.LRotateRelative(quaternionf, time);
             }
         } else if (args[0].equals("entity_move")) {
-            cube.moveEntityStatic(loc);
+            if (cube != null) cube.moveEntityStatic(loc);
+            if (colorDisplay != null) colorDisplay.moveEntityStatic(loc);
         } else if (args[0].equals("entity_ride")) {
             ColorDisplay top = cube.getTop();
             ColorDisplay bottom = cube.getBottom();
@@ -128,6 +137,14 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         } else if (args[0].equals("line")) {
             cube.setLocalTransform(CubeColorDisplay.makeTransformBetween(new Vector3f(37, 72, -300), loc.toVector().toVector3f()), 50);
+
+        } else if (args[0].equals("color")) {
+            colorDisplay = ColorDisplay.create(loc, new Vector3f(1, 1, 1), new Vector3f(), new Quaternionf(), Color.AQUA);
+            colorDisplay.respawnEntity();
+
+        } else if (args[0].equals("toggle")) {
+            DisplayPacketListener.getInstance().enabled = !DisplayPacketListener.getInstance().enabled;
+            sender.sendMessage("Packet listener " + (DisplayPacketListener.getInstance().enabled ? "enabled" : "disabled"));
         }
 
 
@@ -137,7 +154,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("block", "move", "scale", "rotate", "entity_move");
+            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "toggle");
         }
 
         return List.of();
