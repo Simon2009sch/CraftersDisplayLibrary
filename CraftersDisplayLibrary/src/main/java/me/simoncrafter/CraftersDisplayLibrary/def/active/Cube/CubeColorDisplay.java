@@ -82,12 +82,13 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         Quaternionf cubeRightRotation = getLocalTransform().getRightRotation();
 
         // Fixed unit positions for each face center
-        Vector3f topPos = new Vector3f(0, 0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // RED
-        Vector3f bottomPos = new Vector3f(0, -0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // BLUE
-        Vector3f leftPos = new Vector3f(-0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // PURPLE
-        Vector3f rightPos = new Vector3f(0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // ORANGE
-        Vector3f frontPos = new Vector3f(0, 0, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
-        Vector3f backPos = new Vector3f(0, 0, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
+        // colors beside are debug colors used when trying to find errors with the faces
+        Vector3f topPos = new Vector3f(-0.5f, 0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // RED
+        Vector3f bottomPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // BLUE
+        Vector3f leftPos = new Vector3f(-0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // PURPLE
+        Vector3f rightPos = new Vector3f(0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // ORANGE
+        Vector3f frontPos = new Vector3f(0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
+        Vector3f backPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
 
         // Create all faces with rotation-adjusted positions
         top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
@@ -209,6 +210,15 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
 
     public ColorDisplay getRight() {
         return right;
+    }
+
+    public void setAllColors(Color color, int duration) {
+        top.setColor(color, duration);
+        bottom.setColor(color, duration);
+        left.setColor(color, duration);
+        right.setColor(color, duration);
+        front.setColor(color, duration);
+        back.setColor(color, duration);
     }
 
     //TODO: Implement hideable

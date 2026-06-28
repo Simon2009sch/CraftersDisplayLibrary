@@ -167,12 +167,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
             if (face.equals("all")) {
                 if (cube != null) {
-                    cube.getTop().setColor(newColor, duration);
-                    cube.getBottom().setColor(newColor, duration);
-                    cube.getLeft().setColor(newColor, duration);
-                    cube.getRight().setColor(newColor, duration);
-                    cube.getFront().setColor(newColor, duration);
-                    cube.getBack().setColor(newColor, duration);
+                    cube.setAllColors(newColor, duration);
                 }
                 if (colorDisplay != null) {
                     colorDisplay.setColor(newColor, duration);
