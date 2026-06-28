@@ -12,9 +12,9 @@ public class PluginHolder {
     private static Vector3f getBlockScaleForVersion() {
         String version = Bukkit.getVersion();
 
-        if (version.contains("1.20") || version.contains("1.21")) {
-            return new Vector3f(40, 2f, 40);
-        } else if (version.contains("1.19")) {
+        if (version.contains("1.21")) {
+            return new Vector3f(40, 1.905f, 40);
+        } else if (version.contains("1.20")) {
             return new Vector3f(40, 2f, 40);
         } else {
             return new Vector3f(40, 2f, 40);

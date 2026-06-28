@@ -30,12 +30,20 @@ public class CubeColorInformation {
     }
 
     public CubeColorInformation() {
+        /*
         this.top = Color.RED;
         this.bottom = Color.BLUE;
         this.front = Color.GREEN;
         this.back = Color.YELLOW;
         this.left = Color.PURPLE;
         this.right = Color.ORANGE;
+        */
+        this.top = Color.WHITE;
+        this.bottom = Color.WHITE;
+        this.front = Color.WHITE;
+        this.back = Color.WHITE;
+        this.left = Color.WHITE;
+        this.right = Color.WHITE;
     }
 
     @Contract("_ -> new")

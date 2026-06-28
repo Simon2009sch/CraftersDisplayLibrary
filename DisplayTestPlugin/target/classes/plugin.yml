@@ -2,8 +2,6 @@ name: DisplayTestPlugin
 version: '1'
 main: me.simoncrafter.mods.displayTestPlugin.DisplayTestPlugin
 api-version: '1.21'
-depend:
-  - ProtocolLib
 commands:
   cdl:
     description: "The test command for the Crafters display library"

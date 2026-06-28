@@ -1,10 +1,8 @@
 me\simoncrafter\CraftersDisplayLibrary\def\interfaces\IDisplayable.class
 me\simoncrafter\CraftersDisplayLibrary\PluginHolder.class
 me\simoncrafter\CraftersDisplayLibrary\def\interfaces\IHidable.class
-me\simoncrafter\CraftersDisplayLibrary\DisplayPacketListener$1.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\Cube\CubeColorDisplay.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\Cube\CubeColorInformation.class
-me\simoncrafter\CraftersDisplayLibrary\DisplayPacketListener.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\ColorDisplay.class
 me\simoncrafter\CraftersDisplayLibrary\def\PositionObject.class
 me\simoncrafter\CraftersDisplayLibrary\Tags.class

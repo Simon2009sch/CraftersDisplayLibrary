@@ -328,7 +328,7 @@ public class PositionObject implements IDisplayable {
                 .lerp(animationEndTransform.getScale(), progress);
 
         localTransform = new Transformation(interpolatedPos, interpolatedLeftRot, interpolatedScale, interpolatedRightRot);
-        updateChildren(0);
+        updateChildren(1);
 
         animationCurrentTick++;
         if (animationCurrentTick > animationDurationTicks) {

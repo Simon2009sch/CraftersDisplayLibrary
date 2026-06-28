@@ -180,19 +180,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
                 }
 
                 if (rgba.length == 3) {
-                    // RGB only: preserve current alpha
-                    if (cube != null && cube.getTop() != null && cube.getTop().getEntity() != null) {
-                        int currentAlpha = cube.getTop().getEntity().getBackgroundColor().getAlpha();
-                        newColor = Color.fromARGB(currentAlpha, rgba[0], rgba[1], rgba[2]);
-                    } else if (colorDisplay != null && colorDisplay.getEntity() != null) {
-                        int currentAlpha = colorDisplay.getEntity().getBackgroundColor().getAlpha();
-                        newColor = Color.fromARGB(currentAlpha, rgba[0], rgba[1], rgba[2]);
-                    } else {
-                        // Fallback to full opacity if can't get current alpha
-                        newColor = Color.fromARGB(255, rgba[0], rgba[1], rgba[2]);
-                    }
+                    newColor = Color.fromARGB(255, rgba[0], rgba[1], rgba[2]);
                 } else {
-                    // RGBA: use provided alpha
                     newColor = Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]);
                 }
             }

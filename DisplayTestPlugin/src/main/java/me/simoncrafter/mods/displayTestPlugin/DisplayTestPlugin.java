@@ -1,6 +1,5 @@
 package me.simoncrafter.mods.displayTestPlugin;
 
-import me.simoncrafter.CraftersDisplayLibrary.DisplayPacketListener;
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -14,7 +13,6 @@ public final class DisplayTestPlugin extends JavaPlugin {
     public void onEnable() {
         Bukkit.getPluginCommand("cdl").setExecutor(new testCommand());
         PluginHolder.plugin = this;
-        DisplayPacketListener.getInstance();
 
     }
 
