@@ -6,10 +6,11 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
+import org.joml.QuaternionfdInterpolator;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -42,6 +43,13 @@ public class PositionObject implements IDisplayable {
     };
 
     private Transformation parentTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(0, 0, 0, 1), new Vector3f(1, 1, 1), new Quaternionf(0, 0, 0, 1));
+
+    // Animation tracking
+    private BukkitTask animationTask = null;
+    private Transformation animationStartTransform = null;
+    private Transformation animationEndTransform = null;
+    private int animationDurationTicks = 0;
+    private int animationCurrentTick = 0;
 
     public PositionObject(List<IDisplayable> children, Transformation localTransform, Location location) {
         this.children = new ArrayList<>(children);
@@ -138,18 +146,17 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void moveRelative(Vector3f movement, int time) {
-        //for some rason from the moveRelativeToWorld function this line causes a nullpointer exeption and I am honestly to lazy to figure this out. (It works, but throws an exeption)
         try {
-            localTransform = new Transformation(localTransform.getTranslation()
-                    .add(movement), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+            Vector3f newPos = new Vector3f(localTransform.getTranslation()).add(movement);
+            Transformation endTransform = new Transformation(newPos, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+            startAnimation(endTransform, time);
         } catch (NullPointerException ignored) {}
-        updateChildren(time);
     }
 
     @Override
     public void moveAbsolute(Vector3f position, int time) {
-        localTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
-        updateChildren(time);
+        Transformation endTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        startAnimation(endTransform, time);
     }
 
     @Override
@@ -162,38 +169,41 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void LRotateAbsolute(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
-        updateChildren(time);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
+        startAnimation(endTransform, time);
     }
 
     @Override
     public void LRotateRelative(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation().mul(rotation), localTransform.getScale(), localTransform.getRightRotation());
-        updateChildren(time);
+        Quaternionf newRotation = new Quaternionf(localTransform.getLeftRotation()).mul(rotation);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), newRotation, localTransform.getScale(), localTransform.getRightRotation());
+        startAnimation(endTransform, time);
     }
 
     @Override
     public void RRotateAbsolute(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
-        updateChildren(time);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
+        startAnimation(endTransform, time);
     }
 
     @Override
     public void RRotateRelative(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation().mul(rotation));
-        updateChildren(time);
+        Quaternionf newRotation = new Quaternionf(localTransform.getRightRotation()).mul(rotation);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), newRotation);
+        startAnimation(endTransform, time);
     }
 
     @Override
     public void scaleAbsolute(Vector3f scale, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
-        updateChildren(time);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
+        startAnimation(endTransform, time);
     }
 
     @Override
     public void scaleRelative(Vector3f scale, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale().add(scale), localTransform.getRightRotation());
-        updateChildren(time);
+        Vector3f newScale = new Vector3f(localTransform.getScale()).add(scale);
+        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), newScale, localTransform.getRightRotation());
+        startAnimation(endTransform, time);
     }
 
 
@@ -247,6 +257,59 @@ public class PositionObject implements IDisplayable {
         return parentAplerFunction.apply(parentTransform, localTransform);
     }
 
+    private void startAnimation(Transformation endTransform, int durationTicks) {
+        cancelAnimation();
+        animationStartTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        animationEndTransform = endTransform;
+        animationDurationTicks = durationTicks;
+        animationCurrentTick = 0;
+
+        if (durationTicks <= 0) {
+            setLocalTransform(endTransform, 0);
+            return;
+        }
+
+        animationTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(PluginHolder.plugin, this::updateAnimation, 0L, 1L);
+    }
+
+    private void updateAnimation() {
+        if (animationStartTransform == null || animationEndTransform == null) {
+            cancelAnimation();
+            return;
+        }
+
+        float progress = (float) animationCurrentTick / animationDurationTicks;
+        progress = Math.min(progress, 1.0f);
+
+        Vector3f interpolatedPos = new Vector3f(animationStartTransform.getTranslation())
+                .lerp(animationEndTransform.getTranslation(), progress);
+
+        Quaternionf interpolatedLeftRot = new Quaternionf(animationStartTransform.getLeftRotation())
+                .slerp(animationEndTransform.getLeftRotation(), progress);
+
+        Quaternionf interpolatedRightRot = new Quaternionf(animationStartTransform.getRightRotation())
+                .slerp(animationEndTransform.getRightRotation(), progress);
+
+        Vector3f interpolatedScale = new Vector3f(animationStartTransform.getScale())
+                .lerp(animationEndTransform.getScale(), progress);
+
+        localTransform = new Transformation(interpolatedPos, interpolatedLeftRot, interpolatedScale, interpolatedRightRot);
+        updateChildren(0);
+
+        animationCurrentTick++;
+        if (animationCurrentTick > animationDurationTicks) {
+            cancelAnimation();
+        }
+    }
+
+    private void cancelAnimation() {
+        if (animationTask != null) {
+            animationTask.cancel();
+            animationTask = null;
+        }
+        animationStartTransform = null;
+        animationEndTransform = null;
+    }
 
     protected Transformation scaleToBlock(Transformation transformation) {
         return new Transformation(transformation.getTranslation().add(BLOCK_TEXT_DIFFERENCE), transformation.getLeftRotation(), transformation.getScale().mul(PluginHolder.BLOCK_SCALE), transformation.getRightRotation());
