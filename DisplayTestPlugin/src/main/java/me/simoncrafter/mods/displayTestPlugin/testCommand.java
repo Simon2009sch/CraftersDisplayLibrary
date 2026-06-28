@@ -1,6 +1,5 @@
 package me.simoncrafter.mods.displayTestPlugin;
 
-import me.simoncrafter.CraftersDisplayLibrary.DisplayPacketListener;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
@@ -142,10 +141,6 @@ public class testCommand implements CommandExecutor, TabExecutor {
             colorDisplay = ColorDisplay.create(loc, new Vector3f(1, 1, 1), new Vector3f(), new Quaternionf(), Color.AQUA);
             colorDisplay.respawnEntity();
 
-        } else if (args[0].equals("toggle")) {
-            DisplayPacketListener.getInstance().enabled = !DisplayPacketListener.getInstance().enabled;
-            sender.sendMessage("Packet listener " + (DisplayPacketListener.getInstance().enabled ? "enabled" : "disabled"));
-        }
 
 
         return false;
@@ -154,7 +149,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "toggle");
+            return List.of("block", "move", "scale", "rotate", "entity_move", "color");
         }
 
         return List.of();
