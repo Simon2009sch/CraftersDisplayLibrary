@@ -82,12 +82,12 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         Quaternionf cubeRightRotation = getLocalTransform().getRightRotation();
 
         // Fixed unit positions for each face center
-        Vector3f topPos = new Vector3f(0, 0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
-        Vector3f bottomPos = new Vector3f(0, -0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
-        Vector3f leftPos = new Vector3f(-0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
-        Vector3f rightPos = new Vector3f(0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
-        Vector3f frontPos = new Vector3f(0, 0, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation);
-        Vector3f backPos = new Vector3f(0, 0, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f topPos = new Vector3f(0, 0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // RED
+        Vector3f bottomPos = new Vector3f(0, -0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // BLUE
+        Vector3f leftPos = new Vector3f(-0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // PURPLE
+        Vector3f rightPos = new Vector3f(0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation); // ORANGE
+        Vector3f frontPos = new Vector3f(0, 0, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
+        Vector3f backPos = new Vector3f(0, 0, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
 
         // Create all faces with rotation-adjusted positions
         top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
