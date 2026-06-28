@@ -268,7 +268,7 @@ public class PositionObject implements IDisplayable {
             return;
         }
 
-        animationTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(PluginHolder.plugin, this::updateAnimation, 0L, 1L);
+        animationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateAnimation, 0L, 1L);
     }
 
     private void updateAnimation() {
