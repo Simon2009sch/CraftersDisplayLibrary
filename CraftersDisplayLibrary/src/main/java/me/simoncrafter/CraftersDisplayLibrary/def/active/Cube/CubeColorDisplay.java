@@ -77,13 +77,19 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
     }
 
     public void spawnDisplay() {
-        // Create all faces with initial scale
-        top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-0.5f, 0.5f, 0.5f), new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
-        bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-0.5f, -0.5f, -0.5f), new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
-        left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-0.5f, -0.5f, 0.5f), new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
-        right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0.5f, -0.5f, -0.5f), new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
-        front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0.5f, -0.5f, 0.5f), new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
-        back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-0.5f, -0.5f, -0.5f), new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
+        // Calculate face positions based on cube's local scale
+        Vector3f cubeScale = getLocalTransform().getScale();
+        float halfX = cubeScale.x / 2f;
+        float halfY = cubeScale.y / 2f;
+        float halfZ = cubeScale.z / 2f;
+
+        // Create all faces with positions calculated from cube scale
+        top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, halfY, 0), new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
+        bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, -halfY, 0), new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
+        left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-halfX, 0, 0), new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
+        right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(halfX, 0, 0), new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
+        front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, 0, halfZ), new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
+        back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, 0, -halfZ), new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
 
         // Spawn all displays
         top.spawnDisplay();
@@ -94,7 +100,6 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         back.spawnDisplay();
 
         // Apply initial transformation to all faces
-        Transformation initialTransform = getFinalTransform();
         updateChildren(0);
     }
 
