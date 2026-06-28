@@ -26,9 +26,10 @@ public class PositionObject implements IDisplayable {
     private Location location;
 
     private BiFunction<Transformation, Transformation, Transformation> parentAplerFunction = (parent, local) -> {
-        // Rotate the local translation by the parent's rotation
+        // Rotate the local translation by both parent rotations (left then right)
         Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
-                .rotate(parent.getLeftRotation());
+                .rotate(parent.getLeftRotation())
+                .rotate(parent.getRightRotation());
 
         // Combine with parent translation and scale
         Vector3f finalTranslation = rotatedTranslation.mul(parent.getScale()).add(parent.getTranslation());
@@ -162,25 +163,25 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void LRotateAbsolute(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation().mul(rotation), localTransform.getScale(), localTransform.getRightRotation());
-        updateChildren(time);
-    }
-
-    @Override
-    public void LRotateRelative(Quaternionf rotation, int time) {
         localTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
         updateChildren(time);
     }
 
     @Override
+    public void LRotateRelative(Quaternionf rotation, int time) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation().mul(rotation), localTransform.getScale(), localTransform.getRightRotation());
+        updateChildren(time);
+    }
+
+    @Override
     public void RRotateAbsolute(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation().mul(rotation));
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
         updateChildren(time);
     }
 
     @Override
     public void RRotateRelative(Quaternionf rotation, int time) {
-        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation().mul(rotation));
         updateChildren(time);
     }
 

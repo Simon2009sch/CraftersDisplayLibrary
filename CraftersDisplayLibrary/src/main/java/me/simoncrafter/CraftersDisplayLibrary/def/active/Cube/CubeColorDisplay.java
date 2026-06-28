@@ -30,7 +30,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
 
 
     private static BiFunction<Transformation, Transformation, Transformation> topBottomApplier = (parent, local) -> {
-        // Rotate the local translation by the parent's rotation
+        // Rotate the local translation by both parent rotations (left then right)
         Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
                 .rotate(parent.getLeftRotation()).rotate(parent.getRightRotation());
 
@@ -45,7 +45,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         );
     };
     private static BiFunction<Transformation, Transformation, Transformation> frontBackApplier = (parent, local) -> {
-        // Rotate the local translation by the parent's rotation
+        // Rotate the local translation by both parent rotations (left then right)
         Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
                 .rotate(parent.getLeftRotation()).rotate(parent.getRightRotation());
 
