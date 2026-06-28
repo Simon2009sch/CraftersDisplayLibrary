@@ -1,5 +1,6 @@
 package me.simoncrafter.CraftersDisplayLibrary.def;
 
+import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -17,7 +18,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 public class PositionObject implements IDisplayable {
-    private static final Vector3f BLOCK_SCALE = new Vector3f(40, 2f, 40); //with space new Vector3f(8f, 3.636f, 1);
     private static final Vector3f BLOCK_TEXT_DIFFERENCE = new Vector3f(0f, 0f, 0);
 
 
@@ -249,8 +249,8 @@ public class PositionObject implements IDisplayable {
     }
 
 
-    protected Transformation scaleToBlock(Transformation transformation) {                    //                                         40.025f
-        return new Transformation(transformation.getTranslation().add(BLOCK_TEXT_DIFFERENCE), transformation.getLeftRotation(), transformation.getScale().mul(BLOCK_SCALE), transformation.getRightRotation());
+    protected Transformation scaleToBlock(Transformation transformation) {
+        return new Transformation(transformation.getTranslation().add(BLOCK_TEXT_DIFFERENCE), transformation.getLeftRotation(), transformation.getScale().mul(PluginHolder.BLOCK_SCALE), transformation.getRightRotation());
     }
 
 }
