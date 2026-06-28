@@ -1,5 +1,6 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.active;
 
+import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
@@ -12,9 +13,9 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
-import org.joml.QuaterniondInterpolator;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -26,6 +27,13 @@ public class ColorDisplay extends PositionObject implements IHidable {
     private boolean seeTrough = false;
     private Color color = Color.fromARGB(0, 0, 0, 0);
     private Display.Billboard billboard = Display.Billboard.FIXED;
+
+    // Color animation tracking
+    private BukkitTask colorAnimationTask = null;
+    private Color colorAnimationStartColor = null;
+    private Color colorAnimationEndColor = null;
+    private int colorAnimationDurationTicks = 0;
+    private int colorAnimationCurrentTick = 0;
 
     private ColorDisplay(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, Color color, boolean seeTrough, Display.Billboard billboard) {
         super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
@@ -183,6 +191,70 @@ public class ColorDisplay extends PositionObject implements IHidable {
         return null;
     }
 
+
+    public void setColor(Color newColor, int durationTicks) {
+        cancelColorAnimation();
+        colorAnimationStartColor = color;
+        colorAnimationEndColor = newColor;
+        colorAnimationDurationTicks = durationTicks;
+        colorAnimationCurrentTick = 0;
+
+        if (durationTicks <= 0) {
+            color = newColor;
+            updateEntity(0);
+            return;
+        }
+
+        colorAnimationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateColorAnimation, 0L, 1L);
+    }
+
+    private void updateColorAnimation() {
+        if (colorAnimationStartColor == null || colorAnimationEndColor == null) {
+            cancelColorAnimation();
+            return;
+        }
+
+        float progress = (float) colorAnimationCurrentTick / colorAnimationDurationTicks;
+        progress = Math.min(progress, 1.0f);
+
+        int startARGB = colorAnimationStartColor.asARGB();
+        int endARGB = colorAnimationEndColor.asARGB();
+
+        int startA = (startARGB >> 24) & 0xFF;
+        int startR = (startARGB >> 16) & 0xFF;
+        int startG = (startARGB >> 8) & 0xFF;
+        int startB = startARGB & 0xFF;
+
+        int endA = (endARGB >> 24) & 0xFF;
+        int endR = (endARGB >> 16) & 0xFF;
+        int endG = (endARGB >> 8) & 0xFF;
+        int endB = endARGB & 0xFF;
+
+        int interpolatedA = (int) (startA + (endA - startA) * progress);
+        int interpolatedR = (int) (startR + (endR - startR) * progress);
+        int interpolatedG = (int) (startG + (endG - startG) * progress);
+        int interpolatedB = (int) (startB + (endB - startB) * progress);
+
+        color = Color.fromARGB(interpolatedA, interpolatedR, interpolatedG, interpolatedB);
+
+        if (entity != null && entity.isValid()) {
+            entity.setBackgroundColor(color);
+        }
+
+        colorAnimationCurrentTick++;
+        if (colorAnimationCurrentTick > colorAnimationDurationTicks) {
+            cancelColorAnimation();
+        }
+    }
+
+    private void cancelColorAnimation() {
+        if (colorAnimationTask != null) {
+            colorAnimationTask.cancel();
+            colorAnimationTask = null;
+        }
+        colorAnimationStartColor = null;
+        colorAnimationEndColor = null;
+    }
 
     @Override
     public IDisplayable clone() {
