@@ -4,8 +4,8 @@ import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -14,7 +14,6 @@ import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 public class CubeColorDisplay extends PositionObject implements IHidable {
 
@@ -212,13 +211,22 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         return right;
     }
 
-    public void setAllColors(Color color, int duration) {
+    public void setColor(Color color, int duration) {
         top.setColor(color, duration);
         bottom.setColor(color, duration);
         left.setColor(color, duration);
         right.setColor(color, duration);
         front.setColor(color, duration);
         back.setColor(color, duration);
+    }
+
+    public void setAlpha(int alpha, int duration) {
+        top.setAlpha(alpha, duration);
+        bottom.setAlpha(alpha, duration);
+        left.setAlpha(alpha, duration);
+        right.setAlpha(alpha, duration);
+        front.setAlpha(alpha, duration);
+        back.setAlpha(alpha, duration);
     }
 
     //TODO: Implement hideable

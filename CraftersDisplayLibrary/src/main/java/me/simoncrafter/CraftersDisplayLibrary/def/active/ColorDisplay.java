@@ -35,6 +35,13 @@ public class ColorDisplay extends PositionObject implements IHidable {
     private int colorAnimationDurationTicks = 0;
     private int colorAnimationCurrentTick = 0;
 
+    // Alpha animation tracking
+    private BukkitTask alphaAnimationTask = null;
+    private int alphaAnimationStartAlpha = 255;
+    private int alphaAnimationEndAlpha = 255;
+    private int alphaAnimationDurationTicks = 0;
+    private int alphaAnimationCurrentTick = 0;
+
     private ColorDisplay(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, Color color, boolean seeTrough, Display.Billboard billboard) {
         super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
         this.color = color;
@@ -251,6 +258,46 @@ public class ColorDisplay extends PositionObject implements IHidable {
         }
         colorAnimationStartColor = null;
         colorAnimationEndColor = null;
+    }
+
+    public void setAlpha(int newAlpha, int durationTicks) {
+        cancelAlphaAnimation();
+        alphaAnimationStartAlpha = color.getAlpha();
+        alphaAnimationEndAlpha = newAlpha;
+        alphaAnimationDurationTicks = durationTicks;
+        alphaAnimationCurrentTick = 0;
+
+        if (durationTicks <= 0) {
+            color = Color.fromARGB(newAlpha, color.getRed(), color.getGreen(), color.getBlue());
+            updateEntity(0);
+            return;
+        }
+
+        alphaAnimationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateAlphaAnimation, 0L, 1L);
+    }
+
+    private void updateAlphaAnimation() {
+        float progress = (float) alphaAnimationCurrentTick / alphaAnimationDurationTicks;
+        progress = Math.min(progress, 1.0f);
+
+        int interpolatedAlpha = (int) (alphaAnimationStartAlpha + (alphaAnimationEndAlpha - alphaAnimationStartAlpha) * progress);
+        color = Color.fromARGB(interpolatedAlpha, color.getRed(), color.getGreen(), color.getBlue());
+
+        if (entity != null && entity.isValid()) {
+            entity.setBackgroundColor(color);
+        }
+
+        alphaAnimationCurrentTick++;
+        if (alphaAnimationCurrentTick > alphaAnimationDurationTicks) {
+            cancelAlphaAnimation();
+        }
+    }
+
+    private void cancelAlphaAnimation() {
+        if (alphaAnimationTask != null) {
+            alphaAnimationTask.cancel();
+            alphaAnimationTask = null;
+        }
     }
 
     @Override

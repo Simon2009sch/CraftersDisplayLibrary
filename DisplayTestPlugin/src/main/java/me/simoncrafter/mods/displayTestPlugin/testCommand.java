@@ -7,11 +7,8 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.World;
-import org.bukkit.block.CommandBlock;
 import org.bukkit.command.*;
 import org.bukkit.entity.*;
-import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
@@ -167,7 +164,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
             if (face.equals("all")) {
                 if (cube != null) {
-                    cube.setAllColors(newColor, duration);
+                    cube.setColor(newColor, duration);
                 }
                 if (colorDisplay != null) {
                     colorDisplay.setColor(newColor, duration);
@@ -185,6 +182,56 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                 }
             }
+        } else if (args[0].equals("setAlpha")) {
+            if (args.length < 2) {
+                sender.sendMessage("Usage: /cdl setAlpha <0-255> [duration] [face]");
+                return true;
+            }
+
+            int alpha;
+            try {
+                alpha = Integer.parseInt(args[1]);
+                if (alpha < 0 || alpha > 255) {
+                    sender.sendMessage("Alpha must be 0-255");
+                    return true;
+                }
+            } catch (NumberFormatException e) {
+                sender.sendMessage("Invalid alpha value");
+                return true;
+            }
+
+            int duration = 0;
+            if (args.length > 2) {
+                try {
+                    duration = Integer.parseInt(args[2]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("Invalid duration");
+                    return true;
+                }
+            }
+
+            String face = args.length > 3 ? args[3].toLowerCase() : "all";
+
+            if (face.equals("all")) {
+                if (cube != null) {
+                    cube.setAlpha(alpha, duration);
+                }
+                if (colorDisplay != null) {
+                    colorDisplay.setAlpha(alpha, duration);
+                }
+            } else {
+                if (cube != null) {
+                    switch (face) {
+                        case "top" -> cube.getTop().setAlpha(alpha, duration);
+                        case "bottom" -> cube.getBottom().setAlpha(alpha, duration);
+                        case "left" -> cube.getLeft().setAlpha(alpha, duration);
+                        case "right" -> cube.getRight().setAlpha(alpha, duration);
+                        case "front" -> cube.getFront().setAlpha(alpha, duration);
+                        case "back" -> cube.getBack().setAlpha(alpha, duration);
+                        default -> sender.sendMessage("Unknown face: " + face);
+                    }
+                }
+            }
         }
 
 
@@ -194,10 +241,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "setColor");
+            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "setColor", "setAlpha");
         }
 
-        if (args.length == 4 && args[0].equals("setColor")) {
+        if ((args.length == 4 && args[0].equals("setColor")) || (args.length == 4 && args[0].equals("setAlpha"))) {
             return List.of("top", "bottom", "left", "right", "front", "back", "all");
         }
 
