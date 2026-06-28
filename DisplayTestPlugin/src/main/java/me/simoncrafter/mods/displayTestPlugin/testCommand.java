@@ -139,13 +139,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             colorDisplay.respawnEntity();
         } else if (args[0].equals("setColor")) {
             if (args.length < 2) {
-                sender.sendMessage("Usage: /cdl setColor <r,g,b> [duration] [face]");
-                return true;
-            }
-
-            int[] rgb = parseRGB(args[1]);
-            if (rgb == null) {
-                sender.sendMessage("Invalid RGB color. Format: r,g,b (0-255)");
+                sender.sendMessage("Usage: /cdl setColor <alpha|r,g,b|r,g,b,a> [duration] [face]");
                 return true;
             }
 
@@ -159,81 +153,76 @@ public class testCommand implements CommandExecutor, TabExecutor {
                 }
             }
 
-            Color newColor = Color.fromARGB(255, rgb[0], rgb[1], rgb[2]);
             String face = args.length > 3 ? args[3].toLowerCase() : "all";
+            Color newColor = null;
+            Integer alphaOnly = null;
 
-            if (face.equals("all")) {
-                if (cube != null) {
-                    cube.setColor(newColor, duration);
-                }
-                if (colorDisplay != null) {
-                    colorDisplay.setColor(newColor, duration);
-                }
-            } else {
-                if (cube != null) {
-                    switch (face) {
-                        case "top" -> cube.getTop().setColor(newColor, duration);
-                        case "bottom" -> cube.getBottom().setColor(newColor, duration);
-                        case "left" -> cube.getLeft().setColor(newColor, duration);
-                        case "right" -> cube.getRight().setColor(newColor, duration);
-                        case "front" -> cube.getFront().setColor(newColor, duration);
-                        case "back" -> cube.getBack().setColor(newColor, duration);
-                        default -> sender.sendMessage("Unknown face: " + face);
+            // Check if it's just a number (alpha only)
+            if (!args[1].contains(",")) {
+                try {
+                    int alpha = Integer.parseInt(args[1]);
+                    if (alpha >= 0 && alpha <= 255) {
+                        alphaOnly = alpha;
+                    } else {
+                        sender.sendMessage("Alpha must be 0-255");
+                        return true;
                     }
-                }
-            }
-        } else if (args[0].equals("setAlpha")) {
-            if (args.length < 2) {
-                sender.sendMessage("Usage: /cdl setAlpha <0-255> [duration] [face]");
-                return true;
-            }
-
-            int alpha;
-            try {
-                alpha = Integer.parseInt(args[1]);
-                if (alpha < 0 || alpha > 255) {
-                    sender.sendMessage("Alpha must be 0-255");
-                    return true;
-                }
-            } catch (NumberFormatException e) {
-                sender.sendMessage("Invalid alpha value");
-                return true;
-            }
-
-            int duration = 0;
-            if (args.length > 2) {
-                try {
-                    duration = Integer.parseInt(args[2]);
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("Invalid duration");
+                    sender.sendMessage("Invalid format");
                     return true;
-                }
-            }
-
-            String face = args.length > 3 ? args[3].toLowerCase() : "all";
-
-            if (face.equals("all")) {
-                if (cube != null) {
-                    cube.setAlpha(alpha, duration);
-                }
-                if (colorDisplay != null) {
-                    colorDisplay.setAlpha(alpha, duration);
                 }
             } else {
-                if (cube != null) {
-                    switch (face) {
-                        case "top" -> cube.getTop().setAlpha(alpha, duration);
-                        case "bottom" -> cube.getBottom().setAlpha(alpha, duration);
-                        case "left" -> cube.getLeft().setAlpha(alpha, duration);
-                        case "right" -> cube.getRight().setAlpha(alpha, duration);
-                        case "front" -> cube.getFront().setAlpha(alpha, duration);
-                        case "back" -> cube.getBack().setAlpha(alpha, duration);
-                        default -> sender.sendMessage("Unknown face: " + face);
+                // Parse as RGB or RGBA
+                int[] rgba = parseRGBA(args[1]);
+                if (rgba == null) {
+                    sender.sendMessage("Invalid color format. Use: <alpha> or <r,g,b> or <r,g,b,a>");
+                    return true;
+                }
+
+                if (rgba.length == 3) {
+                    newColor = Color.fromARGB(255, rgba[0], rgba[1], rgba[2]);
+                } else {
+                    newColor = Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]);
+                }
+            }
+
+            // Apply changes
+            if (face.equals("all")) {
+                if (alphaOnly != null) {
+                    if (cube != null) cube.setAlpha(alphaOnly, duration);
+                    if (colorDisplay != null) colorDisplay.setAlpha(alphaOnly, duration);
+                } else {
+                    if (cube != null) cube.setColor(newColor, duration);
+                    if (colorDisplay != null) colorDisplay.setColor(newColor, duration);
+                }
+            } else {
+                if (alphaOnly != null) {
+                    if (cube != null) {
+                        switch (face) {
+                            case "top" -> cube.getTop().setAlpha(alphaOnly, duration);
+                            case "bottom" -> cube.getBottom().setAlpha(alphaOnly, duration);
+                            case "left" -> cube.getLeft().setAlpha(alphaOnly, duration);
+                            case "right" -> cube.getRight().setAlpha(alphaOnly, duration);
+                            case "front" -> cube.getFront().setAlpha(alphaOnly, duration);
+                            case "back" -> cube.getBack().setAlpha(alphaOnly, duration);
+                            default -> sender.sendMessage("Unknown face: " + face);
+                        }
+                    }
+                } else {
+                    if (cube != null) {
+                        switch (face) {
+                            case "top" -> cube.getTop().setColor(newColor, duration);
+                            case "bottom" -> cube.getBottom().setColor(newColor, duration);
+                            case "left" -> cube.getLeft().setColor(newColor, duration);
+                            case "right" -> cube.getRight().setColor(newColor, duration);
+                            case "front" -> cube.getFront().setColor(newColor, duration);
+                            case "back" -> cube.getBack().setColor(newColor, duration);
+                            default -> sender.sendMessage("Unknown face: " + face);
+                        }
                     }
                 }
             }
         }
-
 
         return false;
     }
@@ -241,10 +230,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "setColor", "setAlpha");
+            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "setColor");
         }
 
-        if ((args.length == 4 && args[0].equals("setColor")) || (args.length == 4 && args[0].equals("setAlpha"))) {
+        if (args.length == 4 && args[0].equals("setColor")) {
             return List.of("top", "bottom", "left", "right", "front", "back", "all");
         }
 
@@ -281,6 +270,37 @@ public class testCommand implements CommandExecutor, TabExecutor {
                 return new int[]{r, g, b};
             }
         }
+        return null;
+    }
+
+    private int[] parseRGBA(String args) {
+        // Try RGBA format first
+        Pattern rgbaPattern = Pattern.compile("^(?<r>\\d+),(?<g>\\d+),(?<b>\\d+),(?<a>\\d+)$");
+        Matcher rgbaMatcher = rgbaPattern.matcher(args);
+        if (rgbaMatcher.find()) {
+            int r = Integer.parseInt(rgbaMatcher.group("r"));
+            int g = Integer.parseInt(rgbaMatcher.group("g"));
+            int b = Integer.parseInt(rgbaMatcher.group("b"));
+            int a = Integer.parseInt(rgbaMatcher.group("a"));
+
+            if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255 && a >= 0 && a <= 255) {
+                return new int[]{r, g, b, a};
+            }
+        }
+
+        // Try RGB format
+        Pattern rgbPattern = Pattern.compile("^(?<r>\\d+),(?<g>\\d+),(?<b>\\d+)$");
+        Matcher rgbMatcher = rgbPattern.matcher(args);
+        if (rgbMatcher.find()) {
+            int r = Integer.parseInt(rgbMatcher.group("r"));
+            int g = Integer.parseInt(rgbMatcher.group("g"));
+            int b = Integer.parseInt(rgbMatcher.group("b"));
+
+            if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+                return new int[]{r, g, b};
+            }
+        }
+
         return null;
     }
 
