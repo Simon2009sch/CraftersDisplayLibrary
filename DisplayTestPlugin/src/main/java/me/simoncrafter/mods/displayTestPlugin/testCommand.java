@@ -140,7 +140,57 @@ public class testCommand implements CommandExecutor, TabExecutor {
         } else if (args[0].equals("color")) {
             colorDisplay = ColorDisplay.create(loc, new Vector3f(1, 1, 1), new Vector3f(), new Quaternionf(), Color.AQUA);
             colorDisplay.respawnEntity();
+        } else if (args[0].equals("setColor")) {
+            if (args.length < 2) {
+                sender.sendMessage("Usage: /cdl setColor <r,g,b> [duration] [face]");
+                return true;
+            }
 
+            int[] rgb = parseRGB(args[1]);
+            if (rgb == null) {
+                sender.sendMessage("Invalid RGB color. Format: r,g,b (0-255)");
+                return true;
+            }
+
+            int duration = 0;
+            if (args.length > 2) {
+                try {
+                    duration = Integer.parseInt(args[2]);
+                } catch (NumberFormatException e) {
+                    sender.sendMessage("Invalid duration");
+                    return true;
+                }
+            }
+
+            Color newColor = Color.fromARGB(255, rgb[0], rgb[1], rgb[2]);
+            String face = args.length > 3 ? args[3].toLowerCase() : "all";
+
+            if (face.equals("all")) {
+                if (cube != null) {
+                    cube.getTop().setColor(newColor, duration);
+                    cube.getBottom().setColor(newColor, duration);
+                    cube.getLeft().setColor(newColor, duration);
+                    cube.getRight().setColor(newColor, duration);
+                    cube.getFront().setColor(newColor, duration);
+                    cube.getBack().setColor(newColor, duration);
+                }
+                if (colorDisplay != null) {
+                    colorDisplay.setColor(newColor, duration);
+                }
+            } else {
+                if (cube != null) {
+                    switch (face) {
+                        case "top" -> cube.getTop().setColor(newColor, duration);
+                        case "bottom" -> cube.getBottom().setColor(newColor, duration);
+                        case "left" -> cube.getLeft().setColor(newColor, duration);
+                        case "right" -> cube.getRight().setColor(newColor, duration);
+                        case "front" -> cube.getFront().setColor(newColor, duration);
+                        case "back" -> cube.getBack().setColor(newColor, duration);
+                        default -> sender.sendMessage("Unknown face: " + face);
+                    }
+                }
+            }
+        }
 
 
         return false;
@@ -149,7 +199,11 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("block", "move", "scale", "rotate", "entity_move", "color");
+            return List.of("block", "move", "scale", "rotate", "entity_move", "color", "setColor");
+        }
+
+        if (args.length == 4 && args[0].equals("setColor")) {
+            return List.of("top", "bottom", "left", "right", "front", "back", "all");
         }
 
         return List.of();
@@ -169,6 +223,21 @@ public class testCommand implements CommandExecutor, TabExecutor {
         Matcher matcher = pattern.matcher(args);
         if (matcher.find()) {
             return new Quaternionf(Float.parseFloat(matcher.group("x")), Float.parseFloat(matcher.group("y")), Float.parseFloat(matcher.group("z")), Float.parseFloat(matcher.group("w")));
+        }
+        return null;
+    }
+
+    private int[] parseRGB(String args) {
+        Pattern pattern = Pattern.compile("^(?<r>\\d+),(?<g>\\d+),(?<b>\\d+)$");
+        Matcher matcher = pattern.matcher(args);
+        if (matcher.find()) {
+            int r = Integer.parseInt(matcher.group("r"));
+            int g = Integer.parseInt(matcher.group("g"));
+            int b = Integer.parseInt(matcher.group("b"));
+
+            if (r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) {
+                return new int[]{r, g, b};
+            }
         }
         return null;
     }
