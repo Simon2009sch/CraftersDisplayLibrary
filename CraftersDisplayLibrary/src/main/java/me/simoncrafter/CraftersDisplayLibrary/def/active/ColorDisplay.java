@@ -201,6 +201,12 @@ public class ColorDisplay extends PositionObject implements IHidable {
 
     public void setColor(Color newColor, int durationTicks) {
         cancelColorAnimation();
+
+        // Ensure color is not null
+        if (color == null) {
+            color = Color.fromARGB(255, 0, 0, 0);
+        }
+
         colorAnimationStartColor = color;
         colorAnimationEndColor = newColor;
         colorAnimationDurationTicks = durationTicks;
@@ -208,7 +214,9 @@ public class ColorDisplay extends PositionObject implements IHidable {
 
         if (durationTicks <= 0) {
             color = newColor;
-            updateEntity(0);
+            if (entity != null && entity.isValid()) {
+                entity.setBackgroundColor(color);
+            }
             return;
         }
 
@@ -262,6 +270,12 @@ public class ColorDisplay extends PositionObject implements IHidable {
 
     public void setAlpha(int newAlpha, int durationTicks) {
         cancelAlphaAnimation();
+
+        // Ensure color is not null
+        if (color == null) {
+            color = Color.fromARGB(255, 0, 0, 0);
+        }
+
         alphaAnimationStartAlpha = color.getAlpha();
         alphaAnimationEndAlpha = newAlpha;
         alphaAnimationDurationTicks = durationTicks;
@@ -269,7 +283,9 @@ public class ColorDisplay extends PositionObject implements IHidable {
 
         if (durationTicks <= 0) {
             color = Color.fromARGB(newAlpha, color.getRed(), color.getGreen(), color.getBlue());
-            updateEntity(0);
+            if (entity != null && entity.isValid()) {
+                entity.setBackgroundColor(color);
+            }
             return;
         }
 
