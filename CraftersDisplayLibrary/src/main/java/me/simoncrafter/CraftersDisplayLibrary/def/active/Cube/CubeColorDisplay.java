@@ -30,12 +30,11 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
 
 
     private static BiFunction<Transformation, Transformation, Transformation> topBottomApplier = (parent, local) -> {
-        // Rotate the local translation by both parent rotations (left then right)
-        Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
+        // Apply transformation in correct order: scale → rotate → translate
+        Vector3f scaledTranslation = new Vector3f(local.getTranslation()).mul(parent.getScale());
+        Vector3f rotatedTranslation = new Vector3f(scaledTranslation)
                 .rotate(parent.getLeftRotation()).rotate(parent.getRightRotation());
-
-        // Combine with parent translation and scale
-        Vector3f finalTranslation = rotatedTranslation.mul(parent.getScale()).add(parent.getTranslation());
+        Vector3f finalTranslation = rotatedTranslation.add(parent.getTranslation());
 
         return new Transformation(
                 new Vector3f(finalTranslation.x, finalTranslation.y, finalTranslation.z),
@@ -45,12 +44,11 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         );
     };
     private static BiFunction<Transformation, Transformation, Transformation> frontBackApplier = (parent, local) -> {
-        // Rotate the local translation by both parent rotations (left then right)
-        Vector3f rotatedTranslation = new Vector3f(local.getTranslation())
+        // Apply transformation in correct order: scale → rotate → translate
+        Vector3f scaledTranslation = new Vector3f(local.getTranslation()).mul(parent.getScale());
+        Vector3f rotatedTranslation = new Vector3f(scaledTranslation)
                 .rotate(parent.getLeftRotation()).rotate(parent.getRightRotation());
-
-        // Combine with parent translation and scale
-        Vector3f finalTranslation = rotatedTranslation.mul(parent.getScale()).add(parent.getTranslation());
+        Vector3f finalTranslation = rotatedTranslation.add(parent.getTranslation());
 
         return new Transformation(
                 new Vector3f(finalTranslation.x, finalTranslation.y, finalTranslation.z),
