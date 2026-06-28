@@ -10,7 +10,6 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
-import org.joml.QuaternionfdInterpolator;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
