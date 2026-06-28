@@ -146,16 +146,16 @@ public class PositionObject implements IDisplayable {
     @Override
     public void moveRelative(Vector3f movement, int time) {
         try {
-            Vector3f newPos = new Vector3f(localTransform.getTranslation()).add(movement);
-            Transformation endTransform = new Transformation(newPos, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
-            startAnimation(endTransform, time);
+            localTransform = new Transformation(localTransform.getTranslation()
+                    .add(movement), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
         } catch (NullPointerException ignored) {}
+        updateChildren(time);
     }
 
     @Override
     public void moveAbsolute(Vector3f position, int time) {
-        Transformation endTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
-        startAnimation(endTransform, time);
+        localTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        updateChildren(time);
     }
 
     @Override
@@ -168,41 +168,76 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void LRotateAbsolute(Quaternionf rotation, int time) {
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
-        startAnimation(endTransform, time);
+        LRotateAbsolute(rotation, time, true);
+    }
+
+    public void LRotateAbsolute(Quaternionf rotation, int time, boolean useAnimation) {
+        if (useAnimation) {
+            Transformation endTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
+            startAnimation(endTransform, time);
+        } else {
+            localTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
+            updateChildren(time);
+        }
     }
 
     @Override
     public void LRotateRelative(Quaternionf rotation, int time) {
+        LRotateRelative(rotation, time, true);
+    }
+
+    public void LRotateRelative(Quaternionf rotation, int time, boolean useAnimation) {
         Quaternionf newRotation = new Quaternionf(localTransform.getLeftRotation()).mul(rotation);
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), newRotation, localTransform.getScale(), localTransform.getRightRotation());
-        startAnimation(endTransform, time);
+        if (useAnimation) {
+            Transformation endTransform = new Transformation(localTransform.getTranslation(), newRotation, localTransform.getScale(), localTransform.getRightRotation());
+            startAnimation(endTransform, time);
+        } else {
+            localTransform = new Transformation(localTransform.getTranslation(), newRotation, localTransform.getScale(), localTransform.getRightRotation());
+            updateChildren(time);
+        }
     }
 
     @Override
     public void RRotateAbsolute(Quaternionf rotation, int time) {
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
-        startAnimation(endTransform, time);
+        RRotateAbsolute(rotation, time, true);
+    }
+
+    public void RRotateAbsolute(Quaternionf rotation, int time, boolean useAnimation) {
+        if (useAnimation) {
+            Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
+            startAnimation(endTransform, time);
+        } else {
+            localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
+            updateChildren(time);
+        }
     }
 
     @Override
     public void RRotateRelative(Quaternionf rotation, int time) {
+        RRotateRelative(rotation, time, true);
+    }
+
+    public void RRotateRelative(Quaternionf rotation, int time, boolean useAnimation) {
         Quaternionf newRotation = new Quaternionf(localTransform.getRightRotation()).mul(rotation);
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), newRotation);
-        startAnimation(endTransform, time);
+        if (useAnimation) {
+            Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), newRotation);
+            startAnimation(endTransform, time);
+        } else {
+            localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), newRotation);
+            updateChildren(time);
+        }
     }
 
     @Override
     public void scaleAbsolute(Vector3f scale, int time) {
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
-        startAnimation(endTransform, time);
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
+        updateChildren(time);
     }
 
     @Override
     public void scaleRelative(Vector3f scale, int time) {
-        Vector3f newScale = new Vector3f(localTransform.getScale()).add(scale);
-        Transformation endTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), newScale, localTransform.getRightRotation());
-        startAnimation(endTransform, time);
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale().add(scale), localTransform.getRightRotation());
+        updateChildren(time);
     }
 
 
