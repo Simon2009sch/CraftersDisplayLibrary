@@ -217,18 +217,15 @@ public class ColorDisplay extends PositionObject implements IHidable {
         float progress = (float) colorAnimationCurrentTick / colorAnimationDurationTicks;
         progress = Math.min(progress, 1.0f);
 
-        int startARGB = colorAnimationStartColor.asARGB();
-        int endARGB = colorAnimationEndColor.asARGB();
+        int startA = colorAnimationStartColor.getAlpha();
+        int startR = colorAnimationStartColor.getRed();
+        int startG = colorAnimationStartColor.getGreen();
+        int startB = colorAnimationStartColor.getBlue();
 
-        int startA = (startARGB >> 24) & 0xFF;
-        int startR = (startARGB >> 16) & 0xFF;
-        int startG = (startARGB >> 8) & 0xFF;
-        int startB = startARGB & 0xFF;
-
-        int endA = (endARGB >> 24) & 0xFF;
-        int endR = (endARGB >> 16) & 0xFF;
-        int endG = (endARGB >> 8) & 0xFF;
-        int endB = endARGB & 0xFF;
+        int endA = colorAnimationEndColor.getAlpha();
+        int endR = colorAnimationEndColor.getRed();
+        int endG = colorAnimationEndColor.getGreen();
+        int endB = colorAnimationEndColor.getBlue();
 
         int interpolatedA = (int) (startA + (endA - startA) * progress);
         int interpolatedR = (int) (startR + (endR - startR) * progress);
