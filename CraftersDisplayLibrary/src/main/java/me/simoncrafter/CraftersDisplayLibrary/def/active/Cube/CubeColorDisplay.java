@@ -77,19 +77,25 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
     }
 
     public void spawnDisplay() {
-        // Calculate face positions based on cube's local scale
-        Vector3f cubeScale = getLocalTransform().getScale();
-        float halfX = cubeScale.x / 2f;
-        float halfY = cubeScale.y / 2f;
-        float halfZ = cubeScale.z / 2f;
+        // Get cube's rotation to apply to face positions
+        Quaternionf cubeLeftRotation = getLocalTransform().getLeftRotation();
+        Quaternionf cubeRightRotation = getLocalTransform().getRightRotation();
 
-        // Create all faces with positions calculated from cube scale
-        top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, halfY, 0), new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
-        bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, -halfY, 0), new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
-        left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(-halfX, 0, 0), new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
-        right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(halfX, 0, 0), new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
-        front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, 0, halfZ), new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
-        back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), new Vector3f(0, 0, -halfZ), new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
+        // Fixed unit positions for each face center
+        Vector3f topPos = new Vector3f(0, 0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f bottomPos = new Vector3f(0, -0.5f, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f leftPos = new Vector3f(-0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f rightPos = new Vector3f(0.5f, 0, 0).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f frontPos = new Vector3f(0, 0, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+        Vector3f backPos = new Vector3f(0, 0, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation);
+
+        // Create all faces with rotation-adjusted positions
+        top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
+        bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
+        left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
+        right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
+        front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
+        back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
 
         // Spawn all displays
         top.spawnDisplay();
