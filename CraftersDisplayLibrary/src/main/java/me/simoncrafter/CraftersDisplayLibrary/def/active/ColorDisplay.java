@@ -83,10 +83,6 @@ public class ColorDisplay extends PositionObject implements IHidable {
         return new ColorDisplay(loc, scale, translation, leftRotation, new Quaternionf(0, 0, 0, 1), color, false, Display.Billboard.FIXED);
     }
 
-    public void killDisplay() {
-        entity.remove();
-    }
-
     @Override
     public void moveEntityStatic(Location location) {
 
@@ -176,6 +172,15 @@ public class ColorDisplay extends PositionObject implements IHidable {
         entity.setTransformation(scaleToBlock(getFinalTransform()));
         entity.setInterpolationDelay(0);
         entity.setInterpolationDuration(time);
+    }
+
+    public void setBillboard(Display.Billboard billboard) {
+        this.billboard = billboard;
+    }
+
+
+    public Display.Billboard getBillboard() {
+        return billboard;
     }
 
     @Override
@@ -322,7 +327,10 @@ public class ColorDisplay extends PositionObject implements IHidable {
     }
 
 
-
-
-
+    @Override
+    public void remove() {
+        super.remove();
+        entity.remove();
+        entity = null;
+    }
 }

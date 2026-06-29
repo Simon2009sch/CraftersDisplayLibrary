@@ -62,7 +62,6 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
         this.colorInformation = colorInformation;
         this.seeThrough = seeThrough;
-
     }
 
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
@@ -89,13 +88,15 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         Vector3f frontPos = new Vector3f(0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
         Vector3f backPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
 
+
+
         // Create all faces with rotation-adjusted positions
-        top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
-        bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
-        left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
-        right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
-        front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
-        back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
+        if (top == null) top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
+        if (bottom == null) bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
+        if (left == null) left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
+        if (right == null) right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
+        if (front == null) front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
+        if (back == null) back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
 
         // Spawn all displays
         top.spawnDisplay();
@@ -273,5 +274,22 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         back.setParentTransform(finalTransform, time);
         back.setParentApplierFunction(frontBackApplier);
 
+    }
+
+    @Override
+    public void remove() {
+        super.remove();
+        top.remove();
+        top = null;
+        bottom.remove();
+        bottom = null;
+        left.remove();
+        left = null;
+        right.remove();
+        right = null;
+        front.remove();
+        front = null;
+        back.remove();
+        back = null;
     }
 }

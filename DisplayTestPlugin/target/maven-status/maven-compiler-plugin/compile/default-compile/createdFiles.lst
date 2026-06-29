@@ -1,2 +1,6 @@
-me\simoncrafter\mods\displayTestPlugin\testCommand.class
 me\simoncrafter\mods\displayTestPlugin\DisplayTestPlugin.class
+me\simoncrafter\mods\displayTestPlugin\testCommand$ColorDisplayHandler.class
+me\simoncrafter\mods\displayTestPlugin\testCommand$DisplayTypeHandler.class
+me\simoncrafter\mods\displayTestPlugin\testCommand$LineDisplayHandler.class
+me\simoncrafter\mods\displayTestPlugin\testCommand.class
+me\simoncrafter\mods\displayTestPlugin\testCommand$CubeDisplayHandler.class

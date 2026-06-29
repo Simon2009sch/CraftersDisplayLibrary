@@ -287,6 +287,13 @@ public class PositionObject implements IDisplayable {
         return parentAplerFunction;
     }
 
+    @Override
+    public void remove() {
+        for (IDisplayable obj : getChildren()) {
+            obj.remove();
+        }
+    }
+
     protected Transformation getFinalTransform() {
         return parentAplerFunction.apply(parentTransform, localTransform);
     }

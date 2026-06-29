@@ -17,6 +17,7 @@ public interface IDisplayable {
     void addChild(IDisplayable child);
     void removeChild(IDisplayable child);
     void setChildren(List<IDisplayable> children);
+    void remove();
     List<IDisplayable> getChildren();
 
     void setParentTransform(Transformation transformation, int time);
