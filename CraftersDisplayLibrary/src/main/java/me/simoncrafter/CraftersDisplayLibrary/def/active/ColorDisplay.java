@@ -3,6 +3,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active;
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
 import net.kyori.adventure.text.Component;
@@ -21,26 +22,12 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class ColorDisplay extends PositionObject implements IHidable {
+public class ColorDisplay extends PositionObject implements IHidable, IColorable {
 
     private TextDisplay entity = null;
     private boolean seeTrough = false;
     private Color color = Color.fromARGB(0, 0, 0, 0);
     private Display.Billboard billboard = Display.Billboard.FIXED;
-
-    // Color animation tracking
-    private BukkitTask colorAnimationTask = null;
-    private Color colorAnimationStartColor = null;
-    private Color colorAnimationEndColor = null;
-    private int colorAnimationDurationTicks = 0;
-    private int colorAnimationCurrentTick = 0;
-
-    // Alpha animation tracking
-    private BukkitTask alphaAnimationTask = null;
-    private int alphaAnimationStartAlpha = 255;
-    private int alphaAnimationEndAlpha = 255;
-    private int alphaAnimationDurationTicks = 0;
-    private int alphaAnimationCurrentTick = 0;
 
     private ColorDisplay(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, Color color, boolean seeTrough, Display.Billboard billboard) {
         super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
@@ -57,6 +44,7 @@ public class ColorDisplay extends PositionObject implements IHidable {
         entity = getLocation().getWorld().spawn(getLocation(), TextDisplay.class);
         entity.setBillboard(billboard);
         entity.setBackgroundColor(color);
+        entity.setDefaultBackground(false);
         entity.setSeeThrough(seeTrough);
         entity.text(Component.text("\n"));
         Transformation transform = scaleToBlock(getFinalTransform());
@@ -167,20 +155,34 @@ public class ColorDisplay extends PositionObject implements IHidable {
         updateEntity(time);
     }
 
+
     private void updateEntity(int time) {
         if (entity == null || !entity.isValid()) return;
         entity.setTransformation(scaleToBlock(getFinalTransform()));
         entity.setInterpolationDelay(0);
         entity.setInterpolationDuration(time);
+        if (entity.isSeeThrough() != seeTrough) {
+            entity.setSeeThrough(seeTrough);
+        }
     }
 
     public void setBillboard(Display.Billboard billboard) {
         this.billboard = billboard;
     }
 
-
     public Display.Billboard getBillboard() {
         return billboard;
+    }
+
+    public void setSeeTrough(boolean seeTrough) {
+        this.seeTrough = seeTrough;
+        if (entity != null) {
+            entity.setSeeThrough(seeTrough);
+        }
+    }
+
+    public boolean isSeeTrough() {
+        return seeTrough;
     }
 
     @Override
@@ -203,121 +205,11 @@ public class ColorDisplay extends PositionObject implements IHidable {
         return null;
     }
 
-
-    public void setColor(Color newColor, int durationTicks) {
-        cancelColorAnimation();
-
-        // Ensure color is not null
-        if (color == null) {
-            color = Color.fromARGB(255, 0, 0, 0);
-        }
-
-        colorAnimationStartColor = color;
-        colorAnimationEndColor = newColor;
-        colorAnimationDurationTicks = durationTicks;
-        colorAnimationCurrentTick = 0;
-
-        if (durationTicks <= 0) {
-            color = newColor;
-            if (entity != null && entity.isValid()) {
-                entity.setBackgroundColor(color);
-            }
-            return;
-        }
-
-        colorAnimationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateColorAnimation, 0L, 1L);
-    }
-
-    private void updateColorAnimation() {
-        if (colorAnimationStartColor == null || colorAnimationEndColor == null) {
-            cancelColorAnimation();
-            return;
-        }
-
-        float progress = (float) colorAnimationCurrentTick / colorAnimationDurationTicks;
-        progress = Math.min(progress, 1.0f);
-
-        int startA = colorAnimationStartColor.getAlpha();
-        int startR = colorAnimationStartColor.getRed();
-        int startG = colorAnimationStartColor.getGreen();
-        int startB = colorAnimationStartColor.getBlue();
-
-        int endA = colorAnimationEndColor.getAlpha();
-        int endR = colorAnimationEndColor.getRed();
-        int endG = colorAnimationEndColor.getGreen();
-        int endB = colorAnimationEndColor.getBlue();
-
-        int interpolatedA = (int) (startA + (endA - startA) * progress);
-        int interpolatedR = (int) (startR + (endR - startR) * progress);
-        int interpolatedG = (int) (startG + (endG - startG) * progress);
-        int interpolatedB = (int) (startB + (endB - startB) * progress);
-
-        color = Color.fromARGB(interpolatedA, interpolatedR, interpolatedG, interpolatedB);
-
+    @Override
+    public void setColor(Color newColor) {
+        color = newColor;
         if (entity != null && entity.isValid()) {
             entity.setBackgroundColor(color);
-        }
-
-        colorAnimationCurrentTick++;
-        if (colorAnimationCurrentTick > colorAnimationDurationTicks) {
-            cancelColorAnimation();
-        }
-    }
-
-    private void cancelColorAnimation() {
-        if (colorAnimationTask != null) {
-            colorAnimationTask.cancel();
-            colorAnimationTask = null;
-        }
-        colorAnimationStartColor = null;
-        colorAnimationEndColor = null;
-    }
-
-    public void setAlpha(int newAlpha, int durationTicks) {
-        cancelAlphaAnimation();
-
-        // Ensure color is not null
-        if (color == null) {
-            color = Color.fromARGB(255, 0, 0, 0);
-        }
-
-        alphaAnimationStartAlpha = color.getAlpha();
-        alphaAnimationEndAlpha = newAlpha;
-        alphaAnimationDurationTicks = durationTicks;
-        alphaAnimationCurrentTick = 0;
-
-        if (durationTicks <= 0) {
-            color = Color.fromARGB(newAlpha, color.getRed(), color.getGreen(), color.getBlue());
-            if (entity != null && entity.isValid()) {
-                entity.setBackgroundColor(color);
-            }
-            return;
-        }
-
-        alphaAnimationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateAlphaAnimation, 0L, 1L);
-    }
-
-    private void updateAlphaAnimation() {
-        float progress = (float) alphaAnimationCurrentTick / alphaAnimationDurationTicks;
-        progress = Math.min(progress, 1.0f);
-
-        int interpolatedAlpha = (int) (alphaAnimationStartAlpha + (alphaAnimationEndAlpha - alphaAnimationStartAlpha) * progress);
-        color = Color.fromARGB(interpolatedAlpha, color.getRed(), color.getGreen(), color.getBlue());
-
-        if (entity != null && entity.isValid()) {
-            entity.setBackgroundColor(color);
-        }
-
-        alphaAnimationCurrentTick++;
-        if (alphaAnimationCurrentTick > alphaAnimationDurationTicks) {
-            cancelAlphaAnimation();
-        }
-    }
-
-    private void cancelAlphaAnimation() {
-        if (alphaAnimationTask != null) {
-            alphaAnimationTask.cancel();
-            alphaAnimationTask = null;
         }
     }
 
@@ -330,7 +222,7 @@ public class ColorDisplay extends PositionObject implements IHidable {
     @Override
     public void remove() {
         super.remove();
-        entity.remove();
+        if (entity != null) entity.remove();
         entity = null;
     }
 }

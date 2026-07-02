@@ -12,7 +12,7 @@ public final class DisplayTestPlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         Bukkit.getPluginCommand("cdl").setExecutor(new testCommand());
-        PluginHolder.plugin = this;
+        PluginHolder.setPlugin(this);
 
     }
 

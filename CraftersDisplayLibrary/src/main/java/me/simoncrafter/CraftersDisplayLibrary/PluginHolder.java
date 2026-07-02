@@ -1,11 +1,24 @@
 package me.simoncrafter.CraftersDisplayLibrary;
 
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.joml.Vector3f;
 
 public class PluginHolder {
-    public static JavaPlugin plugin;
+    private static JavaPlugin plugin;
+    private static GlobalAnimationTickHandler animationTickHandler;
+
+    public static void setPlugin(JavaPlugin plugin) {
+        PluginHolder.plugin = plugin;
+        if (animationTickHandler != null) {
+            animationTickHandler = GlobalAnimationTickHandler.getInstance();
+        }
+    }
+
+    public static JavaPlugin getPlugin() {
+        return plugin;
+    }
 
     public static Vector3f BLOCK_SCALE = getBlockScaleForVersion();
 

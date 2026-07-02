@@ -2,10 +2,12 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.Cube;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -15,9 +17,9 @@ import org.joml.Vector3f;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class CubeColorDisplay extends PositionObject implements IHidable {
+public class CubeColorDisplay extends PositionObject implements IHidable, IColorable {
 
-    private boolean seeThrough = false;
+    private boolean seeTrough = false;
 
     private CubeColorInformation colorInformation = new CubeColorInformation();
     private ColorDisplay top;
@@ -61,7 +63,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
     private CubeColorDisplay(Transformation localTransform, Location location, CubeColorInformation colorInformation, boolean seeThrough) {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
         this.colorInformation = colorInformation;
-        this.seeThrough = seeThrough;
+        this.seeTrough = seeThrough;
     }
 
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
@@ -75,39 +77,48 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
     }
 
     public void spawnDisplay() {
-        // Get cube's rotation to apply to face positions
-        Quaternionf cubeLeftRotation = getLocalTransform().getLeftRotation();
-        Quaternionf cubeRightRotation = getLocalTransform().getRightRotation();
+        try {
+            // Get cube's rotation to apply to face positions
+            Quaternionf cubeLeftRotation = getLocalTransform().getLeftRotation();
+            Quaternionf cubeRightRotation = getLocalTransform().getRightRotation();
 
-        // Fixed unit positions for each face center
-        // colors beside are debug colors used when trying to find errors with the faces
-        Vector3f topPos = new Vector3f(-0.5f, 0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // RED
-        Vector3f bottomPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // BLUE
-        Vector3f leftPos = new Vector3f(-0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // PURPLE
-        Vector3f rightPos = new Vector3f(0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // ORANGE
-        Vector3f frontPos = new Vector3f(0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
-        Vector3f backPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
+            // Fixed unit positions for each face center
+            // colors beside are debug colors used when trying to find errors with the faces
+            Vector3f topPos = new Vector3f(-0.5f, 0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // RED
+            Vector3f bottomPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // BLUE
+            Vector3f leftPos = new Vector3f(-0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // PURPLE
+            Vector3f rightPos = new Vector3f(0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // ORANGE
+            Vector3f frontPos = new Vector3f(0.5f, -0.5f, 0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // GREEN
+            Vector3f backPos = new Vector3f(-0.5f, -0.5f, -0.5f).rotate(cubeLeftRotation).rotate(cubeRightRotation); // YELLOW
 
 
 
-        // Create all faces with rotation-adjusted positions
-        if (top == null) top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), colorInformation.getTop());
-        if (bottom == null) bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), colorInformation.getBottom());
-        if (left == null) left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), colorInformation.getLeft());
-        if (right == null) right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), colorInformation.getRight());
-        if (front == null) front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), colorInformation.getFront());
-        if (back == null) back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), colorInformation.getBack());
+            // Create all faces with rotation-adjusted positions
+            if (top == null) top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getTop(), seeTrough, Display.Billboard.FIXED);
+            if (bottom == null) bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getBottom(), seeTrough, Display.Billboard.FIXED);
+            if (left == null) left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), new Quaternionf(), colorInformation.getLeft(), seeTrough, Display.Billboard.FIXED);
+            if (right == null) right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), new Quaternionf(), colorInformation.getRight(), seeTrough, Display.Billboard.FIXED);
+            if (front == null) front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getFront(), seeTrough, Display.Billboard.FIXED);
+            if (back == null) back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getBack(), seeTrough, Display.Billboard.FIXED);
 
-        // Spawn all displays
-        top.spawnDisplay();
-        bottom.spawnDisplay();
-        left.spawnDisplay();
-        right.spawnDisplay();
-        front.spawnDisplay();
-        back.spawnDisplay();
+            // Add faces as children and spawn
+            addChild(top);
+            addChild(bottom);
+            addChild(left);
+            addChild(right);
+            addChild(front);
+            addChild(back);
 
-        // Apply initial transformation to all faces
-        updateChildren(0);
+            // Spawn all displays
+            top.spawnDisplay();
+            bottom.spawnDisplay();
+            left.spawnDisplay();
+            right.spawnDisplay();
+            front.spawnDisplay();
+            back.spawnDisplay();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static Transformation makeTransformBetween(Vector3f p1, Vector3f p2) {
@@ -212,22 +223,28 @@ public class CubeColorDisplay extends PositionObject implements IHidable {
         return right;
     }
 
-    public void setColor(Color color, int duration) {
-        top.setColor(color, duration);
-        bottom.setColor(color, duration);
-        left.setColor(color, duration);
-        right.setColor(color, duration);
-        front.setColor(color, duration);
-        back.setColor(color, duration);
+    public boolean isSeeTrough() {
+        return seeTrough;
     }
 
-    public void setAlpha(int alpha, int duration) {
-        top.setAlpha(alpha, duration);
-        bottom.setAlpha(alpha, duration);
-        left.setAlpha(alpha, duration);
-        right.setAlpha(alpha, duration);
-        front.setAlpha(alpha, duration);
-        back.setAlpha(alpha, duration);
+    public void setSeeTrough(boolean seeTrough) {
+        this.seeTrough = seeTrough;
+        if (top != null) { top.setSeeTrough(seeTrough); }
+        if (bottom != null) { bottom.setSeeTrough(seeTrough); }
+        if (left != null) { left.setSeeTrough(seeTrough); }
+        if (right != null) { right.setSeeTrough(seeTrough); }
+        if (front != null) { front.setSeeTrough(seeTrough); }
+        if (back != null) { back.setSeeTrough(seeTrough); }
+    }
+
+    @Override
+    public void setColor(Color color) {
+        top.setColor(color);
+        bottom.setColor(color);
+        left.setColor(color);
+        right.setColor(color);
+        front.setColor(color);
+        back.setColor(color);
     }
 
     //TODO: Implement hideable

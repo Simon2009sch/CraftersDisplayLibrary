@@ -5,6 +5,8 @@ import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.AnimationFactory;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -205,7 +207,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 3) {
-            return recommendListThatContainsObject(List.of("position", "rotation", "scale", "color", "direction", "thickness"), args[2]);
+            return recommendListThatContainsObject(List.of("position", "rotation", "rrotation", "scale", "color", "randomcolor", "direction", "thickness", "seetrough"), args[2]);
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 5) {
@@ -213,7 +215,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 7) {
-            return recommendListThatContainsObject(List.of("linear"), args[6]);
+            return recommendListThatContainsObject(List.of("linear", "smooth"), args[6]);
         }
 
         return List.of();
@@ -233,7 +235,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         if (values.length < 2) return 0;
         try {
             String lastArg = values[values.length - 1].toLowerCase();
-            if (lastArg.equals("linear")) {
+            if (lastArg.equals("linear") || lastArg.equals("smooth")) {
                 return Integer.parseInt(values[values.length - 2]);
             }
             return Integer.parseInt(values[values.length - 1]);
@@ -245,7 +247,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     private boolean isAbsolute(String[] values) {
         if (values.length < 2) return true;
         String mode = values[values.length - 2].toLowerCase();
-        if (mode.equals("linear")) {
+        if (mode.equals("linear") || mode.equals("smooth")) {
             mode = values.length >= 3 ? values[values.length - 3].toLowerCase() : "absolute";
         }
         return mode.equals("absolute");
@@ -254,7 +256,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     private boolean isRelative(String[] values) {
         if (values.length < 2) return false;
         String mode = values[values.length - 2].toLowerCase();
-        if (mode.equals("linear")) {
+        if (mode.equals("linear") || mode.equals("smooth")) {
             mode = values.length >= 3 ? values[values.length - 3].toLowerCase() : "";
         }
         return mode.equals("relative");
@@ -263,6 +265,25 @@ public class testCommand implements CommandExecutor, TabExecutor {
     private boolean hasLinearInterpolation(String[] values) {
         if (values.length < 1) return false;
         return values[values.length - 1].toLowerCase().equals("linear");
+    }
+
+    private boolean hasSmoothInterpolation(String[] values) {
+        if (values.length < 1) return false;
+        return values[values.length - 1].toLowerCase().equals("smooth");
+    }
+
+    private String getInterpolationMode(String[] values) {
+        if (values.length < 1) return "linear";
+        String last = values[values.length - 1].toLowerCase();
+        if (last.equals("smooth") || last.equals("linear")) {
+            return last;
+        }
+        return "linear";
+    }
+
+    private Color randomColor() {
+        Random rand = new Random();
+        return Color.fromRGB(rand.nextInt(256), rand.nextInt(256), rand.nextInt(256));
     }
 
     private Vector3f parseVector(String args) {
@@ -381,7 +402,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return switch (property) {
                 case "color" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     int[] rgba = parseRGBA(values[0]);
@@ -390,18 +411,22 @@ public class testCommand implements CommandExecutor, TabExecutor {
                         yield false;
                     }
                     int duration = parseDuration(values);
-                    if (rgba.length == 4) {
-                        display.setColor(Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]), duration);
+                    Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Color currentColor = display instanceof IColorable colorable ?
+                            Color.fromARGB(255, 255, 255, 255) : Color.WHITE;
+                        AnimationFactory.registerColorAnimationSmooth(display, duration, currentColor, targetColor);
                     } else {
-                        display.setColor(Color.fromRGB(rgba[0], rgba[1], rgba[2]), duration);
+                        display.setColor(targetColor);
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated color" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "position" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f pos = parseVector(values[0]);
@@ -411,18 +436,28 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.moveRelative(pos, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = display.getLocalTransform().getTranslation();
+                        Vector3f targetPos = pos;
+                        if (isRelative(values)) {
+                            targetPos = new Vector3f(currentPos).add(pos);
+                        }
+                        AnimationFactory.registerTranslationAnimationSmooth(display, duration, currentPos, targetPos);
                     } else {
-                        display.moveAbsolute(pos, duration);
+                        if (isRelative(values)) {
+                            display.moveRelative(pos, duration);
+                        } else {
+                            display.moveAbsolute(pos, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "scale" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f scale = parseVector(values[0]);
@@ -432,18 +467,28 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.scaleRelative(scale, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentScale = display.getLocalTransform().getScale();
+                        Vector3f targetScale = scale;
+                        if (isRelative(values)) {
+                            targetScale = new Vector3f(currentScale).add(scale);
+                        }
+                        AnimationFactory.registerScalingAnimationSmooth(display, duration, currentScale, targetScale);
                     } else {
-                        display.scaleAbsolute(scale, duration);
+                        if (isRelative(values)) {
+                            display.scaleRelative(scale, duration);
+                        } else {
+                            display.scaleAbsolute(scale, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "rotation" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Quaternionf rot = parseQuaternion(values[0]);
@@ -453,13 +498,70 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.LRotateRelative(rot, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerLRotationAnimationSmooth(display, duration, currentRot, targetRot);
                     } else {
-                        display.LRotateAbsolute(rot, duration);
+                        if (isRelative(values)) {
+                            display.LRotateRelative(rot, duration);
+                        } else {
+                            display.LRotateAbsolute(rot, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rrotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rrotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getRightRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerRRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.RRotateRelative(rot, duration);
+                        } else {
+                            display.RRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "seetrough" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
+                    display.setSeeTrough(seeThrough);
+                    sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "randomcolor" -> {
+                    Color randomCol = randomColor();
+                    display.setColor(randomCol);
+                    sender.sendMessage(Component.text("Set color to random RGB(" + randomCol.getRed() + "," + randomCol.getGreen() + "," + randomCol.getBlue() + ")", NamedTextColor.GREEN));
                     yield true;
                 }
                 default -> false;
@@ -483,6 +585,20 @@ public class testCommand implements CommandExecutor, TabExecutor {
             CubeColorDisplay display = (CubeColorDisplay) obj;
             try {
                 display.spawnDisplay();
+
+                /*// Add a small child cube at one corner for parenting system testing
+                CubeColorDisplay childCube = CubeColorDisplay.create(
+                        display.getLocation(),
+                        new Vector3f(0.25f, 0.25f, 0.25f),
+                        new Vector3f(0.5f, 0.5f, 0.5f),
+                        new Quaternionf(),
+                        new CubeColorInformation(Color.fromRGB(255, 0, 0)),
+                        false
+                        );
+                childCube.spawnDisplay();
+                objectMap.put("child", childCube);
+                display.addChild(childCube);*/
+
                 return true;
             } catch (Exception e) {
                 sender.sendMessage(Component.text("Error spawning cube display: " + e.getMessage(), NamedTextColor.RED));
@@ -504,7 +620,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return switch (property) {
                 case "color" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     int[] rgba = parseRGBA(values[0]);
@@ -513,15 +629,20 @@ public class testCommand implements CommandExecutor, TabExecutor {
                         yield false;
                     }
                     int duration = parseDuration(values);
-                    Color color = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
-                    display.setColor(color, duration);
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        AnimationFactory.registerColorAnimationSmooth(display, duration, Color.fromRGB(255, 255, 255), targetColor);
+                    } else {
+                        display.setColor(targetColor);
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated color" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "position" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f pos = parseVector(values[0]);
@@ -531,18 +652,33 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.moveRelative(pos, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = display.getLocalTransform().getTranslation();
+                        Vector3f targetPos = pos;
+                        if (isRelative(values)) {
+                            targetPos = new Vector3f(currentPos).add(pos);
+                        }
+                        AnimationFactory.registerTranslationAnimationSmooth(display, duration, currentPos, targetPos);
                     } else {
-                        display.moveAbsolute(pos, duration);
+                        if (isRelative(values)) {
+                            display.moveRelative(pos, duration);
+                        } else {
+                            Vector3f currentPos = display.getLocalTransform().getTranslation();
+                            Vector3f targetPos = pos;
+                            if (isRelative(values)) {
+                                targetPos = new Vector3f(currentPos).add(pos);
+                            }
+                            AnimationFactory.registerTranslationAnimation(display, duration, currentPos, targetPos);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "scale" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f scale = parseVector(values[0]);
@@ -552,18 +688,28 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.scaleRelative(scale, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentScale = display.getLocalTransform().getScale();
+                        Vector3f targetScale = scale;
+                        if (isRelative(values)) {
+                            targetScale = new Vector3f(currentScale).add(scale);
+                        }
+                        AnimationFactory.registerScalingAnimationSmooth(display, duration, currentScale, targetScale);
                     } else {
-                        display.scaleAbsolute(scale, duration);
+                        if (isRelative(values)) {
+                            display.scaleRelative(scale, duration);
+                        } else {
+                            display.scaleAbsolute(scale, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "rotation" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Quaternionf rot = parseQuaternion(values[0]);
@@ -573,13 +719,82 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.LRotateRelative(rot, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerLRotationAnimationSmooth(display, duration, currentRot, targetRot);
                     } else {
-                        display.LRotateAbsolute(rot, duration);
+                        if (isRelative(values)) {
+                            display.LRotateRelative(rot, duration);
+                        } else {
+                            display.LRotateAbsolute(rot, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rrotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rrotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getRightRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerRRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.RRotateRelative(rot, duration);
+                        } else {
+                            display.RRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "seetrough" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
+                    display.setSeeTrough(seeThrough);
+                    sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "randomcolor" -> {
+                    Color topColor = randomColor();
+                    Color bottomColor = randomColor();
+                    Color leftColor = randomColor();
+                    Color rightColor = randomColor();
+                    Color frontColor = randomColor();
+                    Color backColor = randomColor();
+
+                    if (display.getTop() != null) display.getTop().setColor(topColor);
+                    if (display.getBottom() != null) display.getBottom().setColor(bottomColor);
+                    if (display.getLeft() != null) display.getLeft().setColor(leftColor);
+                    if (display.getRight() != null) display.getRight().setColor(rightColor);
+                    if (display.getFront() != null) display.getFront().setColor(frontColor);
+                    if (display.getBack() != null) display.getBack().setColor(backColor);
+
+                    sender.sendMessage(Component.text("Set random colors for all cube faces", NamedTextColor.GREEN));
                     yield true;
                 }
                 default -> false;
@@ -629,7 +844,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return switch (property) {
                 case "color" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     int[] rgba = parseRGBA(values[0]);
@@ -638,14 +853,18 @@ public class testCommand implements CommandExecutor, TabExecutor {
                         yield false;
                     }
                     int duration = parseDuration(values);
-                    Color color = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        AnimationFactory.registerColorAnimationSmooth(display, duration, Color.WHITE, targetColor);
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated color" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "direction" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> direction <x,y,z> [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> direction <x,y,z> [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f direction = parseVector(values[0]);
@@ -655,13 +874,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     display.setDirection(direction, duration);
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated direction (length: " + String.format("%.2f", direction.length()) + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 case "position" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear]", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
                         yield false;
                     }
                     Vector3f pos = parseVector(values[0]);
@@ -671,12 +890,22 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     int duration = parseDuration(values);
                     String modeStr = isRelative(values) ? "relative" : "absolute";
-                    if (isRelative(values)) {
-                        display.moveRelative(pos, duration);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = display.getLocalTransform().getTranslation();
+                        Vector3f targetPos = pos;
+                        if (isRelative(values)) {
+                            targetPos = new Vector3f(currentPos).add(pos);
+                        }
+                        AnimationFactory.registerTranslationAnimationSmooth(display, duration, currentPos, targetPos);
                     } else {
-                        display.moveAbsolute(pos, duration);
+                        if (isRelative(values)) {
+                            display.moveRelative(pos, duration);
+                        } else {
+                            display.moveAbsolute(pos, duration);
+                        }
                     }
-                    String interpolation = hasLinearInterpolation(values) ? " (linear)" : "";
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
@@ -695,6 +924,84 @@ public class testCommand implements CommandExecutor, TabExecutor {
                         sender.sendMessage(Component.text("Invalid thickness format. Use a number", NamedTextColor.RED));
                         yield false;
                     }
+                }
+                case "rotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerLRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.LRotateRelative(rot, duration);
+                        } else {
+                            display.LRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rrotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rrotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getRightRotation();
+                        Quaternionf targetRot = rot;
+                        if (isRelative(values)) {
+                            targetRot = new Quaternionf(currentRot).mul(rot);
+                        }
+                        AnimationFactory.registerRRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.RRotateRelative(rot, duration);
+                        } else {
+                            display.RRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "seetrough" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
+                    display.setSeeTrough(seeThrough);
+                    sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "randomcolor" -> {
+                    Color randomCol = randomColor();
+                    display.setColor(randomCol);
+                    sender.sendMessage(Component.text("Set color to random RGB(" + randomCol.getRed() + "," + randomCol.getGreen() + "," + randomCol.getBlue() + ")", NamedTextColor.GREEN));
+                    yield true;
                 }
                 default -> false;
             };

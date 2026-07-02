@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -93,6 +94,10 @@ public class PositionObject implements IDisplayable {
         updateChildren(time);
     }
 
+    public void setLocalTransformNoUpdate(Transformation transformation) {
+        localTransform = transformation;
+    }
+
 
     public void moveEntityStatic(Location location) {
         Vector oldLoc = this.location.toVector();
@@ -152,17 +157,27 @@ public class PositionObject implements IDisplayable {
         updateChildren(time);
     }
 
+    public void moveRelativeNoUpdate(Vector3f movement) {
+        try {
+            localTransform = new Transformation(localTransform.getTranslation()
+                    .add(movement), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+        } catch (NullPointerException ignored) {}
+    }
+
     @Override
     public void moveAbsolute(Vector3f position, int time) {
         localTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
         updateChildren(time);
     }
 
+    public void moveAbsoluteNoUpdate(Vector3f position) {
+        localTransform = new Transformation(position, localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation());
+    }
+
     @Override
     public void moveRelativeToWorld(Vector3f position, int time) {
         Vector3f currentPos = location.toVector().toVector3f().add(getFinalTransform().getTranslation());
         Vector3f diff = position.sub(currentPos);
-        Bukkit.broadcast(Component.text(diff.toString()));
         moveRelative(diff, time);
     }
 
@@ -181,6 +196,10 @@ public class PositionObject implements IDisplayable {
         }
     }
 
+    public void LRotateAbsoluteNoUpdate(Quaternionf rotation) {
+        localTransform = new Transformation(localTransform.getTranslation(), rotation, localTransform.getScale(), localTransform.getRightRotation());
+    }
+
     @Override
     public void LRotateRelative(Quaternionf rotation, int time) {
         LRotateRelative(rotation, time, true);
@@ -197,6 +216,11 @@ public class PositionObject implements IDisplayable {
         }
     }
 
+    public void LRotateRelativeNoUpdate(Quaternionf rotation) {
+        Quaternionf newRotation = new Quaternionf(localTransform.getLeftRotation()).mul(rotation);
+        localTransform = new Transformation(localTransform.getTranslation(), newRotation, localTransform.getScale(), localTransform.getRightRotation());
+    }
+
     @Override
     public void RRotateAbsolute(Quaternionf rotation, int time) {
         RRotateAbsolute(rotation, time, true);
@@ -210,6 +234,10 @@ public class PositionObject implements IDisplayable {
             localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
             updateChildren(time);
         }
+    }
+
+    public void RRotateAbsoluteNoUpdate(Quaternionf rotation) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), rotation);
     }
 
     @Override
@@ -228,16 +256,29 @@ public class PositionObject implements IDisplayable {
         }
     }
 
+    public void RRotateRelativeNoUpdate(Quaternionf rotation) {
+        Quaternionf newRotation = new Quaternionf(localTransform.getRightRotation()).mul(rotation);
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), newRotation);
+    }
+
     @Override
     public void scaleAbsolute(Vector3f scale, int time) {
         localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
         updateChildren(time);
     }
 
+    public void scaleAbsoluteNoUpdate(Vector3f scale) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), scale, localTransform.getRightRotation());
+    }
+
     @Override
     public void scaleRelative(Vector3f scale, int time) {
         localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale().add(scale), localTransform.getRightRotation());
         updateChildren(time);
+    }
+
+    public void scaleRelativeNoUpdate(Vector3f scale) {
+        localTransform = new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale().add(scale), localTransform.getRightRotation());
     }
 
 
@@ -262,6 +303,11 @@ public class PositionObject implements IDisplayable {
         runForEveryChild(c -> {
             c.setParentTransform(getFinalTransform(), time);
         });
+    }
+
+    @ApiStatus.Internal
+    public void updateChildrenNow(int duration) {
+        updateChildren(duration);
     }
 
     @Override
@@ -310,7 +356,7 @@ public class PositionObject implements IDisplayable {
             return;
         }
 
-        animationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.plugin, this::updateAnimation, 0L, 1L);
+        animationTask = Bukkit.getScheduler().runTaskTimer(PluginHolder.getPlugin(), this::updateAnimation, 0L, 1L);
     }
 
     private void updateAnimation() {

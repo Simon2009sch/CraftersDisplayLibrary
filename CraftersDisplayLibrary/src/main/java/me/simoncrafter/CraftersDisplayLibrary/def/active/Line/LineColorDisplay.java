@@ -2,6 +2,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.Line;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
 import net.kyori.adventure.text.Component;
@@ -17,8 +18,9 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class LineColorDisplay extends PositionObject implements IHidable {
+public class LineColorDisplay extends PositionObject implements IHidable, IColorable {
 
+    private boolean seeTrough = false;
     private Color color;
     private float thickness = 0.1f;
     private Vector3f direction = new Vector3f(0,1,0);
@@ -43,7 +45,6 @@ public class LineColorDisplay extends PositionObject implements IHidable {
     }
 
     public void spawnDisplay() {
-        Bukkit.broadcast(Component.text(direction.x + " " + direction.y + " " + direction.z));
         frontDisply = ColorDisplay.create(getLocation(), new Vector3f(thickness, direction.length(), thickness), new Vector3f(-(thickness/2), 0, 0).rotate(getTransformation().getLeftRotation()).rotate(getTransformation().getRightRotation()), getTransformation().getLeftRotation(), color);
 
         frontDisply.spawnDisplay();
@@ -59,6 +60,19 @@ public class LineColorDisplay extends PositionObject implements IHidable {
         if (frontDisply != null && frontDisply.getEntity() != null) {
             frontDisply.scaleAbsolute(new Vector3f(thickness, direction.length(), thickness), duration);
         }
+    }
+
+    @Override
+    public void setColor(Color color) {
+
+    }
+
+    public boolean isSeeTrough() {
+        return seeTrough;
+    }
+
+    public void setSeeTrough(boolean seeTrough) {
+        this.seeTrough = seeTrough;
     }
 
     public void setThickness(float thickness) {
