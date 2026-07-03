@@ -1,2 +1,2 @@
 install:
-  - mvn clean deploy -pl CraftersDisplayLibrary -am -DskipTests
+  - mvn clean package -pl CraftersDisplayLibrary -am -DskipTests
