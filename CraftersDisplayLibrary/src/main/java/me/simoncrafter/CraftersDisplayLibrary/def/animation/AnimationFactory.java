@@ -2,7 +2,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.animation;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.functions.*;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import org.bukkit.Color;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -44,11 +44,11 @@ public class AnimationFactory {
         GlobalAnimationTickHandler.registerNewScaleAnimation(obj, new ScalingAnimationSmooth(durationTicks, start, end, obj));
     }
 
-    public static void registerColorAnimation(IColorable obj, int durationTicks, Color start, Color end) {
+    public static void registerColorAnimation(IColorableDisplay obj, int durationTicks, Color start, Color end) {
         GlobalAnimationTickHandler.registerNewColorAnimation(obj, new ColorAnimation(durationTicks, start, end, obj));
     }
 
-    public static void registerColorAnimationSmooth(IColorable obj, int durationTicks, Color start, Color end) {
+    public static void registerColorAnimationSmooth(IColorableDisplay obj, int durationTicks, Color start, Color end) {
         GlobalAnimationTickHandler.registerNewColorAnimation(obj, new ColorAnimationSmooth(durationTicks, start, end, obj));
     }
 }

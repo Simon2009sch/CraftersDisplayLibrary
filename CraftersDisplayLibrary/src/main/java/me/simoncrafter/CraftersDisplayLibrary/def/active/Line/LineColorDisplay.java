@@ -2,11 +2,9 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.Line;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -18,7 +16,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-public class LineColorDisplay extends PositionObject implements IHidable, IColorable {
+public class LineColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
 
     private boolean seeTrough = false;
     private Color color;

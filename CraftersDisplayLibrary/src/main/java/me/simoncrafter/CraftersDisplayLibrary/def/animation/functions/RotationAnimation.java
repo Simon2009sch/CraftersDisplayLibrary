@@ -1,10 +1,10 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.animation.functions;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.IAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
 import org.joml.Quaternionf;
 
-public class RotationAnimation extends IAnimationInterpolationFunction<Quaternionf> {
+public class RotationAnimation extends AAnimationInterpolationFunction<Quaternionf> {
 
     public RotationAnimation(int duration, Quaternionf start, Quaternionf end, PositionObject obj) {
         super(duration, start, end, obj);

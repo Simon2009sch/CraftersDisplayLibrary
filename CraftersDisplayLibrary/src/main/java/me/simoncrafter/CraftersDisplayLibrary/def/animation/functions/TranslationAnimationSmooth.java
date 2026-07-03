@@ -1,12 +1,10 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.animation.functions;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.IAnimationInterpolationFunction;
-import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
 import org.joml.Vector3f;
 
-public class TranslationAnimationSmooth extends IAnimationInterpolationFunction<Vector3f> {
+public class TranslationAnimationSmooth extends AAnimationInterpolationFunction<Vector3f> {
 
     public TranslationAnimationSmooth(int duration, Vector3f start, Vector3f end, PositionObject obj) {
         super(duration, start, end, obj);

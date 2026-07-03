@@ -1,20 +1,17 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.active;
 
-import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
 import net.kyori.adventure.text.Component;
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
@@ -22,7 +19,7 @@ import org.joml.Vector3f;
 
 import java.util.List;
 
-public class ColorDisplay extends PositionObject implements IHidable, IColorable {
+public class ColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
 
     private TextDisplay entity = null;
     private boolean seeTrough = false;

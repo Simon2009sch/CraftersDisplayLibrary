@@ -1,23 +1,21 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.animation.functions;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.IAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ICustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import org.bukkit.Color;
 
-public class ColorAnimation extends ICustomTypeAnimationInterpolationFunction<Color, IColorable> {
+public class ColorAnimation extends ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay> {
 
-    public ColorAnimation(int duration, Color start, Color end, IColorable obj) {
+    public ColorAnimation(int duration, Color start, Color end, IColorableDisplay obj) {
         super(duration, start, end, obj);
     }
 
-    public ColorAnimation(int duration, int tick, Color start, Color end, IColorable obj) {
+    public ColorAnimation(int duration, int tick, Color start, Color end, IColorableDisplay obj) {
         super(duration, tick, start, end, obj);
     }
 
     @Override
-    public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorable obj) {
+    public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
         float progress = (float) tick / duration;
 
         int r = (int) (startColor.getRed() + (endColor.getRed() - startColor.getRed()) * progress);

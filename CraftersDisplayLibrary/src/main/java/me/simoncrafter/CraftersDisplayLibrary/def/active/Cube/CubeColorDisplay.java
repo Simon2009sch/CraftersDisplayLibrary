@@ -2,7 +2,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.Cube;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
 import org.bukkit.Color;
@@ -17,7 +17,7 @@ import org.joml.Vector3f;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class CubeColorDisplay extends PositionObject implements IHidable, IColorable {
+public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
 
     private boolean seeTrough = false;
 
@@ -68,6 +68,9 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
 
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, seeThrough);
+    }
+    public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation) {
+        return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, false);
     }
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, rightRotation), loc, colorInformation, seeThrough);

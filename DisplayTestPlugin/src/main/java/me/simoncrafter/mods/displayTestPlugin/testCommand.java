@@ -6,7 +6,7 @@ import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.AnimationFactory;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorable;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -414,7 +414,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
 
                     if (duration > 0 && hasSmoothInterpolation(values)) {
-                        Color currentColor = display instanceof IColorable colorable ?
+                        Color currentColor = display instanceof IColorableDisplay colorable ?
                             Color.fromARGB(255, 255, 255, 255) : Color.WHITE;
                         AnimationFactory.registerColorAnimationSmooth(display, duration, currentColor, targetColor);
                     } else {

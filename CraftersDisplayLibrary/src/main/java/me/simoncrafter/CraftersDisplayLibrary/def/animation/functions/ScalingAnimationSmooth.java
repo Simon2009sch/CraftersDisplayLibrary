@@ -1,11 +1,11 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.animation.functions;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.IAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
 import org.bukkit.util.Transformation;
 import org.joml.Vector3f;
 
-public class ScalingAnimationSmooth extends IAnimationInterpolationFunction<Vector3f> {
+public class ScalingAnimationSmooth extends AAnimationInterpolationFunction<Vector3f> {
 
     public ScalingAnimationSmooth(int duration, Vector3f start, Vector3f end, PositionObject obj) {
         super(duration, start, end, obj);
