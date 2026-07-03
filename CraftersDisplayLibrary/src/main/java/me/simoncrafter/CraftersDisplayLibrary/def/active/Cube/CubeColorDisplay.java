@@ -2,6 +2,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.Cube;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
@@ -17,9 +18,10 @@ import org.joml.Vector3f;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
+public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
     private boolean seeTrough = false;
+    private boolean hiddenByDefault = false;
 
     private CubeColorInformation colorInformation = new CubeColorInformation();
     private ColorDisplay top;
@@ -119,6 +121,14 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
             right.spawnDisplay();
             front.spawnDisplay();
             back.spawnDisplay();
+
+            // Apply visibility state in case hideByDefault() was called before spawning
+            top.hideByDefault(hiddenByDefault);
+            bottom.hideByDefault(hiddenByDefault);
+            left.hideByDefault(hiddenByDefault);
+            right.hideByDefault(hiddenByDefault);
+            front.hideByDefault(hiddenByDefault);
+            back.hideByDefault(hiddenByDefault);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -250,25 +260,43 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         back.setColor(color);
     }
 
-    //TODO: Implement hideable
     @Override
     public boolean isHiddenByDefault() {
-        return false;
+        return hiddenByDefault;
     }
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
-        return null;
+        hiddenByDefault = hide;
+        if (top != null) top.hideByDefault(hide);
+        if (bottom != null) bottom.hideByDefault(hide);
+        if (left != null) left.hideByDefault(hide);
+        if (right != null) right.hideByDefault(hide);
+        if (front != null) front.hideByDefault(hide);
+        if (back != null) back.hideByDefault(hide);
+        return this;
     }
 
     @Override
     public IDisplayable showForPlayer(Player player) {
-        return null;
+        if (top != null) top.showForPlayer(player);
+        if (bottom != null) bottom.showForPlayer(player);
+        if (left != null) left.showForPlayer(player);
+        if (right != null) right.showForPlayer(player);
+        if (front != null) front.showForPlayer(player);
+        if (back != null) back.showForPlayer(player);
+        return this;
     }
 
     @Override
     public IDisplayable hideForPlayer(Player player) {
-        return null;
+        if (top != null) top.hideForPlayer(player);
+        if (bottom != null) bottom.hideForPlayer(player);
+        if (left != null) left.hideForPlayer(player);
+        if (right != null) right.hideForPlayer(player);
+        if (front != null) front.hideForPlayer(player);
+        if (back != null) back.hideForPlayer(player);
+        return this;
     }
 
     @Override

@@ -1,7 +1,7 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter;
 
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,15 +12,15 @@ public class BlockHighlighterData {
     private int animationDuration = 20;
     private int lifeTime = -1;
     private int tickCounter = 0;
-    private CubeColorDisplay display;
-    private IHighliterFunction<CubeColorDisplay> function;
+    private ICuboidDisplay display;
+    private IHighliterFunction<ICuboidDisplay> function;
     private BukkitTask task;
 
-    public BlockHighlighterData(int animationDuration, CubeColorDisplay display, IHighliterFunction<CubeColorDisplay> function) {
+    public BlockHighlighterData(int animationDuration, ICuboidDisplay display, IHighliterFunction<ICuboidDisplay> function) {
         this(animationDuration, display, function, -1);
     }
 
-    public BlockHighlighterData(int animationDuration, CubeColorDisplay display, IHighliterFunction<CubeColorDisplay> function, int lifeTime) {
+    public BlockHighlighterData(int animationDuration, ICuboidDisplay display, IHighliterFunction<ICuboidDisplay> function, int lifeTime) {
         this.animationDuration = animationDuration;
         this.display = display;
         this.function = function;
@@ -31,7 +31,7 @@ public class BlockHighlighterData {
         if (animationDuration > 0 && function == null) return;
         if (task != null) return;
         task = new BukkitRunnable(){
-            int ticksSinceLastAnimation = 0;
+            int ticksSinceLastAnimation = animationDuration;
             @Override
             public void run() {
                 tickCounter++;
@@ -73,19 +73,19 @@ public class BlockHighlighterData {
         return tickCounter;
     }
 
-    public IHighliterFunction<CubeColorDisplay> getFunction() {
+    public IHighliterFunction<ICuboidDisplay> getFunction() {
         return function;
     }
 
-    public void setFunction(IHighliterFunction<CubeColorDisplay> function) {
+    public void setFunction(IHighliterFunction<ICuboidDisplay> function) {
         this.function = function;
     }
 
-    public CubeColorDisplay getDisplay() {
+    public ICuboidDisplay getDisplay() {
         return display;
     }
 
-    public void setDisplay(CubeColorDisplay display) {
+    public void setDisplay(ICuboidDisplay display) {
         this.display = display;
     }
 }

@@ -1,10 +1,10 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 
-public class RainbowHighlighter implements IHighliterFunction<CubeColorDisplay> {
+public class RainbowHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private static final Color[] RAINBOW_COLORS = {
         Color.fromRGB(255, 0, 0),
@@ -19,7 +19,7 @@ public class RainbowHighlighter implements IHighliterFunction<CubeColorDisplay> 
     private int currentColorIndex = 0;
 
     @Override
-    public void onAnimationRestart(CubeColorDisplay object) {
+    public void onAnimationRestart(ICuboidDisplay object) {
         object.setColor(RAINBOW_COLORS[currentColorIndex]);
         currentColorIndex = (currentColorIndex + 1) % RAINBOW_COLORS.length;
     }

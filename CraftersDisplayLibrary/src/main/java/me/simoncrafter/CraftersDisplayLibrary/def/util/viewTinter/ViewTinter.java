@@ -30,6 +30,9 @@ public class ViewTinter {
                 new CubeColorInformation(color)
         );
 
+        display.hideByDefault(true);
+        display.showForPlayer(player);
+
         try {
             display.spawnDisplay();
             if (display.getTop() != null) {

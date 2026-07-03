@@ -1,13 +1,13 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 
-public class GlowingHighlighter implements IHighliterFunction<CubeColorDisplay> {
+public class GlowingHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private Color baseColor;
     private int cycleDuration;
@@ -26,14 +26,14 @@ public class GlowingHighlighter implements IHighliterFunction<CubeColorDisplay> 
     }
 
     @Override
-    public void onAnimationRestart(CubeColorDisplay object) {
+    public void onAnimationRestart(ICuboidDisplay object) {
         Color dimColor = Color.fromRGB(
             (baseColor.getRed() * minBrightness) / 255,
             (baseColor.getGreen() * minBrightness) / 255,
             (baseColor.getBlue() * minBrightness) / 255
         );
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dimColor, baseColor, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dimColor, baseColor, object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 float progress = (float) tick / duration;

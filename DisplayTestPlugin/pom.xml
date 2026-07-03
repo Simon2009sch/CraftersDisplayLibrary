@@ -55,27 +55,6 @@
           <outputDirectory>C:\Coden\minecraftServer\PL-TEST\plugins</outputDirectory>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>push</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>cmd</executable>
-              <arguments>
-                <argument>/c</argument>
-                <argument>psftp.exe  admin.95287f91@node.simon.internet14.cloud -P 2222 -pwfile "C:\Coden\Scripts\pw.txt" -b "C:\Coden\Scripts\upload_cdl.txt"</argument>
-              </arguments>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
     <resources>
       <resource>

@@ -1,13 +1,13 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 
-public class PulsingColorHighlighter implements IHighliterFunction<CubeColorDisplay> {
+public class PulsingColorHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private final Color baseColor;
     private final int minAlpha;
@@ -26,7 +26,7 @@ public class PulsingColorHighlighter implements IHighliterFunction<CubeColorDisp
     }
 
     @Override
-    public void onAnimationRestart(CubeColorDisplay object) {
+    public void onAnimationRestart(ICuboidDisplay object) {
         int r = baseColor.getRed();
         int g = baseColor.getGreen();
         int b = baseColor.getBlue();
@@ -34,7 +34,7 @@ public class PulsingColorHighlighter implements IHighliterFunction<CubeColorDisp
         Color dummyStart = Color.fromARGB(minAlpha, r, g, b);
         Color dummyEnd = Color.fromARGB(maxAlpha, r, g, b);
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dummyStart, dummyEnd, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dummyStart, dummyEnd, object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 try {

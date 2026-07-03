@@ -1,16 +1,16 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 import org.joml.Vector3f;
 
-public class PingHighlighter implements IHighliterFunction<CubeColorDisplay> {
+public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private final float minScale;
     private final float maxScale;
@@ -25,11 +25,15 @@ public class PingHighlighter implements IHighliterFunction<CubeColorDisplay> {
     }
 
     @Override
-    public void onAnimationRestart(CubeColorDisplay object) {
+    public void onAnimationRestart(ICuboidDisplay object) {
         Vector3f startVector = new Vector3f(minScale, minScale, minScale);
         Vector3f endVector = new Vector3f(maxScale, maxScale, maxScale);
 
-        GlobalAnimationTickHandler.registerNewScaleAnimation(object, new AAnimationInterpolationFunction<>(cycleDuration, startVector, endVector, object) {
+        // Every ICuboidDisplay (CubeColorDisplay/WireframeCubeColorDisplay/FilledWireframeCubeColorDisplay)
+        // is also a PositionObject, which is what the scale-animation registry operates on.
+        PositionObject positionObject = (PositionObject) object;
+
+        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AAnimationInterpolationFunction<>(cycleDuration, startVector, endVector, positionObject) {
             @Override
             public void nextTick(int duration, int tick, Vector3f startScale, Vector3f endScale, PositionObject obj) {
                 if (tick >= duration) {

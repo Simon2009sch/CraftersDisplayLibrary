@@ -9,6 +9,7 @@ import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeEdge;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeFace;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
@@ -32,10 +33,11 @@ import java.util.List;
  * the same controls as {@link CubeColorDisplay}; edges expose the same controls as
  * {@link WireframeCubeColorDisplay} (including edge thickness).
  */
-public class FilledWireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
+public class FilledWireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
     private final CubeColorDisplay faceCube;
     private final WireframeCubeColorDisplay wireframeCube;
+    private boolean hiddenByDefault = false;
 
     private FilledWireframeCubeColorDisplay(Transformation localTransform, Location location, CubeColorInformation faceColors, WireframeCubeColorInformation edgeColors, boolean facesSeeThrough, boolean edgesSeeThrough, float edgeThickness) {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
@@ -67,6 +69,10 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
             addChild(wireframeCube);
 
             updateChildren(0);
+
+            // Apply visibility state in case hideByDefault() was called before spawning
+            faceCube.hideByDefault(hiddenByDefault);
+            wireframeCube.hideByDefault(hiddenByDefault);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -196,12 +202,20 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
     @Override
     public void setColor(Color color) {
         faceCube.setColor(color);
+        wireframeCube.setColor(color);
     }
 
     /** Sets see-through for both faces and edges at once. */
+    @Override
     public void setSeeTrough(boolean seeTrough) {
         setFacesSeeTrough(seeTrough);
         setEdgesSeeTrough(seeTrough);
+    }
+
+    /** True only if both faces and edges are currently see-through. */
+    @Override
+    public boolean isSeeTrough() {
+        return isFacesSeeTrough() && isEdgesSeeTrough();
     }
 
     @Override
@@ -219,11 +233,12 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
 
     @Override
     public boolean isHiddenByDefault() {
-        return false;
+        return hiddenByDefault;
     }
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
+        hiddenByDefault = hide;
         faceCube.hideByDefault(hide);
         wireframeCube.hideByDefault(hide);
         return this;

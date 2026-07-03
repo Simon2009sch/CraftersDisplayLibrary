@@ -1,5 +1,6 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.active;
 
+import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
@@ -23,6 +24,7 @@ public class ColorDisplay extends PositionObject implements IHidable, IColorable
 
     private TextDisplay entity = null;
     private boolean seeTrough = false;
+    private boolean hiddenByDefault = false;
     private Color color = Color.fromARGB(0, 0, 0, 0);
     private Display.Billboard billboard = Display.Billboard.FIXED;
 
@@ -43,6 +45,7 @@ public class ColorDisplay extends PositionObject implements IHidable, IColorable
         entity.setBackgroundColor(color);
         entity.setDefaultBackground(false);
         entity.setSeeThrough(seeTrough);
+        entity.setVisibleByDefault(!hiddenByDefault);
         entity.text(Component.text("\n"));
         Transformation transform = scaleToBlock(getFinalTransform());
         entity.setTransformation(transform);
@@ -190,22 +193,32 @@ public class ColorDisplay extends PositionObject implements IHidable, IColorable
 
     @Override
     public boolean isHiddenByDefault() {
-        return false;
+        return hiddenByDefault;
     }
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
-        return null;
+        hiddenByDefault = hide;
+        if (entity != null) {
+            entity.setVisibleByDefault(!hide);
+        }
+        return this;
     }
 
     @Override
     public IDisplayable showForPlayer(Player player) {
-        return null;
+        if (entity != null) {
+            player.showEntity(PluginHolder.getPlugin(), entity);
+        }
+        return this;
     }
 
     @Override
     public IDisplayable hideForPlayer(Player player) {
-        return null;
+        if (entity != null) {
+            player.hideEntity(PluginHolder.getPlugin(), entity);
+        }
+        return this;
     }
 
     @Override

@@ -20,6 +20,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     private RawLineDisplay rawLine;
     private Vector3f baseStartPoint;
     private Vector3f baseDirection;
+    private boolean hiddenByDefault = false;
     private Transformation lastAppliedTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf());
 
     private LineColorDisplay(Vector3f startPoint, Vector3f direction, Color color, Location location, float thickness) {
@@ -48,6 +49,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     public void spawnDisplay() {
         rawLine.spawn();
         updateRawLineTransform(0);
+        // Apply visibility state in case hideByDefault() was called before spawning
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.hideByDefault(hiddenByDefault);
+        }
     }
 
     public float getThickness() {
@@ -342,11 +348,12 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
 
     @Override
     public boolean isHiddenByDefault() {
-        return false;
+        return hiddenByDefault;
     }
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
+        hiddenByDefault = hide;
         for (int i = 0; i < 4; i++) {
             var display = rawLine.getDisplay(i);
             if (display != null) display.hideByDefault(hide);

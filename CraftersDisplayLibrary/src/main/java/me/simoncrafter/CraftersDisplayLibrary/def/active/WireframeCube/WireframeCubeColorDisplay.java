@@ -2,6 +2,7 @@ package me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
@@ -29,9 +30,10 @@ import java.util.List;
  * Edge colours can be set individually ({@link #setEdgeColor}), per face
  * ({@link #setFaceColor}, colours all 4 edges of that face) or all at once ({@link #setColor}).
  */
-public class WireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
+public class WireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
     private boolean seeTrough;
+    private boolean hiddenByDefault = false;
     private float thickness;
     private WireframeCubeColorInformation colorInformation;
 
@@ -69,6 +71,7 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
                 LineColorDisplay line = LineColorDisplay.createFromDirection(start, direction, colorInformation.getEdge(edge), getLocation(), thickness);
                 line.setSeeTrough(seeTrough);
                 line.spawnDisplay();
+                line.hideByDefault(hiddenByDefault);
 
                 edges.put(edge, line);
                 addChild(line);
@@ -164,11 +167,12 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
 
     @Override
     public boolean isHiddenByDefault() {
-        return false;
+        return hiddenByDefault;
     }
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
+        hiddenByDefault = hide;
         for (LineColorDisplay line : edges.values()) {
             line.hideByDefault(hide);
         }

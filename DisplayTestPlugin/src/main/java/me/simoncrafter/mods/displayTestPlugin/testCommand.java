@@ -12,7 +12,9 @@ import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.Wireframe
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.AnimationFactory;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.HighlightDisplayType;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.*;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter;
@@ -209,9 +211,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         Color color = Color.WHITE;
         boolean seeThrough = false;
-        IHighliterFunction<CubeColorDisplay> animation = null;
+        IHighliterFunction<ICuboidDisplay> animation = null;
         int lifeTime = -1;
         int animationDuration = 20;
+        HighlightDisplayType shape = HighlightDisplayType.CUBE;
 
         if (args.length > 1) {
             String colorArg = args[1].toLowerCase();
@@ -246,14 +249,22 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
         }
 
-        targetBlock.setType(targetBlock.getType());
-        if (lifeTime > 0) {
-            BlockHighlighter.highlightBlock(targetBlock, animation, lifeTime, animationDuration);
-        } else {
-            BlockHighlighter.highlightBlock(targetBlock, animation, animationDuration);
+        if (args.length > 5) {
+            shape = switch (args[5].toLowerCase()) {
+                case "wireframe" -> HighlightDisplayType.WIREFRAME;
+                case "filledwireframe" -> HighlightDisplayType.FILLED_WIREFRAME;
+                default -> HighlightDisplayType.CUBE;
+            };
         }
 
-        CubeColorDisplay display = BlockHighlighter.getHighlightDisplay(targetBlock);
+        targetBlock.setType(targetBlock.getType());
+        if (lifeTime > 0) {
+            BlockHighlighter.highlightBlock(targetBlock, shape, animation, lifeTime, animationDuration);
+        } else {
+            BlockHighlighter.highlightBlock(targetBlock, shape, animation, animationDuration);
+        }
+
+        ICuboidDisplay display = BlockHighlighter.getHighlightDisplay(targetBlock);
         if (display != null) {
             display.setColor(color);
             if (seeThrough) {
@@ -261,7 +272,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
         }
 
-        String highlightInfo = "Color: " + color.getRed() + "," + color.getGreen() + "," + color.getBlue();
+        String highlightInfo = "Color: " + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + " | Shape: " + shape.name();
         if (animation != null) {
             highlightInfo += " | Animation: " + args[3];
         }
@@ -421,7 +432,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         return null;
     }
 
-    private IHighliterFunction<CubeColorDisplay> createAnimation(String animationName, Color color) {
+    private IHighliterFunction<ICuboidDisplay> createAnimation(String animationName, Color color) {
         return switch (animationName) {
             case "pulse" -> new PulsingColorHighlighter(color, 20);
             case "rainbow" -> new RainbowHighlighter();
@@ -497,6 +508,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         if (args[0].equalsIgnoreCase("highlight") && args.length == 4) {
             return recommendListThatContainsObject(List.of("none", "pulse", "rainbow", "glow", "scale", "ping"), args[3]);
+        }
+
+        if (args[0].equalsIgnoreCase("highlight") && args.length == 6) {
+            return recommendListThatContainsObject(List.of("cube", "wireframe", "filledwireframe"), args[5]);
         }
 
         if (args[0].equalsIgnoreCase("tint") && args.length == 2) {

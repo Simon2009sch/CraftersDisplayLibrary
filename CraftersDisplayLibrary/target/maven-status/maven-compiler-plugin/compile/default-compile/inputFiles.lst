@@ -23,11 +23,13 @@ C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\animation\functions\TranslationAnimationSmooth.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\animation\GlobalAnimationTickHandler.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\interfaces\IColorableDisplay.java
+C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\interfaces\ICuboidDisplay.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\interfaces\IDisplayable.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\interfaces\IHidable.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\PositionObject.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\BlockHighlighter.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\BlockHighlighterData.java
+C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\HighlightDisplayType.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\IHighliterFunction.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\prefabs\GlowingHighlighter.java
 C:\Coden\INTELIJ\CraftersDisplayLibrary\CraftersDisplayLibrary\src\main\java\me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\prefabs\PingHighlighter.java
