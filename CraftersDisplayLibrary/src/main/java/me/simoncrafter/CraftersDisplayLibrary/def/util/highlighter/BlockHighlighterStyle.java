@@ -21,7 +21,7 @@ public class BlockHighlighterStyle {
     }
 
     public void start() {
-        if (animationDuration > 0) return;
+        if (animationDuration > 0 && function == null) return;
         if (task != null) return;
         task = new BukkitRunnable(){
             @Override

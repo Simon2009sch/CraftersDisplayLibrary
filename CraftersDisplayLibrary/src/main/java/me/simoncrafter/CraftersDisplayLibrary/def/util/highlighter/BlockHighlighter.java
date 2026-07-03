@@ -30,6 +30,18 @@ public class BlockHighlighter {
         style.start();
     }
 
+    public static void highlightBlock(Block block, IHighliterFunction<CubeColorDisplay> function, int lifeTime, int duration) {
+
+    }
+
+    public static void highlightBlock(Block block, int lifeTime) {
+        //highlightBlock();
+    }
+
+    public static void highlightBlock(Block block) {
+        highlightBlock(block, -1);
+    }
+
     public static void unhighlightBlock(Block block) {
         BlockHighlighterStyle style = highlightedBlock.get(block);
         if (style != null) {
