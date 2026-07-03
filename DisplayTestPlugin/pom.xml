@@ -6,7 +6,7 @@
 
   <groupId>me.simoncrafter.mods</groupId>
   <artifactId>DisplayTestPlugin</artifactId>
-  <version>1</version>
+  <version>v1.0.3</version>
   <packaging>jar</packaging>
 
   <parent>
