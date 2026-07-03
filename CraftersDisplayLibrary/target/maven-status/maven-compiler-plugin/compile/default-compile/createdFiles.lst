@@ -28,6 +28,7 @@ me\simoncrafter\CraftersDisplayLibrary\def\util\viewTinter\prefabs\ColorShiftTin
 me\simoncrafter\CraftersDisplayLibrary\def\animation\GlobalAnimationTickHandler.class
 me\simoncrafter\CraftersDisplayLibrary\def\animation\functions\ScalingAnimation.class
 me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\prefabs\PingHighlighter$2.class
+me\simoncrafter\CraftersDisplayLibrary\def\active\BlockDisplayObject.class
 me\simoncrafter\CraftersDisplayLibrary\def\animation\functions\ColorAnimation.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\Cube\CubeColorDisplay.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\WireframeCube\WireframeCubeColorInformation.class
@@ -58,5 +59,6 @@ me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\BlockHighlighter$1.c
 me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\prefabs\PulsingColorHighlighter.class
 me\simoncrafter\CraftersDisplayLibrary\PluginHolder.class
 me\simoncrafter\CraftersDisplayLibrary\def\animation\functions\RRotationAnimationSmooth.class
+me\simoncrafter\CraftersDisplayLibrary\def\active\ItemDisplayObject.class
 me\simoncrafter\CraftersDisplayLibrary\def\active\WireframeCube\WireframeCubeColorDisplay.class
 me\simoncrafter\CraftersDisplayLibrary\def\util\highlighter\IHighliterFunction.class
