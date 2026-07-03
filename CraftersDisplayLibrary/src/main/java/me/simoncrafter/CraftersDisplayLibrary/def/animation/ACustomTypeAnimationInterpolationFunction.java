@@ -31,10 +31,10 @@ public abstract class ACustomTypeAnimationInterpolationFunction<V, K> {
         return end;
     }
 
-    final K obj;
-    final int duration;
-    int tick;
-    final V start;
-    final V end;
+    protected final K obj;
+    protected final int duration;
+    protected int tick;
+    protected final V start;
+    protected final V end;
     abstract public void nextTick(final int duration, int tick, final V startRotation, final V endRotation, final K obj);
 }

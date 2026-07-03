@@ -278,21 +278,21 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         Transformation finalTransform = getFinalTransform();
         Vector3f scale = finalTransform.getScale();
 
-        top.setParentTransform(finalTransform, time);
-        top.setParentApplierFunction(topBottomApplier);
+        if (top != null) top.setParentTransform(finalTransform, time);
+        if (top != null) top.setParentApplierFunction(topBottomApplier);
 
-        bottom.setParentTransform(finalTransform, time);
-        bottom.setParentApplierFunction(topBottomApplier);
+        if (bottom != null) bottom.setParentTransform(finalTransform, time);
+        if (bottom != null) bottom.setParentApplierFunction(topBottomApplier);
 
         //left right follows XYZ rules (default applier)
-        left.setParentTransform(finalTransform, time);
-        right.setParentTransform(finalTransform, time);
+        if (left != null) left.setParentTransform(finalTransform, time);
+        if (right != null) right.setParentTransform(finalTransform, time);
 
-        front.setParentTransform(finalTransform, time);
-        front.setParentApplierFunction(frontBackApplier);
+        if (front != null) front.setParentTransform(finalTransform, time);
+        if (front != null) front.setParentApplierFunction(frontBackApplier);
 
-        back.setParentTransform(finalTransform, time);
-        back.setParentApplierFunction(frontBackApplier);
+        if (back != null) back.setParentTransform(finalTransform, time);
+        if (back != null) back.setParentApplierFunction(frontBackApplier);
 
     }
 

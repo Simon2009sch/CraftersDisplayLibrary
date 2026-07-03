@@ -1,7 +1,6 @@
 package me.simoncrafter.CraftersDisplayLibrary.def.active.Line;
 
 import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
@@ -18,84 +17,139 @@ import java.util.function.Consumer;
 
 public class LineColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
 
-    private boolean seeTrough = false;
-    private Color color;
-    private float thickness = 0.1f;
-    private Vector3f direction = new Vector3f(0,1,0);
-    private ColorDisplay frontDisply;
-    private ColorDisplay backDisplay;
-    private ColorDisplay rightDisply;
-    private ColorDisplay leftDisplay;
+    private RawLineDisplay rawLine;
+    private Vector3f baseStartPoint;
+    private Vector3f baseDirection;
+    private Transformation lastAppliedTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf());
 
-    private LineColorDisplay(Vector3f translation, Color color, Location location, Vector3f direction, float thickness) {
-        super(List.of(), new Transformation(translation, vectorToQuaternion(direction), new Vector3f(), new Quaternionf()), location);
-        this.thickness = thickness;
-        this.direction = direction;
-        this.color = color;
+    private LineColorDisplay(Vector3f startPoint, Vector3f direction, Color color, Location location, float thickness) {
+        super(List.of(), new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf()), location);
+        this.baseStartPoint = new Vector3f(startPoint);
+        this.baseDirection = new Vector3f(direction);
+        this.rawLine = new RawLineDisplay(startPoint, direction, color, location, thickness);
     }
 
-    public static LineColorDisplay create(Vector3f translation, Color color, Location origin, Vector3f direction) {
-        return create(translation, color, origin, direction, 0.01f);
+    public static LineColorDisplay create(Vector3f startPoint, Vector3f direction, Color color, Location origin) {
+        return create(startPoint, direction, color, origin, 0.01f);
     }
 
-    public static LineColorDisplay create(Vector3f translation, Color color, Location origin, Vector3f direction, float thickness) {
-        return new LineColorDisplay(translation, color, origin, direction, thickness);
+    public static LineColorDisplay create(Vector3f startPoint, Vector3f direction, Color color, Location origin, float thickness) {
+        return new LineColorDisplay(startPoint, direction, color, origin, thickness);
+    }
+
+    public static LineColorDisplay createFromDirection(Vector3f startPoint, Vector3f direction, Color color, Location origin) {
+        return createFromDirection(startPoint, direction, color, origin, 0.01f);
+    }
+
+    public static LineColorDisplay createFromDirection(Vector3f startPoint, Vector3f direction, Color color, Location origin, float thickness) {
+        return new LineColorDisplay(startPoint, direction, color, origin, thickness);
     }
 
     public void spawnDisplay() {
-        frontDisply = ColorDisplay.create(getLocation(), new Vector3f(thickness, direction.length(), thickness), new Vector3f(-(thickness/2), 0, 0).rotate(getTransformation().getLeftRotation()).rotate(getTransformation().getRightRotation()), getTransformation().getLeftRotation(), color);
-
-        frontDisply.spawnDisplay();
-        updateChildren(0);
+        rawLine.spawn();
+        updateRawLineTransform(0);
     }
 
     public float getThickness() {
-        return thickness;
-    }
-
-    public void setThickness(float thickness, int duration) {
-        this.thickness = thickness;
-        if (frontDisply != null && frontDisply.getEntity() != null) {
-            frontDisply.scaleAbsolute(new Vector3f(thickness, direction.length(), thickness), duration);
-        }
-    }
-
-    @Override
-    public void setColor(Color color) {
-
-    }
-
-    public boolean isSeeTrough() {
-        return seeTrough;
-    }
-
-    public void setSeeTrough(boolean seeTrough) {
-        this.seeTrough = seeTrough;
+        return rawLine.getThickness();
     }
 
     public void setThickness(float thickness) {
         setThickness(thickness, 0);
     }
 
-    public Vector3f getDirection() {
-        return new Vector3f(direction);
+    public void setThickness(float thickness, int duration) {
+        rawLine.setThickness(thickness, duration);
     }
 
-    public void setDirection(Vector3f newDirection, int duration) {
-        this.direction = new Vector3f(newDirection);
-        Quaternionf newRotation = vectorToQuaternion(newDirection);
-        LRotateAbsolute(newRotation, duration, false);
+    @Override
+    public void setColor(Color color) {
+        rawLine.setColor(color);
+    }
 
-        if (frontDisply != null && frontDisply.getEntity() != null) {
-            Vector3f offsetPos = new Vector3f(-(thickness/2), 0, 0).rotate(newRotation);
-            frontDisply.moveAbsolute(offsetPos, duration);
-            frontDisply.scaleAbsolute(new Vector3f(thickness, direction.length(), thickness), duration);
-            frontDisply.LRotateAbsolute(newRotation, duration, false);
-        }
+    public Color getColor() {
+        return rawLine.getColor();
+    }
+
+    public boolean isSeeTrough() {
+        return rawLine.isSeeTrough();
+    }
+
+    public void setSeeTrough(boolean seeTrough) {
+        rawLine.setSeeTrough(seeTrough);
+    }
+
+    public Vector3f getStartPoint() {
+        return rawLine.getStartPoint();
+    }
+
+    public Vector3f getEndPoint() {
+        return rawLine.getEndPoint();
+    }
+
+    public Vector3f getDirection() {
+        return rawLine.getDirection();
+    }
+
+    public float getLength() {
+        return rawLine.getLength();
+    }
+
+    public void setStartPoint(Vector3f newStart) {
+        setStartPoint(newStart, 0);
+    }
+
+    public void setStartPoint(Vector3f newStart, int duration) {
+        this.baseStartPoint = new Vector3f(newStart);
+        updateRawLineTransform(duration);
+    }
+
+    public void setEndPoint(Vector3f newEnd) {
+        setEndPoint(newEnd, 0);
+    }
+
+    public void setEndPoint(Vector3f newEnd, int duration) {
+        Vector3f newDirection = new Vector3f(newEnd).sub(baseStartPoint);
+        setDirection(newDirection, duration);
     }
 
     public void setDirection(Vector3f newDirection) {
         setDirection(newDirection, 0);
+    }
+
+    public void setDirection(Vector3f newDirection, int duration) {
+        this.baseDirection = new Vector3f(newDirection);
+        updateRawLineTransform(duration);
+    }
+
+    private void updateRawLineTransform(int duration) {
+        Transformation currentTransform = getFinalTransform();
+        Vector3f scale = currentTransform.getScale();
+        Quaternionf leftRotation = currentTransform.getLeftRotation();
+        Quaternionf rightRotation = currentTransform.getRightRotation();
+
+        // Apply the full (parent * local) transform to the line's endpoints.
+        // A position is scaled (in local space), then rotated, then translated;
+        // a direction vector is scaled and rotated but NOT translated.
+        Vector3f transformedStart = new Vector3f(baseStartPoint)
+                .mul(scale)
+                .rotate(leftRotation)
+                .rotate(rightRotation)
+                .add(currentTransform.getTranslation());
+        Vector3f transformedDir = new Vector3f(baseDirection)
+                .mul(scale)
+                .rotate(leftRotation)
+                .rotate(rightRotation);
+
+        rawLine.setStartPoint(transformedStart, duration);
+        rawLine.setDirection(transformedDir, duration);
+
+        lastAppliedTransform = new Transformation(currentTransform.getTranslation(), currentTransform.getLeftRotation(), currentTransform.getScale(), currentTransform.getRightRotation());
+    }
+
+    @Override
+    public void setParentTransform(Transformation transformation, int time) {
+        super.setParentTransform(transformation, time);
     }
 
     @Override
@@ -106,6 +160,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     @Override
     public void setLocation(Location loc) {
         super.setLocation(loc);
+        rawLine.setWorldLocation(loc);
     }
 
     @Override
@@ -131,11 +186,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     @Override
     public void moveEntityStatic(Location location) {
         super.moveEntityStatic(location);
-    }
-
-    @Override
-    public void setParentTransform(Transformation transformation, int time) {
-        super.setParentTransform(transformation, time);
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.moveEntityStatic(location);
+        }
+        rawLine.setWorldLocation(location);
     }
 
     @Override
@@ -251,6 +306,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     @Override
     protected void updateChildren(int time) {
         super.updateChildren(time);
+        updateRawLineTransform(time);
     }
 
     @Override
@@ -271,10 +327,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     @Override
     public void remove() {
         super.remove();
-        frontDisply.remove();
-        backDisplay.remove();
-        leftDisplay.remove();
-        rightDisply.remove();
+        rawLine.remove();
     }
 
     @Override
@@ -294,17 +347,29 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
 
     @Override
     public IDisplayable hideByDefault(boolean hide) {
-        return null;
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.hideByDefault(hide);
+        }
+        return this;
     }
 
     @Override
     public IDisplayable showForPlayer(Player player) {
-        return null;
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.showForPlayer(player);
+        }
+        return this;
     }
 
     @Override
     public IDisplayable hideForPlayer(Player player) {
-        return null;
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.hideForPlayer(player);
+        }
+        return this;
     }
 
     //claude

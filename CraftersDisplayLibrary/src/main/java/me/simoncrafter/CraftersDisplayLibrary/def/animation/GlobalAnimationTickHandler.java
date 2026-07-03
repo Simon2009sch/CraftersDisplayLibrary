@@ -59,6 +59,10 @@ public class GlobalAnimationTickHandler {
         checkIfStarted();
     }
 
+    public static void removeColorAnimation(IColorableDisplay obj) {
+        colorAnimations.remove(obj);
+    }
+
     private static void checkIfStarted() {
         if (tickTask == null) {
             start();
@@ -81,11 +85,16 @@ public class GlobalAnimationTickHandler {
         objectsToLoop.addAll(RRotationAnimations.keySet());
         objectsToLoop.addAll(LRotationAnimations.keySet());
 
+        List<IColorableDisplay> listOfColorAnimationsToRemove = new ArrayList<>();
         // have to handle in seperate loop becaues of type difference
         for (IColorableDisplay colorable : colorAnimations.keySet()) {
             if (colorAnimations.containsKey(colorable) && colorAnimations.get(colorable).onTick()) {
-                colorAnimations.remove(colorable);
+                listOfColorAnimationsToRemove.add(colorable);
             }
+        }
+        // remove finished animations
+        for (IColorableDisplay colorable : listOfColorAnimationsToRemove) {
+            colorAnimations.remove(colorable);
         }
 
         for (PositionObject obj : objectsToLoop) {

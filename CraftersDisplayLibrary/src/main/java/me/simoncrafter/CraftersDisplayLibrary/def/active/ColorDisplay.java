@@ -105,6 +105,12 @@ public class ColorDisplay extends PositionObject implements IHidable, IColorable
     }
 
     @Override
+    public void setLocalTransform(Transformation transformation, int time) {
+        super.setLocalTransform(transformation, time);
+        updateEntity(time);
+    }
+
+    @Override
     public void moveRelative(Vector3f movement, int time) {
         super.moveRelative(movement, time);
         updateEntity(time);
@@ -208,6 +214,10 @@ public class ColorDisplay extends PositionObject implements IHidable, IColorable
         if (entity != null && entity.isValid()) {
             entity.setBackgroundColor(color);
         }
+    }
+
+    public Color getColor() {
+        return color;
     }
 
     @Override
