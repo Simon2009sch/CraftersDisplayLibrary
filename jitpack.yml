@@ -2,4 +2,4 @@ jdk:
   - openjdk21
 
 install:
-  - mvn clean package -pl CraftersDisplayLibrary -am -DskipTests
+  - mvn clean package -P library -pl CraftersDisplayLibrary -am -DskipTests
