@@ -8,8 +8,8 @@ Understanding this once means every display type in [Displays](displays.md) work
 `IDisplayable` is the interface most of your code should be written against — "a thing with a transform,
 children, and a location that can be moved/rotated/scaled, optionally with an animation duration."
 `PositionObject` is the concrete base class that implements it, and every spawnable display
-(`ColorDisplay`, `CubeColorDisplay`, `WireframeCubeColorDisplay`, `FilledWireframeCubeColorDisplay`,
-`LineColorDisplay`) extends it.
+(`ColorDisplay`, `BlockDisplayObject`, `ItemDisplayObject`, `CubeColorDisplay`,
+`WireframeCubeColorDisplay`, `FilledWireframeCubeColorDisplay`, `LineColorDisplay`) extends it.
 
 A `PositionObject` has:
 
@@ -94,7 +94,9 @@ property per object.
 Two small interfaces sit alongside `IDisplayable`:
 
 - **`IColorableDisplay`** — adds `setColor(Color)`. Implemented by every display type that renders a solid
-  color (all of them except the plain transform-only cases). This is also the type the color-animation
+  color. The two entity-backed displays — `BlockDisplayObject` and `ItemDisplayObject` — intentionally do
+  **not** implement it, since they render a real block/item rather than a flat colour; use their
+  `setBlock(BlockData)` / `setItem(ItemStack)` methods instead. This is also the type the color-animation
   system operates on.
 - **`IHidable`** — per-player visibility control, layered on top of Bukkit's own
   `Display.setVisibleByDefault`/`Player.showEntity`/`hideEntity`:

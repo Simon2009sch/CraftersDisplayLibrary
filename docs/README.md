@@ -19,7 +19,7 @@ player's whole screen to a color, like a damage flash or a status effect).
 |---|---|
 | [Getting Started](getting-started.md) | Adding the dependency, the one required setup call, a first display |
 | [Core Concepts](core-concepts.md) | `IDisplayable`, `PositionObject`, the transform tree, the two rotation channels, per-call vs. registered animation |
-| [Displays](displays.md) | `ColorDisplay`, `CubeColorDisplay`, `WireframeCubeColorDisplay`, `FilledWireframeCubeColorDisplay`, `LineColorDisplay` |
+| [Displays](displays.md) | `ColorDisplay`, `BlockDisplayObject`, `ItemDisplayObject`, `CubeColorDisplay`, `WireframeCubeColorDisplay`, `FilledWireframeCubeColorDisplay`, `LineColorDisplay` |
 | [Animations](animations.md) | `AnimationFactory`, the linear/smooth interpolators, and how the global tick handler drives them |
 | [Block Highlighting](block-highlighting.md) | `BlockHighlighter` and its built-in pulse/glow/rainbow/ping effects |
 | [View Tinting](view-tinting.md) | `ViewTinter` and its built-in fade/pulse/color-shift effects |

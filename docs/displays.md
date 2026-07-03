@@ -24,12 +24,83 @@ panel.setColor(Color.BLUE);
 panel.setSeeTrough(true);
 ```
 
-Every other display type in this library is ultimately built out of one or more `ColorDisplay`s (or, for
-`LineColorDisplay`, out of `RawLineDisplay`, an internal, non-`PositionObject` helper that manages four
-`ColorDisplay` panels directly).
+The remaining *colored* display types below are all ultimately built out of one or more `ColorDisplay`s
+(or, for `LineColorDisplay`, out of `RawLineDisplay`, an internal, non-`PositionObject` helper that manages
+four `ColorDisplay` panels directly). The block and item displays in the next two sections are the
+exception: each wraps a single real Minecraft entity directly and renders an actual block or item rather
+than a solid colour, so they do **not** implement `IColorableDisplay`.
 
 > [!NOTE]
 > `ColorDisplay.clone()` is currently unimplemented and returns `null`.
+
+## `BlockDisplayObject`
+
+The block-rendering counterpart to `ColorDisplay`. Wraps a single Bukkit `BlockDisplay` entity and renders
+an actual Minecraft `BlockData` (e.g. stone, a log, a custom block) instead of a solid-colour panel. Like
+every other display here it extends `PositionObject`, participates in the same transform tree, and supports
+all the inherited move/rotate/scale methods (animated or not) — but because it shows a real block, it does
+**not** implement `IColorableDisplay`. Use `setBlock(BlockData)` / `getBlock()` to control what is shown.
+
+```java
+import me.simoncrafter.CraftersDisplayLibrary.def.active.BlockDisplayObject;
+import org.bukkit.Material;
+
+BlockDisplayObject block = BlockDisplayObject.create(
+        location,
+        new Vector3f(1, 1, 1),      // scale
+        new Vector3f(0, 0, 0),      // translation
+        new Quaternionf(),          // left rotation
+        Material.DIAMOND_BLOCK.createBlockData()
+);
+block.spawnDisplay();
+
+block.setBlock(Material.GOLD_BLOCK.createBlockData());   // swap the rendered block live
+block.setBillboard(Display.Billboard.VERTICAL);           // takes effect on next spawn
+```
+
+Three `create(...)` overloads are provided: a full one taking both rotation quaternions, a billboard, and
+the `BlockData`; a fixed-billboard one with no right rotation; and a fully-unrotated one. `spawnDisplay()`
+is idempotent — calling it again just returns the existing entity — and `respawnEntity()` tears down and
+re-spawns the backing entity for a full resync after a chunk reload.
+
+> [!NOTE]
+> `BlockDisplayObject.clone()` is currently unimplemented and returns `null`.
+
+## `ItemDisplayObject`
+
+The item-rendering counterpart to `ColorDisplay` and `BlockDisplayObject`. Wraps a single Bukkit
+`ItemDisplay` entity and renders an actual `ItemStack` (a sword, a diamond, a custom player head) instead of
+a coloured panel or block. It extends `PositionObject` and shares the same transform tree, but does **not**
+implement `IColorableDisplay`. Use `setItem(ItemStack)` / `getItem()` to control what is shown, and
+`setItemDisplayTransform(ItemDisplay.ItemDisplayTransform)` to control how the item model is posed
+(`FIXED`, `GUI`, `HEAD`, `GROUND`, `FIRST_PERSON_RIGHT_HAND`, ...).
+
+```java
+import me.simoncrafter.CraftersDisplayLibrary.def.active.ItemDisplayObject;
+import org.bukkit.Material;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.inventory.ItemStack;
+
+ItemDisplayObject item = ItemDisplayObject.create(
+        location,
+        new Vector3f(1, 1, 1),      // scale
+        new Vector3f(0, 0, 0),      // translation
+        new Quaternionf(),          // left rotation
+        new ItemStack(Material.DIAMOND_SWORD)
+);
+item.spawnDisplay();
+
+item.setItem(new ItemStack(Material.NETHER_STAR));                 // swap the rendered item live
+item.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.HEAD); // render as if worn on a head
+```
+
+The same three `create(...)` overload shapes as `BlockDisplayObject` are provided (full / fixed-billboard
+no-right-rotation / fully-unrotated), and `spawnDisplay()` / `respawnEntity()` behave identically. Item
+displays are handy for floating loot indicators, 3D icons, decorative props, or anything where a real item
+model reads better than a flat coloured plane.
+
+> [!NOTE]
+> `ItemDisplayObject.clone()` is currently unimplemented and returns `null`.
 
 ## `CubeColorDisplay`
 

@@ -45,6 +45,8 @@ See [Displays](displays.md) for usage examples of each.
 | Type | Purpose |
 |---|---|
 | `ColorDisplay` | A single colored panel, backed by one `TextDisplay` entity. |
+| `BlockDisplayObject` | A single block, backed by one `BlockDisplay` rendering real `BlockData`. Not `IColorableDisplay`. |
+| `ItemDisplayObject` | A single item, backed by one `ItemDisplay` rendering a real `ItemStack`. Not `IColorableDisplay`. |
 | `Cube.CubeColorDisplay` | Six-panel solid cube. |
 | `Cube.CubeColorInformation` | Immutable per-face color holder for `CubeColorDisplay`. |
 | `WireframeCube.WireframeCubeColorDisplay` | Twelve-edge wireframe cube. |
