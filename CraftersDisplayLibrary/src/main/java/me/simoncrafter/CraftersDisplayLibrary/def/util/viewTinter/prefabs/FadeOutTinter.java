@@ -7,11 +7,19 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
 import org.bukkit.Color;
 
+/**
+ * {@link IViewTinterFunction} prefab that fades a player's tint out from {@code color}'s own alpha
+ * to fully transparent, once - a one-shot transition, not a repeating pulse.
+ */
 public class FadeOutTinter implements IViewTinterFunction {
 
     private final Color color;
     private final int fadeDuration;
 
+    /**
+     * @param color        the tint's RGB and starting alpha
+     * @param fadeDuration ticks the fade-out takes
+     */
     public FadeOutTinter(Color color, int fadeDuration) {
         this.color = color;
         this.fadeDuration = fadeDuration;

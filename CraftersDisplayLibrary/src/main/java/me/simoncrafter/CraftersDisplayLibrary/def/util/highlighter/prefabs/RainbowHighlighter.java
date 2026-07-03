@@ -4,6 +4,14 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 
+/**
+ * {@link IHighliterFunction} prefab that steps a {@link ICuboidDisplay} through a fixed 7-colour
+ * rainbow, one colour per animation cycle (no interpolation between colours).
+ * <p>
+ * Each instance keeps its own position in the cycle ({@code currentColorIndex}); highlighting
+ * multiple blocks with the <em>same</em> {@code RainbowHighlighter} instance means they all share
+ * and advance that one cycle position rather than each starting fresh at red.
+ */
 public class RainbowHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private static final Color[] RAINBOW_COLORS = {

@@ -4,12 +4,20 @@ import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
 import org.joml.Vector3f;
 
+/**
+ * Linearly interpolates a {@link PositionObject}'s local translation from {@code start} to
+ * {@code end} over {@code duration} ticks.
+ * <p>
+ * See {@link TranslationAnimationSmooth} for the eased equivalent.
+ */
 public class TranslationAnimation extends AAnimationInterpolationFunction<Vector3f> {
 
+    /** Creates a tween starting at tick 0. */
     public TranslationAnimation(int duration, Vector3f start, Vector3f end, PositionObject obj) {
         super(duration, start, end, obj);
     }
 
+    /** Creates a tween resuming at an arbitrary tick. */
     public TranslationAnimation(int duration, int tick, Vector3f start, Vector3f end, PositionObject obj) {
         super(duration, tick, start, end, obj);
     }

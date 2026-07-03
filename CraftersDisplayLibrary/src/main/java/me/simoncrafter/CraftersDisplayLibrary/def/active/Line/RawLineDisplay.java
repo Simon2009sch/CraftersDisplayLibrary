@@ -7,6 +7,19 @@ import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+/**
+ * Internal geometry engine behind {@link LineColorDisplay}. Given a start point, direction vector,
+ * and a {@code worldLocation} origin, renders a line as 4 thin
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay} "walls": each offset
+ * perpendicular to the line's axis by {@code thickness / 2} and rotated 90° apart around that axis.
+ * This billboard-less arrangement means that from any horizontal viewing angle at least one wall
+ * renders edge-on (thin) and one renders broadside (visible as a flat line), faking a line that looks
+ * roughly line-like from every direction without needing an actual billboard entity type.
+ * <p>
+ * Unlike {@link LineColorDisplay}, this class is not a {@link me.simoncrafter.CraftersDisplayLibrary.def.PositionObject}
+ * - it operates directly in the coordinate space it's given and has no parent/child transform
+ * propagation of its own.
+ */
 public class RawLineDisplay {
 
     private Vector3f startPoint;
@@ -22,6 +35,7 @@ public class RawLineDisplay {
 
     private Location worldLocation;
 
+    /** Creates the geometry engine for a line; call {@link #spawn()} to actually create the panel entities. */
     public RawLineDisplay(Vector3f startPoint, Vector3f direction, Color color, Location worldLocation, float thickness) {
         this.startPoint = new Vector3f(startPoint);
         this.direction = new Vector3f(direction);
@@ -31,6 +45,7 @@ public class RawLineDisplay {
         this.seeTrough = false;
     }
 
+    /** Spawns the 4 backing panel entities at their initial positions. */
     public void spawn() {
         float lineLength = direction.length();
         Quaternionf directionRotation = vectorToQuaternion(direction);
@@ -56,6 +71,7 @@ public class RawLineDisplay {
         }
     }
 
+    /** Removes all 4 backing panel entities that have been spawned. */
     public void remove() {
         if (display0 != null) display0.remove();
         if (display1 != null) display1.remove();
@@ -73,11 +89,13 @@ public class RawLineDisplay {
         updateDisplays(0);
     }
 
+    /** Moves the start point, interpolated over {@code duration} ticks. A no-op until {@link #spawn()} has been called. */
     public void setStartPoint(Vector3f newStart, int duration) {
         this.startPoint = new Vector3f(newStart);
         updateDisplays(duration);
     }
 
+    /** Sets the direction vector, interpolated over {@code duration} ticks. A no-op until {@link #spawn()} has been called. */
     public void setDirection(Vector3f newDirection, int duration) {
         this.direction = new Vector3f(newDirection);
         updateDisplays(duration);
@@ -87,11 +105,13 @@ public class RawLineDisplay {
         setThickness(newThickness, 0);
     }
 
+    /** Sets line thickness, interpolated over {@code duration} ticks. A no-op until {@link #spawn()} has been called. */
     public void setThickness(float newThickness, int duration) {
         this.thickness = newThickness;
         updateDisplays(duration);
     }
 
+    /** Colours all 4 backing panels (panels not yet spawned are skipped). */
     public void setColor(Color newColor) {
         this.color = newColor;
         if (display0 != null) display0.setColor(newColor);
@@ -100,6 +120,7 @@ public class RawLineDisplay {
         if (display3 != null) display3.setColor(newColor);
     }
 
+    /** Sets see-through on all 4 backing panels (panels not yet spawned are skipped). */
     public void setSeeTrough(boolean seeTrough) {
         this.seeTrough = seeTrough;
         if (display0 != null) display0.setSeeTrough(seeTrough);
@@ -120,6 +141,7 @@ public class RawLineDisplay {
         return new Vector3f(startPoint).add(direction);
     }
 
+    /** The line's length, i.e. the magnitude of the direction vector. */
     public float getLength() {
         return direction.length();
     }
@@ -136,6 +158,10 @@ public class RawLineDisplay {
         return seeTrough;
     }
 
+    /**
+     * One of the 4 backing panel displays, indexed 0-3 (each 90° apart around the line's axis), or
+     * {@code null} if {@code index} is out of range or {@link #spawn()} hasn't been called yet.
+     */
     public ColorDisplay getDisplay(int index) {
         return switch (index) {
             case 0 -> display0;
@@ -146,11 +172,17 @@ public class RawLineDisplay {
         };
     }
 
+    /** Moves the line's world-space origin without changing its local start point/direction. */
     public void setWorldLocation(Location newLocation) {
         this.worldLocation = newLocation;
         updateDisplays(0);
     }
 
+    /**
+     * Recomputes each of the 4 panels' offset, rotation and scale from the current
+     * {@code startPoint}/{@code direction}/{@code thickness} and pushes it to the panel, interpolated
+     * over {@code duration} ticks. A no-op if {@link #spawn()} hasn't been called yet.
+     */
     private void updateDisplays(int duration) {
         if (display0 == null || display1 == null || display2 == null || display3 == null) return;
 
@@ -172,6 +204,7 @@ public class RawLineDisplay {
         }
     }
 
+    /** The perpendicular offset (before rotation) of panel {@code displayIndex}, {@code thickness / 2} out along ±X or ±Z. */
     private Vector3f getOffsetForDisplay(int displayIndex) {
         float offset = thickness / 2f;
         return switch (displayIndex) {
@@ -183,6 +216,11 @@ public class RawLineDisplay {
         };
     }
 
+    /**
+     * Computes the rotation that aligns the reference direction {@code (0, 1, 0)} to {@code direction},
+     * handling the parallel (identity) and antiparallel (180° about an arbitrary perpendicular axis)
+     * degenerate cases.
+     */
     private static Quaternionf vectorToQuaternion(Vector3f direction) {
         Vector3f normalizedDir = new Vector3f(direction).normalize();
         Vector3f referenceDir = new Vector3f(0, 1, 0);

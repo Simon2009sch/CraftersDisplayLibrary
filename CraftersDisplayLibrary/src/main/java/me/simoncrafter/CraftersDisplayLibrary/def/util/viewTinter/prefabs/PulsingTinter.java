@@ -7,6 +7,13 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
 import org.bukkit.Color;
 
+/**
+ * {@link IViewTinterFunction} prefab that repeatedly oscillates a player's tint alpha between
+ * {@code minAlpha} and {@code maxAlpha} following a sine wave, mirroring
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PulsingColorHighlighter}
+ * but for {@link me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter} instead of
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter}.
+ */
 public class PulsingTinter implements IViewTinterFunction {
 
     private final Color color;
@@ -14,10 +21,18 @@ public class PulsingTinter implements IViewTinterFunction {
     private final int maxAlpha;
     private final int cycleDuration;
 
+    /** Same as the 4-argument constructor with {@code minAlpha = 50} and {@code maxAlpha = color.getAlpha()}. */
     public PulsingTinter(Color color, int cycleDuration) {
         this(color, 50, color.getAlpha(), cycleDuration);
     }
 
+    /**
+     * @param color         RGB of the pulse; its own alpha is ignored in favour of {@code minAlpha}/{@code maxAlpha}
+     *                       when this constructor is used directly
+     * @param minAlpha      alpha at the trough of the sine wave
+     * @param maxAlpha      alpha at the peak of the sine wave
+     * @param cycleDuration ticks per full sine cycle
+     */
     public PulsingTinter(Color color, int minAlpha, int maxAlpha, int cycleDuration) {
         this.color = color;
         this.minAlpha = minAlpha;

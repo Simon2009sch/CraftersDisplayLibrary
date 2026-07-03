@@ -7,6 +7,11 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.bukkit.Color;
 
+/**
+ * {@link IHighliterFunction} prefab that oscillates a {@link ICuboidDisplay}'s alpha between
+ * {@code minAlpha} and {@code maxAlpha} following a sine wave, for a smooth "breathing" pulse
+ * rather than a linear fade back and forth.
+ */
 public class PulsingColorHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private final Color baseColor;
@@ -14,10 +19,18 @@ public class PulsingColorHighlighter implements IHighliterFunction<ICuboidDispla
     private final int maxAlpha;
     private final int cycleDuration;
 
+    /** Same as the 4-argument constructor with {@code minAlpha = 50} and {@code maxAlpha = color.getAlpha()}. */
     public PulsingColorHighlighter(Color color, int cycleDuration) {
         this(color, 50, color.getAlpha(), cycleDuration);
     }
 
+    /**
+     * @param color         RGB of the pulse; its own alpha is ignored in favour of {@code minAlpha}/{@code maxAlpha}
+     *                       when this constructor is used directly
+     * @param minAlpha      alpha at the trough of the sine wave
+     * @param maxAlpha      alpha at the peak of the sine wave
+     * @param cycleDuration ticks per full sine cycle
+     */
     public PulsingColorHighlighter(Color color, int minAlpha, int maxAlpha, int cycleDuration) {
         this.baseColor = color;
         this.minAlpha = minAlpha;

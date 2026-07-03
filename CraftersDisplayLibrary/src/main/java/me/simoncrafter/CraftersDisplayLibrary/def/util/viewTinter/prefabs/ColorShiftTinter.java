@@ -7,12 +7,21 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
 import org.bukkit.Color;
 
+/**
+ * {@link IViewTinterFunction} prefab that transitions a player's tint from {@code startColor} to
+ * {@code endColor} (including alpha) once, then stops - a one-shot transition, not a repeating pulse.
+ */
 public class ColorShiftTinter implements IViewTinterFunction {
 
     private final Color startColor;
     private final Color endColor;
     private final int cycleDuration;
 
+    /**
+     * @param startColor    ARGB colour at the start of the transition
+     * @param endColor      ARGB colour at the end of the transition
+     * @param cycleDuration ticks the transition takes
+     */
     public ColorShiftTinter(Color startColor, Color endColor, int cycleDuration) {
         this.startColor = startColor;
         this.endColor = endColor;

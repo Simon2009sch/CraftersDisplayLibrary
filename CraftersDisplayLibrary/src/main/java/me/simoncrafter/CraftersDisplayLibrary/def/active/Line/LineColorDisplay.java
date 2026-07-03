@@ -15,6 +15,24 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+/**
+ * A 3D line/beam between two points, rendered via a {@link RawLineDisplay} (4 thin
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay} panels arranged around the
+ * line's axis). Used as the edge type for
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay}.
+ * <p>
+ * This is a {@link PositionObject} wrapper: the start point and direction passed to
+ * {@link #create}/{@link #createFromDirection} are kept as {@code baseStartPoint}/{@code baseDirection}
+ * in <em>local</em> space, and re-derived into world-space endpoints on every transform change (own
+ * or inherited from a parent) via {@link #updateRawLineTransform}. This is what lets a line be
+ * scaled/rotated/moved as part of a larger composite object while still being described in simple
+ * local start/direction terms.
+ * <p>
+ * Most of the {@link IDisplayable}/{@link PositionObject} method overrides below are pure delegation
+ * to {@code super} with no added behaviour - present only because this class needs to intercept a
+ * few of them ({@link #setLocation}, {@link #moveEntityStatic}, {@link #updateChildren}) and Java
+ * doesn't allow overriding just some members of an inherited API surface without listing the rest.
+ */
 public class LineColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
 
     private RawLineDisplay rawLine;
@@ -30,22 +48,30 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         this.rawLine = new RawLineDisplay(startPoint, direction, color, location, thickness);
     }
 
+    /** Creates a line from {@code startPoint} extending by {@code direction}, with a default thin thickness. */
     public static LineColorDisplay create(Vector3f startPoint, Vector3f direction, Color color, Location origin) {
         return create(startPoint, direction, color, origin, 0.01f);
     }
 
+    /** Creates a line from {@code startPoint} extending by {@code direction}. */
     public static LineColorDisplay create(Vector3f startPoint, Vector3f direction, Color color, Location origin, float thickness) {
         return new LineColorDisplay(startPoint, direction, color, origin, thickness);
     }
 
+    /**
+     * Alias for {@link #create}, with a default thin thickness. Named for readability at call sites
+     * that build the line from a direction vector rather than an explicit end point.
+     */
     public static LineColorDisplay createFromDirection(Vector3f startPoint, Vector3f direction, Color color, Location origin) {
         return createFromDirection(startPoint, direction, color, origin, 0.01f);
     }
 
+    /** Alias for {@link #create}. */
     public static LineColorDisplay createFromDirection(Vector3f startPoint, Vector3f direction, Color color, Location origin, float thickness) {
         return new LineColorDisplay(startPoint, direction, color, origin, thickness);
     }
 
+    /** Spawns the 4 backing panel entities and applies any {@link #hideByDefault} state set before this call. */
     public void spawnDisplay() {
         rawLine.spawn();
         updateRawLineTransform(0);
@@ -64,6 +90,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         setThickness(thickness, 0);
     }
 
+    /** Sets line thickness, interpolated over {@code duration} ticks on the client. */
     public void setThickness(float thickness, int duration) {
         rawLine.setThickness(thickness, duration);
     }
@@ -85,18 +112,22 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         rawLine.setSeeTrough(seeTrough);
     }
 
+    /** The line's start point, in this object's local space. */
     public Vector3f getStartPoint() {
         return rawLine.getStartPoint();
     }
 
+    /** The line's end point ({@code startPoint + direction}), in this object's local space. */
     public Vector3f getEndPoint() {
         return rawLine.getEndPoint();
     }
 
+    /** The line's direction vector (end minus start), in this object's local space. */
     public Vector3f getDirection() {
         return rawLine.getDirection();
     }
 
+    /** The line's length, i.e. the magnitude of {@link #getDirection()}. */
     public float getLength() {
         return rawLine.getLength();
     }
@@ -105,6 +136,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         setStartPoint(newStart, 0);
     }
 
+    /** Moves the start point, keeping the end point fixed (direction is recomputed), interpolated over {@code duration} ticks. */
     public void setStartPoint(Vector3f newStart, int duration) {
         this.baseStartPoint = new Vector3f(newStart);
         updateRawLineTransform(duration);
@@ -114,6 +146,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         setEndPoint(newEnd, 0);
     }
 
+    /** Moves the end point, keeping the start point fixed, interpolated over {@code duration} ticks. */
     public void setEndPoint(Vector3f newEnd, int duration) {
         Vector3f newDirection = new Vector3f(newEnd).sub(baseStartPoint);
         setDirection(newDirection, duration);
@@ -123,11 +156,18 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         setDirection(newDirection, 0);
     }
 
+    /** Sets the direction vector, keeping the start point fixed, interpolated over {@code duration} ticks. */
     public void setDirection(Vector3f newDirection, int duration) {
         this.baseDirection = new Vector3f(newDirection);
         updateRawLineTransform(duration);
     }
 
+    /**
+     * Re-derives the line's world-space start point and direction from the local
+     * {@code baseStartPoint}/{@code baseDirection} by applying this object's current
+     * {@linkplain #getFinalTransform() final transform} (parent * local): positions are scaled,
+     * rotated, then translated; direction vectors are scaled and rotated but not translated.
+     */
     private void updateRawLineTransform(int duration) {
         Transformation currentTransform = getFinalTransform();
         Vector3f scale = currentTransform.getScale();
@@ -153,6 +193,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         lastAppliedTransform = new Transformation(currentTransform.getTranslation(), currentTransform.getLeftRotation(), currentTransform.getScale(), currentTransform.getRightRotation());
     }
 
+    // --- The overrides below are largely pure delegation to PositionObject, present because this
+    // --- class needs to intercept a few of them (setLocation, moveEntityStatic, updateChildren) to
+    // --- keep the RawLineDisplay in sync, and Java requires overriding the whole method if any of it
+    // --- changes visibility/behaviour relative to the supertype in a subclass-specific way here.
+
     @Override
     public void setParentTransform(Transformation transformation, int time) {
         super.setParentTransform(transformation, time);
@@ -163,6 +208,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return super.getLocation();
     }
 
+    /** {@inheritDoc} Also updates the {@link RawLineDisplay}'s world-space origin. */
     @Override
     public void setLocation(Location loc) {
         super.setLocation(loc);
@@ -189,6 +235,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         super.setLocalTransform(transformation, time);
     }
 
+    /** {@inheritDoc} Also teleports the 4 backing panel entities directly and updates the {@link RawLineDisplay}'s world-space origin. */
     @Override
     public void moveEntityStatic(Location location) {
         super.moveEntityStatic(location);
@@ -309,6 +356,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         super.runForEveryChild(action);
     }
 
+    /** {@inheritDoc} Also re-derives and pushes the world-space start/direction onto the {@link RawLineDisplay}. */
     @Override
     protected void updateChildren(int time) {
         super.updateChildren(time);
@@ -330,6 +378,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return super.getParentApplierFunction();
     }
 
+    /** {@inheritDoc} Also removes the 4 backing panel entities. */
     @Override
     public void remove() {
         super.remove();
@@ -351,6 +400,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return hiddenByDefault;
     }
 
+    /** {@inheritDoc} Applies to all 4 backing panels (panels not yet spawned are skipped). */
     @Override
     public IDisplayable hideByDefault(boolean hide) {
         hiddenByDefault = hide;
@@ -361,6 +411,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
+    /** {@inheritDoc} Applies to all 4 backing panels. */
     @Override
     public IDisplayable showForPlayer(Player player) {
         for (int i = 0; i < 4; i++) {
@@ -370,6 +421,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
+    /** {@inheritDoc} Applies to all 4 backing panels. */
     @Override
     public IDisplayable hideForPlayer(Player player) {
         for (int i = 0; i < 4; i++) {
@@ -379,7 +431,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
-    //claude
+    /**
+     * Computes the rotation that aligns the reference direction {@code (0, 1, 0)} to {@code direction},
+     * handling the parallel (identity) and antiparallel (180° about an arbitrary perpendicular axis)
+     * degenerate cases.
+     */
     public static Quaternionf vectorToQuaternion(Vector3f direction) {
         Vector3f normalizedDir = new Vector3f(direction).normalize();
         Vector3f referenceDir = new Vector3f(0, 1, 0);
@@ -405,7 +461,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return quat.normalize();
     }
 
-    //claude
+    /**
+     * Computes the rotation that aligns {@code referenceDirection} to {@code direction}, handling the
+     * parallel (identity) and antiparallel (180° about an arbitrary perpendicular axis) degenerate
+     * cases.
+     */
     public static Quaternionf vectorToQuaternion(Vector3f direction, Vector3f referenceDirection) {
         Vector3f normalizedDir = new Vector3f(direction).normalize();
         Vector3f normalizedRef = new Vector3f(referenceDirection).normalize();

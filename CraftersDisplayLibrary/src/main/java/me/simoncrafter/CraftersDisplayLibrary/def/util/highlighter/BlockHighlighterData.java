@@ -6,6 +6,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.ApiStatus;
 
+/**
+ * Internal per-block state backing {@link BlockHighlighter}: owns the highlight's display, its
+ * {@link IHighliterFunction}, and the repeating task that calls the function every
+ * {@code animationDuration} ticks. {@link BlockHighlighter}'s shared lifetime-checker task reads
+ * {@link #getLifeTime()} / {@link #getTickCounter()} on this object to decide when to expire it.
+ */
 @ApiStatus.Internal
 public class BlockHighlighterData {
 
@@ -16,6 +22,7 @@ public class BlockHighlighterData {
     private IHighliterFunction<ICuboidDisplay> function;
     private BukkitTask task;
 
+    /** Same as {@link #BlockHighlighterData(int, ICuboidDisplay, IHighliterFunction, int)} with no lifetime (never auto-expires). */
     public BlockHighlighterData(int animationDuration, ICuboidDisplay display, IHighliterFunction<ICuboidDisplay> function) {
         this(animationDuration, display, function, -1);
     }
@@ -27,6 +34,10 @@ public class BlockHighlighterData {
         this.lifeTime = lifeTime;
     }
 
+    /**
+     * Starts the repeating tick task that calls {@link IHighliterFunction#onAnimationRestart} every
+     * {@code animationDuration} ticks. No-ops if there is no {@link #function} to run, or if already started.
+     */
     public void start() {
         if (animationDuration > 0 && function == null) return;
         if (task != null) return;
@@ -47,12 +58,14 @@ public class BlockHighlighterData {
         }.runTaskTimer(PluginHolder.getPlugin(), 0, 1);
     }
 
+    /** Cancels the repeating tick task, if running. */
     public void stop() {
         if (task != null) {
             task.cancel();
         }
     }
 
+    /** Ticks between calls to {@link IHighliterFunction#onAnimationRestart}. */
     public int getAnimationDuration() {
         return animationDuration;
     }
@@ -61,6 +74,7 @@ public class BlockHighlighterData {
         this.animationDuration = animationDuration;
     }
 
+    /** Ticks until this highlight auto-expires, or a value {@code <= 0} if it never does. */
     public int getLifeTime() {
         return lifeTime;
     }
@@ -69,6 +83,7 @@ public class BlockHighlighterData {
         this.lifeTime = lifeTime;
     }
 
+    /** Ticks elapsed since {@link #start()} was called; compared against {@link #getLifeTime()} to expire this highlight. */
     public int getTickCounter() {
         return tickCounter;
     }

@@ -18,6 +18,20 @@ import org.joml.Vector3f;
 import java.util.List;
 import java.util.function.BiFunction;
 
+/**
+ * A cube with 6 independently colourable, solid faces, each rendered as a
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay}. This is the solid-face
+ * counterpart to {@link me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay}
+ * (edges only) and is combined with it inside
+ * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.FilledWireframeCube.FilledWireframeCubeColorDisplay}.
+ * <p>
+ * The 6 faces are added as children of this object, so all inherited transform controls (move /
+ * rotate / scale, animated or not) propagate to them. Because a face on the Y axis (top/bottom) and
+ * a face on the Z axis (front/back) need different remappings of the parent's non-uniform scale to
+ * stay flush against the cube body, {@link #topBottomApplier} and {@link #frontBackApplier} are
+ * installed as custom {@linkplain IDisplayable#setParentApplierFunction parent-transform appliers}
+ * on those faces; left/right use the default XYZ applier.
+ */
 public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
     private boolean seeTrough = false;
@@ -32,6 +46,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
     private ColorDisplay right;
 
 
+    /** Remaps the parent's Y/Z scale components before applying it to a top/bottom face's local scale. */
     private static BiFunction<Transformation, Transformation, Transformation> topBottomApplier = (parent, local) -> {
         // Apply transformation in correct order: scale → rotate → translate
         Vector3f scaledTranslation = new Vector3f(local.getTranslation()).mul(parent.getScale());
@@ -46,6 +61,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
                 parent.getRightRotation().mul(local.getRightRotation(), new Quaternionf()).normalize()
         );
     };
+    /** Remaps the parent's X/Z scale components before applying it to a front/back face's local scale. */
     private static BiFunction<Transformation, Transformation, Transformation> frontBackApplier = (parent, local) -> {
         // Apply transformation in correct order: scale → rotate → translate
         Vector3f scaledTranslation = new Vector3f(local.getTranslation()).mul(parent.getScale());
@@ -68,19 +84,29 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         this.seeTrough = seeThrough;
     }
 
+    /** Creates a cube with no right rotation and the given see-through state. */
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, seeThrough);
     }
+    /** Creates a non-see-through cube with no right rotation. */
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation colorInformation) {
         return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, false);
     }
+    /** Creates a cube with full control over both rotation components and see-through state. */
     public static CubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(translation, leftRotation, scale, rightRotation), loc, colorInformation, seeThrough);
     }
+    /** Creates a cube centred at the origin (no translation) with no right rotation. */
     public static CubeColorDisplay create(Location loc, Vector3f scale, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(new Vector3f(0, 0, 0), leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, seeThrough);
     }
 
+    /**
+     * Computes the 6 face positions/rotations from unit-cube geometry (rotated by this cube's own
+     * local rotation), spawns a {@link ColorDisplay} for each face lazily (existing faces are left
+     * alone, so this is safe to call again after adding children), adds them all as children, spawns
+     * their entities, and re-applies any {@link #hideByDefault} state set before this call.
+     */
     public void spawnDisplay() {
         try {
             // Get cube's rotation to apply to face positions
@@ -134,6 +160,17 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         }
     }
 
+    /**
+     * Builds a {@link Transformation} that stretches and rotates a unit cube so it forms a beam
+     * connecting {@code p1} to {@code p2}: scaled to the distance between the points along the local
+     * X axis, rotated so local +X points from {@code p1} to {@code p2}, and translated to the
+     * midpoint. Handles the degenerate zero-length case (returns a zero-X-scale, unrotated transform
+     * at {@code p1}) and the antiparallel-direction edge case in the rotation maths (falls back to an
+     * arbitrary perpendicular axis for the 180° rotation). Useful for building custom beam/line-like
+     * effects out of a cube instead of {@code LineColorDisplay}.
+     *
+     * @return a transform that, applied to a unit cube, produces a beam from {@code p1} to {@code p2}
+     */
     public static Transformation makeTransformBetween(Vector3f p1, Vector3f p2) {
         // 1. Compute direction vector from p1 → p2
         Vector3f diff = new Vector3f(p2).sub(p1);
@@ -194,6 +231,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         );
     }
 
+    /** {@inheritDoc} Also teleports all 6 faces' backing entities directly. */
     @Override
     public void moveEntityStatic(Location location) {
         Vector oldLoc = getLocation().toVector();
@@ -212,26 +250,32 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         back.moveEntityStatic(location);
     }
 
+    /** The top face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getTop() {
         return top;
     }
 
+    /** The bottom face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getBottom() {
         return bottom;
     }
 
+    /** The front face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getFront() {
         return front;
     }
 
+    /** The back face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getBack() {
         return back;
     }
 
+    /** The left face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getLeft() {
         return left;
     }
 
+    /** The right face's display, or {@code null} before {@link #spawnDisplay()} has been called. */
     public ColorDisplay getRight() {
         return right;
     }
@@ -240,6 +284,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return seeTrough;
     }
 
+    /** Sets see-through on all 6 faces at once (faces not yet spawned are skipped). */
     public void setSeeTrough(boolean seeTrough) {
         this.seeTrough = seeTrough;
         if (top != null) { top.setSeeTrough(seeTrough); }
@@ -250,6 +295,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         if (back != null) { back.setSeeTrough(seeTrough); }
     }
 
+    /** Colours all 6 faces the same colour. */
     @Override
     public void setColor(Color color) {
         top.setColor(color);
@@ -265,6 +311,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return hiddenByDefault;
     }
 
+    /** {@inheritDoc} Applies to all 6 faces (faces not yet spawned are skipped, then picked up in {@link #spawnDisplay()}). */
     @Override
     public IDisplayable hideByDefault(boolean hide) {
         hiddenByDefault = hide;
@@ -277,6 +324,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
+    /** {@inheritDoc} Applies to all 6 faces. */
     @Override
     public IDisplayable showForPlayer(Player player) {
         if (top != null) top.showForPlayer(player);
@@ -288,6 +336,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
+    /** {@inheritDoc} Applies to all 6 faces. */
     @Override
     public IDisplayable hideForPlayer(Player player) {
         if (top != null) top.hideForPlayer(player);
@@ -299,6 +348,13 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Also propagates this cube's transform to all 6 faces and (re-)installs
+     * {@link #topBottomApplier} / {@link #frontBackApplier} on the top/bottom and front/back faces
+     * respectively, so non-uniform scaling of the cube stretches those faces correctly.
+     */
     @Override
     protected void updateChildren(int time) {
         super.updateChildren(time);
@@ -324,6 +380,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
 
     }
 
+    /** {@inheritDoc} Also removes and clears all 6 face displays. */
     @Override
     public void remove() {
         super.remove();

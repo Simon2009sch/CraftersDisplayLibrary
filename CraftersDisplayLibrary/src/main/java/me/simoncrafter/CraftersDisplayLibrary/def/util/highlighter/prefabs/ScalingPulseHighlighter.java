@@ -7,12 +7,24 @@ import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
 import org.joml.Vector3f;
 
+/**
+ * {@link IHighliterFunction} prefab that linearly scales a {@link ICuboidDisplay} from
+ * {@code minScale} to {@code maxScale} every cycle - a plain grow pulse, with no colour change and
+ * no shrink-back. Unlike {@link PingHighlighter}, which resets to {@code minScale} once a cycle
+ * finishes, this prefab's scale animation simply stops advancing once it reaches {@code maxScale}
+ * and holds there until the next {@link #onAnimationRestart} call restarts the grow from {@code minScale}.
+ */
 public class ScalingPulseHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private final float minScale;
     private final float maxScale;
     private final int cycleDuration;
 
+    /**
+     * @param minScale      scale at the start of each pulse
+     * @param maxScale      scale the display grows to and holds at for the remainder of the cycle
+     * @param cycleDuration ticks to grow from {@code minScale} to {@code maxScale}
+     */
     public ScalingPulseHighlighter(float minScale, float maxScale, int cycleDuration) {
         this.minScale = minScale;
         this.maxScale = maxScale;

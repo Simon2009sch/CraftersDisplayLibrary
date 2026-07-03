@@ -10,6 +10,11 @@ import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFun
 import org.bukkit.Color;
 import org.joml.Vector3f;
 
+/**
+ * {@link IHighliterFunction} prefab that grows a {@link ICuboidDisplay} from {@code minScale} to
+ * {@code maxScale} while simultaneously fading its colour's alpha to 0, like a radar "ping" that
+ * expands and disappears. Both animations run concurrently and restart together every cycle.
+ */
 public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
 
     private final float minScale;
@@ -17,6 +22,12 @@ public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
     private final int cycleDuration;
     private final Color color;
 
+    /**
+     * @param minScale      scale at the start of each ping
+     * @param maxScale      scale at the end of each ping
+     * @param color         opaque colour the ping starts at before fading to transparent
+     * @param cycleDuration ticks per ping cycle
+     */
     public PingHighlighter(float minScale, float maxScale, Color color, int cycleDuration) {
         this.minScale = minScale;
         this.maxScale = maxScale;
