@@ -22,6 +22,7 @@ AnimationFactory.registerRRotationAnimationSmooth(obj, 20, startQuat, endQuat);
 AnimationFactory.registerScalingAnimation(obj, 20, startScale, endScale);
 AnimationFactory.registerScalingAnimationSmooth(obj, 20, startScale, endScale);
 
+AnimationFactory.registerColorAnimation(colorableDisplay, 20, startColor, endColor);
 AnimationFactory.registerColorAnimationSmooth(colorableDisplay, 20, startColor, endColor);
 ```
 
@@ -31,17 +32,33 @@ AnimationFactory.registerColorAnimationSmooth(colorableDisplay, 20, startColor, 
 | Left rotation | `registerLRotationAnimation` | `registerLRotationAnimationSmooth` |
 | Right rotation | `registerRRotationAnimation` | `registerRRotationAnimationSmooth` |
 | Scale | `registerScalingAnimation` | `registerScalingAnimationSmooth` |
-| Color | *(see note below)* | `registerColorAnimationSmooth` |
+| Color | `registerColorAnimation` | `registerColorAnimationSmooth` |
 
 - **Plain** variants interpolate linearly (lerp for vectors, slerp for rotation) from start to end over the
-  given duration in ticks.
-- **Smooth** variants apply an easing curve first — `easeInOutSine` for translation/rotation/scale,
-  `easeInOutCubic` for color — for a gentler start and end instead of constant speed.
+  given duration in ticks — this is `EasingCurve.LINEAR` under the hood.
+- **Smooth** variants apply an easing curve first — `EasingCurve.EASE_IN_OUT_SINE` for
+  translation/rotation/scale, `EasingCurve.EASE_IN_OUT_CUBIC` for color — for a gentler start and end
+  instead of constant speed. See [`EasingCurve`](#easingcurve) below.
 
-> [!WARNING]
-> `registerColorAnimation` (the plain, non-smooth color animation) currently computes the interpolated color
-> each tick but never applies it to the display — it's a no-op. Use `registerColorAnimationSmooth` for color
-> animations; it applies the color correctly.
+## `EasingCurve`
+
+`EasingCurve` is the enum that unifies what used to be separate "plain" and "Smooth" animation classes into
+a single class per animation kind (translation, left rotation, right rotation, scale, color) with an
+optional easing curve constructor argument. It has three values:
+
+| Value | Behavior |
+|---|---|
+| `LINEAR` | No remapping — constant-speed interpolation. Used by the plain `registerXAnimation` methods. |
+| `EASE_IN_OUT_SINE` | Slow start, fast middle, slow end, based on a cosine curve. Used by `registerXAnimationSmooth` for translation, rotation and scale. |
+| `EASE_IN_OUT_CUBIC` | Slow start, fast middle, slow end, based on a cubic curve (steeper than `EASE_IN_OUT_SINE`). Used by `registerColorAnimationSmooth`. |
+
+Each animation class (`TranslationAnimation`, `RotationAnimation`, `RRotationAnimation`, `ScalingAnimation`,
+`ColorAnimation`) has a 3-arg constructor that defaults to `EasingCurve.LINEAR`, and an overload taking an
+explicit `EasingCurve`. `AnimationFactory.registerXAnimationSmooth` is just a thin wrapper that passes a
+non-default `EasingCurve` into the same constructor `registerXAnimation` (plain) uses with `LINEAR` — there
+are no longer separate `*Smooth` classes, only one class per animation kind with an optional easing curve.
+If you're writing a custom interpolator (see below) and want the same acceleration behavior, call
+`easingCurve.ease(t)` on your own progress fraction before interpolating.
 
 ## How it's driven
 
@@ -62,14 +79,14 @@ be gone).
 
 ## Writing your own interpolator
 
-Both `IHighliterFunction` prefabs (see [Block Highlighting](block-highlighting.md)) and `IViewTinterFunction`
+Both `IHighlighterFunction` prefabs (see [Block Highlighting](block-highlighting.md)) and `IViewTinterFunction`
 prefabs (see [View Tinting](view-tinting.md)) are built by registering small anonymous
-`ACustomTypeAnimationInterpolationFunction`/`AAnimationInterpolationFunction` subclasses inline. The general
+`CustomTypeAnimationInterpolationFunction`/`AnimationInterpolationFunction` subclasses inline. The general
 shape:
 
 ```java
 GlobalAnimationTickHandler.registerNewColorAnimation(display,
-        new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(20, startColor, endColor, display) {
+        new CustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(20, startColor, endColor, display) {
             @Override
             public void nextTick(int duration, int tick, Color start, Color end, IColorableDisplay obj) {
                 float progress = (float) tick / duration;
@@ -78,8 +95,8 @@ GlobalAnimationTickHandler.registerNewColorAnimation(display,
         });
 ```
 
-`AAnimationInterpolationFunction<V>` is the same idea specialized for `PositionObject` targets (translation,
-scale, rotation); `ACustomTypeAnimationInterpolationFunction<V, K>` is the fully generic base used for color
+`AnimationInterpolationFunction<V>` is the same idea specialized for `PositionObject` targets (translation,
+scale, rotation); `CustomTypeAnimationInterpolationFunction<V, K>` is the fully generic base used for color
 (`K = IColorableDisplay`).
 
 > [!NOTE]

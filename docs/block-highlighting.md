@@ -7,8 +7,8 @@ by a repeating pulse effect and/or an automatic expiry time. It's a static regis
 ## Basic usage
 
 ```java
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.HighlightDisplayType;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.BlockHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.HighlightDisplayType;
 
 // Highlight indefinitely, no pulse animation
 BlockHighlighter.highlightBlock(block);
@@ -44,11 +44,11 @@ z-fighting with the block's own faces) — you set a visible color yourself, eit
 | `WIREFRAME` | `WireframeCubeColorDisplay` | Edges only |
 | `FILLED_WIREFRAME` | `FilledWireframeCubeColorDisplay` | Both |
 
-## Built-in animations (`IHighliterFunction`)
+## Built-in animations (`IHighlighterFunction`)
 
-Pass any `IHighliterFunction<ICuboidDisplay>` as the animation argument — it's called every
+Pass any `IHighlighterFunction<ICuboidDisplay>` as the animation argument — it's called every
 `animationDuration` ticks (default 20, i.e. once per second) with the live display. Five ready-made ones
-live in `def.util.highlighter.prefabs`:
+live in `effect.highlighter.prefabs`:
 
 | Class | Effect |
 |---|---|
@@ -62,7 +62,7 @@ live in `def.util.highlighter.prefabs`:
 BlockHighlighter.highlightBlock(block, new GlowingHighlighter(Color.AQUA, 20), -1);
 ```
 
-Write your own by implementing the single-method `IHighliterFunction<ICuboidDisplay>` interface — most
+Write your own by implementing the single-method `IHighlighterFunction<ICuboidDisplay>` interface — most
 prefabs just register a small custom color/scale interpolator (see [Animations](animations.md)) each time
 `onAnimationRestart` fires.
 

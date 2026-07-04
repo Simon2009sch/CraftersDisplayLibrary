@@ -93,8 +93,8 @@ public final class MyPlugin extends JavaPlugin {
 A minimal example that spawns a solid white cube at a player's location:
 
 ```java
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.joml.Quaternionf;

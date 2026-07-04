@@ -21,7 +21,7 @@ ColorDisplay panel = ColorDisplay.create(
 );
 panel.spawnDisplay();
 panel.setColor(Color.BLUE);
-panel.setSeeTrough(true);
+panel.setSeeThrough(true);
 ```
 
 The remaining *colored* display types below are all ultimately built out of one or more `ColorDisplay`s
@@ -42,7 +42,7 @@ all the inherited move/rotate/scale methods (animated or not) — but because it
 **not** implement `IColorableDisplay`. Use `setBlock(BlockData)` / `getBlock()` to control what is shown.
 
 ```java
-import me.simoncrafter.CraftersDisplayLibrary.def.active.BlockDisplayObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.BlockDisplayObject;
 import org.bukkit.Material;
 
 BlockDisplayObject block = BlockDisplayObject.create(
@@ -76,7 +76,7 @@ implement `IColorableDisplay`. Use `setItem(ItemStack)` / `getItem()` to control
 (`FIXED`, `GUI`, `HEAD`, `GROUND`, `FIRST_PERSON_RIGHT_HAND`, ...).
 
 ```java
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ItemDisplayObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ItemDisplayObject;
 import org.bukkit.Material;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
@@ -124,7 +124,7 @@ cube.spawnDisplay();
 
 cube.getTop().setColor(Color.LIME);      // recolor one face directly
 cube.setColor(Color.WHITE);              // recolor all six faces at once
-cube.setSeeTrough(true);
+cube.setSeeThrough(true);
 ```
 
 `CubeColorInformation` is an immutable value holder — `setTop(Color)` and friends return a **new** instance
@@ -188,8 +188,8 @@ both.setFaceEdgesColor(CubeFace.TOP, Color.RED);  // the 4 edges bordering that 
 both.setColor(Color.WHITE);                       // all faces AND all edges at once
 ```
 
-Faces and edges are independently colorable and independently see-through-able (`setFacesSeeTrough` /
-`setEdgesSeeTrough` / `setSeeTrough` for both). This is the display type
+Faces and edges are independently colorable and independently see-through-able (`setFacesSeeThrough` /
+`setEdgesSeeThrough` / `setSeeThrough` for both). This is the display type
 [`BlockHighlighter`](block-highlighting.md) uses for its `FILLED_WIREFRAME` highlight shape.
 
 ## `LineColorDisplay`

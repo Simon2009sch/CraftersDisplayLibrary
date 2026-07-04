@@ -8,7 +8,7 @@ camera. Only the tinted player sees their own box (it's hidden by default and sh
 ## Basic usage
 
 ```java
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter;
 
 // Solid red tint, applied over 20 ticks
 ViewTinter.tintPlayer(player, Color.RED, 20);
