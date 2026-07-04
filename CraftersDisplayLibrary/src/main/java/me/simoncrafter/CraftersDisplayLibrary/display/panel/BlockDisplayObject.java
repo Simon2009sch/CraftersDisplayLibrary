@@ -104,7 +104,12 @@ public class BlockDisplayObject extends AbstractEntityBackedDisplay<BlockDisplay
         return new BlockDisplayObject(loc, scale, translation, new Quaternionf(0, 0, 0, 1), new Quaternionf(0, 0, 0, 1), blockData, Display.Billboard.FIXED);
     }
 
-    /** {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation system. */
+    /**
+     * {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation
+     * system. See {@link me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay#rebaseEntity}
+     * for the opposite operation: teleporting the entity's raw location while keeping the display
+     * rendered exactly where it already was.
+     */
     @Override
     public void moveEntityStatic(Location location) {
         if (entity != null) {

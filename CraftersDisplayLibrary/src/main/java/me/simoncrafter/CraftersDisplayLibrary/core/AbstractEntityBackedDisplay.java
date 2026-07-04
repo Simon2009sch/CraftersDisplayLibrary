@@ -41,6 +41,10 @@ import java.util.List;
  * it at all, so moving a {@code TextDisplay} via {@code moveEntityStatic} does not currently teleport
  * its live entity. This is a pre-existing quirk that the restructuring intentionally leaves in place -
  * do not "fix" it by pulling {@code moveEntityStatic} into this base class.
+ * <p>
+ * {@link #rebaseEntity(Location)}, unlike {@code moveEntityStatic}, teleports the backing entity's
+ * raw location <i>without</i> moving the visible display - it compensates the local transform
+ * translation to cancel out the jump, and is implemented once here for all four subclasses.
  *
  * @param <E> the concrete Bukkit {@link Display} subtype backing this display
  */
@@ -170,6 +174,46 @@ public abstract class AbstractEntityBackedDisplay<E extends Display> extends Pos
 
             entity.teleport(entity.getLocation().clone().add(difference));
         }
+    }
+
+    /**
+     * Teleports the backing entity's raw location to {@code newLocation}, compensating this
+     * object's local transform translation so the display's rendered position does not change -
+     * a "rebase" that moves the entity's coordinate anchor without any visible jump.
+     * <p>
+     * Contrast with {@code moveEntityStatic(Location)} (declared per-subclass rather than here -
+     * see the class Javadoc), which teleports the entity <i>and</i> moves the visible display to
+     * match. This method is for the opposite case: re-anchoring a long-lived display's raw
+     * coordinates (e.g. after it has drifted far from its spawn point through many small
+     * {@link #moveRelative} calls, or before a change of world) while it keeps rendering exactly
+     * where it already was.
+     * <p>
+     * Correctly updates this object's tracked {@link #getLocation() location} to
+     * {@code newLocation} as part of the rebase. This matters: it means a later
+     * {@link #setLocation(Location)} call - even one passing the exact same coordinates that were
+     * previously used as a local-space {@link #moveRelative} offset - computes its move relative
+     * to the entity's actual current position rather than a stale pre-rebase one, so it will not
+     * unexpectedly re-apply that offset on top of the rebase.
+     * <p>
+     * If the entity hasn't been spawned yet, this simply updates the tracked location without
+     * touching the local transform, since there is nothing rendered yet whose position needs
+     * preserving.
+     *
+     * @param newLocation the world-space location to move the backing entity's raw position to
+     */
+    public void rebaseEntity(Location newLocation) {
+        Location originalLocation = getLocation();
+
+        if (entity == null) {
+            setLocationNoUpdate(newLocation);
+            return;
+        }
+
+        Vector3f delta = newLocation.toVector().subtract(originalLocation.toVector()).toVector3f();
+
+        entity.teleport(newLocation);
+        setLocationNoUpdate(newLocation);
+        moveRelative(delta.negate(), 0);
     }
 
     /** Sets the billboard mode; applies immediately to the live entity if already spawned and valid. */

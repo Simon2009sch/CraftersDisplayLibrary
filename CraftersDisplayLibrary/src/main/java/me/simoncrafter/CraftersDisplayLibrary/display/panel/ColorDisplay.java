@@ -97,17 +97,14 @@ public class ColorDisplay extends AbstractEntityBackedDisplay<TextDisplay> imple
         return new ColorDisplay(loc, scale, translation, leftRotation, new Quaternionf(0, 0, 0, 1), color, false, Display.Billboard.FIXED);
     }
 
-    /** {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation system. */
+    /**
+     * {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation
+     * system. See {@link me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay#rebaseEntity}
+     * for the opposite operation: teleporting the entity's raw location while keeping the display
+     * rendered exactly where it already was.
+     */
     @Override
     public void moveEntityStatic(Location location) {
-
-        /*Vector oldLoc = getLocation().toVector();
-        Vector newLoc = location.toVector();
-
-        Vector diff = newLoc.subtract(oldLoc);
-        Vector3f diff3f = diff.toVector3f().div(getLocalTransform().getScale());
-
-        moveRelative(diff3f, 0);*/
         if (entity != null) {
             entity.teleport(location);
         }

@@ -106,6 +106,40 @@ Two small interfaces sit alongside `IDisplayable`:
   This is exactly how [view tinting](view-tinting.md) works: the tint box is hidden by default and shown only
   to the one player it belongs to.
 
+## Location vs. local transform
+
+Every `PositionObject` tracks two separate things that both affect where it renders:
+
+- its **`location`** — the world-space point its backing entity is actually spawned/teleported to;
+- its **`localTransform`**'s translation — an offset from that location, applied client-side via the
+  entity's `Transformation` (this is what `moveRelative`/`moveAbsolute` and friends change).
+
+Normal moves (`moveRelative`, `moveAbsolute`, `setLocation`) keep these working together as you'd
+expect. Two more specialized methods on the entity-backed panel displays (`ColorDisplay`,
+`TextDisplay`, `BlockDisplayObject`, `ItemDisplayObject`) let you manipulate the entity's raw
+`location` directly, independently of the transform:
+
+- **`moveEntityStatic(Location)`** teleports the backing entity directly, bypassing the
+  transform/animation system entirely — the display **moves** to the new location, instantly, with
+  no interpolation.
+- **`rebaseEntity(Location)`** does the opposite: it teleports the entity's raw location but
+  compensates the local transform translation so the display's rendered position **does not
+  change**. This is useful for re-anchoring a long-lived display's coordinates — for example, after
+  it has drifted far from its spawn point through many small `moveRelative` calls — without any
+  visible jump.
+
+```java
+// Panel currently rendering at world (1, 65, 1), reached via moveRelative offsets from its spawn point.
+panel.rebaseEntity(panel.getLocation().add(new Vector(0, 0, 5))); // re-anchors 5 blocks over; nothing visibly moves
+```
+
+> [!IMPORTANT]
+> `rebaseEntity` always updates the object's tracked `location` to match the entity's new raw
+> position. This matters if you plan to call `setLocation` afterward with coordinates that happen to
+> match an earlier local-space offset you used with `moveRelative`/`moveAbsolute` — without this,
+> `setLocation` could compute its move relative to a stale location and re-apply that offset on top
+> of the rebase, causing the display to jump.
+
 ## Cuboid displays
 
 `ICuboidDisplay` (extended by `IColorableDisplay`) is the common interface for anything box-shaped:

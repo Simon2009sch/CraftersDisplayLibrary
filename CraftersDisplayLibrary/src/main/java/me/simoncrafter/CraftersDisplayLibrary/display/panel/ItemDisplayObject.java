@@ -105,7 +105,12 @@ public class ItemDisplayObject extends AbstractEntityBackedDisplay<ItemDisplay> 
         return new ItemDisplayObject(loc, scale, translation, new Quaternionf(0, 0, 0, 1), new Quaternionf(0, 0, 0, 1), item, ItemDisplay.ItemDisplayTransform.FIXED, Display.Billboard.FIXED);
     }
 
-    /** {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation system. */
+    /**
+     * {@inheritDoc} Teleports the backing entity directly, bypassing the transform/animation
+     * system. See {@link me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay#rebaseEntity}
+     * for the opposite operation: teleporting the entity's raw location while keeping the display
+     * rendered exactly where it already was.
+     */
     @Override
     public void moveEntityStatic(Location location) {
         if (entity != null) {
