@@ -1,34 +1,34 @@
 package me.simoncrafter.mods.displayTestPlugin;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.FilledWireframeCube.FilledWireframeCubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeEdge;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeFace;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.TextDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.BlockDisplayObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.AnimationFactory;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.HighlightDisplayType;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PulsingColorHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PingHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.RainbowHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.GlowingHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.ScalingPulseHighlighter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.ColorShiftTinter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.FadeInTinter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.FadeOutTinter;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.PulsingTinter;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.display.filledwireframecube.FilledWireframeCubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.line.LineColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.CubeEdge;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.CubeFace;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.TextDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.BlockDisplayObject;
+import me.simoncrafter.CraftersDisplayLibrary.animation.AnimationFactory;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.BlockHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.HighlightDisplayType;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.IHighlighterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.PulsingColorHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.PingHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.RainbowHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.GlowingHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.ScalingPulseHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs.ColorShiftTinter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs.FadeInTinter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs.FadeOutTinter;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs.PulsingTinter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -224,7 +224,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         Color color = Color.WHITE;
         boolean seeThrough = false;
-        IHighliterFunction<ICuboidDisplay> animation = null;
+        IHighlighterFunction<ICuboidDisplay> animation = null;
         int lifeTime = -1;
         int animationDuration = 20;
         HighlightDisplayType shape = HighlightDisplayType.CUBE;
@@ -281,7 +281,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         if (display != null) {
             display.setColor(color);
             if (seeThrough) {
-                display.setSeeTrough(true);
+                display.setSeeThrough(true);
             }
         }
 
@@ -445,7 +445,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         return null;
     }
 
-    private IHighliterFunction<ICuboidDisplay> createAnimation(String animationName, Color color) {
+    private IHighlighterFunction<ICuboidDisplay> createAnimation(String animationName, Color color) {
         return switch (animationName) {
             case "pulse" -> new PulsingColorHighlighter(color, 20);
             case "rainbow" -> new RainbowHighlighter();
@@ -488,8 +488,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 3) {
-            return recommendListThatContainsObject(List.of("position", "rotation", "rrotation", "scale", "color", "randomcolor", "direction", "thickness", "seetrough", "startpoint", "endpoint",
-                    "facecolor", "edgecolor", "facescolor", "edgescolor", "faceedgecolor", "facesseetrough", "edgesseetrough",
+            return recommendListThatContainsObject(List.of("position", "rotation", "rrotation", "scale", "color", "randomcolor", "direction", "thickness", "seethrough", "startpoint", "endpoint",
+                    "facecolor", "edgecolor", "facescolor", "edgescolor", "faceedgecolor", "facesseethrough", "edgesseethrough",
                     "text", "billboard", "background", "backgroundcolor", "linewidth", "block"), args[2]);
         }
 
@@ -874,13 +874,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
-                case "seetrough" -> {
+                case "seethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setSeeTrough(seeThrough);
+                    display.setSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
@@ -1090,13 +1090,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
-                case "seetrough" -> {
+                case "seethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setSeeTrough(seeThrough);
+                    display.setSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
@@ -1310,13 +1310,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
-                case "seetrough" -> {
+                case "seethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setSeeTrough(seeThrough);
+                    display.setSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
@@ -1584,13 +1584,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
-                case "seetrough" -> {
+                case "seethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setSeeTrough(seeThrough);
+                    display.setSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
@@ -1879,33 +1879,33 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
-                case "seetrough" -> {
+                case "seethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> seetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> seethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setSeeTrough(seeThrough);
+                    display.setSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set see-through to " + seeThrough + " for faces and edges", NamedTextColor.GREEN));
                     yield true;
                 }
-                case "facesseetrough" -> {
+                case "facesseethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> facesseetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> facesseethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setFacesSeeTrough(seeThrough);
+                    display.setFacesSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set face see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
-                case "edgesseetrough" -> {
+                case "edgesseethrough" -> {
                     if (values.length < 1) {
-                        sender.sendMessage(Component.text("Usage: /test edit <id> edgesseetrough <true|false>", NamedTextColor.RED));
+                        sender.sendMessage(Component.text("Usage: /test edit <id> edgesseethrough <true|false>", NamedTextColor.RED));
                         yield false;
                     }
                     boolean seeThrough = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
-                    display.setEdgesSeeTrough(seeThrough);
+                    display.setEdgesSeeThrough(seeThrough);
                     sender.sendMessage(Component.text("Set edge see-through to " + seeThrough, NamedTextColor.GREEN));
                     yield true;
                 }
