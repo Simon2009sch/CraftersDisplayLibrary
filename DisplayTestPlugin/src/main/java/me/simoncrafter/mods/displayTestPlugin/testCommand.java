@@ -10,22 +10,33 @@ import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeEdge;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeFace;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.def.active.TextDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.def.active.BlockDisplayObject;
 import me.simoncrafter.CraftersDisplayLibrary.def.animation.AnimationFactory;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.HighlightDisplayType;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.*;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PulsingColorHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PingHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.RainbowHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.GlowingHighlighter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.ScalingPulseHighlighter;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter;
 import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.*;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.ColorShiftTinter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.FadeInTinter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.FadeOutTinter;
+import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs.PulsingTinter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.command.*;
 import org.bukkit.entity.*;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +63,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
         typeHandlers.put("line", new LineDisplayHandler());
         typeHandlers.put("wireframe", new WireframeDisplayHandler());
         typeHandlers.put("filledwireframe", new FilledWireframeDisplayHandler());
+        typeHandlers.put("text", new TextDisplayHandler());
+        typeHandlers.put("blockdisplay", new BlockDisplayHandler());
     }
 
     @Override
@@ -476,7 +489,12 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 3) {
             return recommendListThatContainsObject(List.of("position", "rotation", "rrotation", "scale", "color", "randomcolor", "direction", "thickness", "seetrough", "startpoint", "endpoint",
-                    "facecolor", "edgecolor", "facescolor", "edgescolor", "faceedgecolor", "facesseetrough", "edgesseetrough"), args[2]);
+                    "facecolor", "edgecolor", "facescolor", "edgescolor", "faceedgecolor", "facesseetrough", "edgesseetrough",
+                    "text", "billboard", "background", "backgroundcolor", "linewidth", "block"), args[2]);
+        }
+
+        if (args[0].equalsIgnoreCase("edit") && args.length == 4 && args[2].equalsIgnoreCase("billboard")) {
+            return recommendListThatContainsObject(List.of("fixed", "vertical", "horizontal", "center"), args[3]);
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 4 && (args[2].equalsIgnoreCase("facecolor") || args[2].equalsIgnoreCase("faceedgecolor"))) {
@@ -1899,6 +1917,443 @@ public class testCommand implements CommandExecutor, TabExecutor {
                         display.setEdgeColor(edge, randomColor());
                     }
                     sender.sendMessage(Component.text("Set random colors for all faces and edges", NamedTextColor.GREEN));
+                    yield true;
+                }
+                default -> false;
+            };
+        }
+    }
+
+    class TextDisplayHandler implements DisplayTypeHandler {
+        @Override
+        public PositionObject create(Location loc) {
+            return TextDisplay.create(loc, new Vector3f(1, 1, 1), new Vector3f(), new Quaternionf());
+        }
+
+        @Override
+        public boolean canHandle(PositionObject obj) {
+            return obj instanceof TextDisplay;
+        }
+
+        @Override
+        public boolean spawn(PositionObject obj, CommandSender sender) {
+            TextDisplay display = (TextDisplay) obj;
+            try {
+                display.spawnDisplay();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error spawning text display: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean despawn(PositionObject obj, CommandSender sender) {
+            TextDisplay display = (TextDisplay) obj;
+            try {
+                display.remove();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error despawning text display: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean edit(PositionObject obj, String property, String[] values, CommandSender sender) {
+            TextDisplay display = (TextDisplay) obj;
+
+            return switch (property) {
+                case "text" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> text <text...>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    String text = String.join(" ", values);
+                    display.setText(text);
+                    sender.sendMessage(Component.text("Updated text to \"" + text + "\"", NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "color" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> color <r,g,b[,a]> [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int[] rgba = parseRGBA(values[0]);
+                    if (rgba == null) {
+                        sender.sendMessage(Component.text("Invalid color format. Use r,g,b or r,g,b,a", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        AnimationFactory.registerColorAnimationSmooth(display, duration, display.getColor(), targetColor);
+                    } else {
+                        display.setColor(targetColor);
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated color" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "background" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> background <true|false>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    boolean hasBackground = values[0].equalsIgnoreCase("true") || values[0].equalsIgnoreCase("on");
+                    display.setHasBackground(hasBackground);
+                    sender.sendMessage(Component.text("Set background to " + hasBackground, NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "backgroundcolor" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> backgroundcolor <r,g,b[,a]>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int[] rgba = parseRGBA(values[0]);
+                    if (rgba == null) {
+                        sender.sendMessage(Component.text("Invalid color format. Use r,g,b or r,g,b,a", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Color targetColor = rgba.length == 4 ? Color.fromARGB(rgba[3], rgba[0], rgba[1], rgba[2]) : Color.fromRGB(rgba[0], rgba[1], rgba[2]);
+                    display.setBackgroundColor(targetColor);
+                    sender.sendMessage(Component.text("Updated background color", NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "linewidth" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> linewidth <width>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    try {
+                        int width = Integer.parseInt(values[0]);
+                        display.setLineWidth(width);
+                        sender.sendMessage(Component.text("Updated line width to " + width, NamedTextColor.GREEN));
+                        yield true;
+                    } catch (NumberFormatException e) {
+                        sender.sendMessage(Component.text("Invalid line width format. Use an integer", NamedTextColor.RED));
+                        yield false;
+                    }
+                }
+                case "billboard" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> billboard <fixed|vertical|horizontal|center>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Display.Billboard billboard = switch (values[0].toLowerCase()) {
+                        case "vertical" -> Display.Billboard.VERTICAL;
+                        case "horizontal" -> Display.Billboard.HORIZONTAL;
+                        case "center" -> Display.Billboard.CENTER;
+                        default -> Display.Billboard.FIXED;
+                    };
+                    display.setBillboard(billboard);
+                    sender.sendMessage(Component.text("Updated billboard mode to " + billboard.name(), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "position" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f pos = parseVector(values[0]);
+                    if (pos == null) {
+                        sender.sendMessage(Component.text("Invalid position format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = display.getLocalTransform().getTranslation();
+                        Vector3f targetPos = isRelative(values) ? new Vector3f(currentPos).add(pos) : pos;
+                        AnimationFactory.registerTranslationAnimationSmooth(display, duration, currentPos, targetPos);
+                    } else {
+                        if (isRelative(values)) {
+                            display.moveRelative(pos, duration);
+                        } else {
+                            display.moveAbsolute(pos, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "scale" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f scale = parseVector(values[0]);
+                    if (scale == null) {
+                        sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentScale = display.getLocalTransform().getScale();
+                        Vector3f targetScale = isRelative(values) ? new Vector3f(currentScale).add(scale) : scale;
+                        AnimationFactory.registerScalingAnimationSmooth(display, duration, currentScale, targetScale);
+                    } else {
+                        if (isRelative(values)) {
+                            display.scaleRelative(scale, duration);
+                        } else {
+                            display.scaleAbsolute(scale, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = isRelative(values) ? new Quaternionf(currentRot).mul(rot) : rot;
+                        AnimationFactory.registerLRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.LRotateRelative(rot, duration);
+                        } else {
+                            display.LRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rrotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rrotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getRightRotation();
+                        Quaternionf targetRot = isRelative(values) ? new Quaternionf(currentRot).mul(rot) : rot;
+                        AnimationFactory.registerRRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.RRotateRelative(rot, duration);
+                        } else {
+                            display.RRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "randomcolor" -> {
+                    Color randomCol = randomColor();
+                    display.setColor(randomCol);
+                    sender.sendMessage(Component.text("Set color to random RGB(" + randomCol.getRed() + "," + randomCol.getGreen() + "," + randomCol.getBlue() + ")", NamedTextColor.GREEN));
+                    yield true;
+                }
+                default -> false;
+            };
+        }
+    }
+
+    class BlockDisplayHandler implements DisplayTypeHandler {
+        @Override
+        public PositionObject create(Location loc) {
+            return BlockDisplayObject.create(loc, new Vector3f(1, 1, 1), new Vector3f(), new Quaternionf(), Material.STONE.createBlockData());
+        }
+
+        @Override
+        public boolean canHandle(PositionObject obj) {
+            return obj instanceof BlockDisplayObject;
+        }
+
+        @Override
+        public boolean spawn(PositionObject obj, CommandSender sender) {
+            BlockDisplayObject display = (BlockDisplayObject) obj;
+            try {
+                display.spawnDisplay();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error spawning block display: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean despawn(PositionObject obj, CommandSender sender) {
+            BlockDisplayObject display = (BlockDisplayObject) obj;
+            try {
+                display.remove();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error despawning block display: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean edit(PositionObject obj, String property, String[] values, CommandSender sender) {
+            BlockDisplayObject display = (BlockDisplayObject) obj;
+
+            return switch (property) {
+                case "block" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> block <material>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Material material = Material.matchMaterial(values[0]);
+                    if (material == null || !material.isBlock()) {
+                        sender.sendMessage(Component.text("Unknown or non-block material: " + values[0], NamedTextColor.RED));
+                        yield false;
+                    }
+                    BlockData blockData = material.createBlockData();
+                    display.setBlock(blockData);
+                    sender.sendMessage(Component.text("Updated block to " + material.name(), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "billboard" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> billboard <fixed|vertical|horizontal|center>", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Display.Billboard billboard = switch (values[0].toLowerCase()) {
+                        case "vertical" -> Display.Billboard.VERTICAL;
+                        case "horizontal" -> Display.Billboard.HORIZONTAL;
+                        case "center" -> Display.Billboard.CENTER;
+                        default -> Display.Billboard.FIXED;
+                    };
+                    display.setBillboard(billboard);
+                    sender.sendMessage(Component.text("Updated billboard mode to " + billboard.name(), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "position" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f pos = parseVector(values[0]);
+                    if (pos == null) {
+                        sender.sendMessage(Component.text("Invalid position format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = display.getLocalTransform().getTranslation();
+                        Vector3f targetPos = isRelative(values) ? new Vector3f(currentPos).add(pos) : pos;
+                        AnimationFactory.registerTranslationAnimationSmooth(display, duration, currentPos, targetPos);
+                    } else {
+                        if (isRelative(values)) {
+                            display.moveRelative(pos, duration);
+                        } else {
+                            display.moveAbsolute(pos, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "scale" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f scale = parseVector(values[0]);
+                    if (scale == null) {
+                        sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentScale = display.getLocalTransform().getScale();
+                        Vector3f targetScale = isRelative(values) ? new Vector3f(currentScale).add(scale) : scale;
+                        AnimationFactory.registerScalingAnimationSmooth(display, duration, currentScale, targetScale);
+                    } else {
+                        if (isRelative(values)) {
+                            display.scaleRelative(scale, duration);
+                        } else {
+                            display.scaleAbsolute(scale, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = isRelative(values) ? new Quaternionf(currentRot).mul(rot) : rot;
+                        AnimationFactory.registerLRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.LRotateRelative(rot, duration);
+                        } else {
+                            display.LRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rrotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rrotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = display.getLocalTransform().getRightRotation();
+                        Quaternionf targetRot = isRelative(values) ? new Quaternionf(currentRot).mul(rot) : rot;
+                        AnimationFactory.registerRRotationAnimationSmooth(display, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            display.RRotateRelative(rot, duration);
+                        } else {
+                            display.RRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 default -> false;

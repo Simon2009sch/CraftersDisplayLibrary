@@ -37,8 +37,10 @@ import java.util.List;
  * backing entity - it is idempotent and simply returns the existing entity on subsequent calls.
  * Every inherited transform-mutating method from {@link PositionObject} (move/rotate/scale,
  * animated or not) is overridden here to also push the new {@link Transformation} onto the live
- * entity via {@link #updateEntity(int)}, applying the block-scale correction from
- * {@code scaleToBlock}.
+ * entity via {@link #updateEntity(int)}. Unlike {@link ColorDisplay} (which fakes a colour panel
+ * out of an empty {@code TextDisplay} and therefore needs the {@code scaleToBlock} correction),
+ * an {@link ItemDisplay} entity's own scale of 1 already renders at its natural item size, so no
+ * such correction is applied here.
  */
 public class ItemDisplayObject extends PositionObject implements IHidable {
 
@@ -73,8 +75,7 @@ public class ItemDisplayObject extends PositionObject implements IHidable {
         entity.setItemStack(item);
         entity.setItemDisplayTransform(itemDisplayTransform);
         entity.setVisibleByDefault(!hiddenByDefault);
-        Transformation transform = scaleToBlock(getFinalTransform());
-        entity.setTransformation(transform);
+        entity.setTransformation(getFinalTransform());
         entity.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 
         return entity;
@@ -211,13 +212,13 @@ public class ItemDisplayObject extends PositionObject implements IHidable {
 
 
     /**
-     * Pushes this object's current {@link #getFinalTransform() final transform} (block-scale
-     * corrected) onto the live entity, with client-side interpolation over {@code time} ticks.
-     * A no-op if the entity hasn't been spawned yet or is no longer valid.
+     * Pushes this object's current {@link #getFinalTransform() final transform} onto the live
+     * entity, with client-side interpolation over {@code time} ticks. A no-op if the entity
+     * hasn't been spawned yet or is no longer valid.
      */
     private void updateEntity(int time) {
         if (entity == null || !entity.isValid()) return;
-        entity.setTransformation(scaleToBlock(getFinalTransform()));
+        entity.setTransformation(getFinalTransform());
         entity.setInterpolationDelay(0);
         entity.setInterpolationDuration(time);
     }

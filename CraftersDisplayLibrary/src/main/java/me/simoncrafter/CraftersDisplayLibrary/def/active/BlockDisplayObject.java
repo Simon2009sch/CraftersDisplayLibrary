@@ -33,8 +33,16 @@ import java.util.List;
  * backing entity - it is idempotent and simply returns the existing entity on subsequent calls.
  * Every inherited transform-mutating method from {@link PositionObject} (move/rotate/scale,
  * animated or not) is overridden here to also push the new {@link Transformation} onto the live
- * entity via {@link #updateEntity(int)}, applying the block-scale correction from
- * {@code scaleToBlock}.
+ * entity via {@link #updateEntity(int)}. Unlike {@link ColorDisplay} (which fakes a colour panel
+ * out of an empty {@code TextDisplay} and therefore needs the {@code scaleToBlock} correction), a
+ * {@link BlockDisplay} entity's own scale of 1 already renders as one full block, so no such
+ * correction is applied here - a scale of {@code (1,1,1)} is one block, as expected.
+ * <p>
+ * A vanilla {@link BlockDisplay}'s local block model spans from its translation outward toward
+ * the positive axes (the translation is the block's corner, not its center), so scaling it would
+ * normally grow the block away from this object's position instead of around it. {@link #centerOrigin}
+ * corrects for this by re-deriving the translation so the block's own center lands on this
+ * object's resolved position, keeping it centered under scaling and rotation alike.
  */
 public class BlockDisplayObject extends PositionObject implements IHidable {
 
@@ -66,8 +74,7 @@ public class BlockDisplayObject extends PositionObject implements IHidable {
         entity.setBillboard(billboard);
         entity.setBlock(blockData);
         entity.setVisibleByDefault(!hiddenByDefault);
-        Transformation transform = scaleToBlock(getFinalTransform());
-        entity.setTransformation(transform);
+        entity.setTransformation(centerOrigin(getFinalTransform()));
         entity.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 
         return entity;
@@ -204,15 +211,32 @@ public class BlockDisplayObject extends PositionObject implements IHidable {
 
 
     /**
-     * Pushes this object's current {@link #getFinalTransform() final transform} (block-scale
-     * corrected) onto the live entity, with client-side interpolation over {@code time} ticks.
-     * A no-op if the entity hasn't been spawned yet or is no longer valid.
+     * Pushes this object's current {@link #getFinalTransform() final transform} onto the live
+     * entity, with client-side interpolation over {@code time} ticks. A no-op if the entity
+     * hasn't been spawned yet or is no longer valid.
      */
     private void updateEntity(int time) {
         if (entity == null || !entity.isValid()) return;
-        entity.setTransformation(scaleToBlock(getFinalTransform()));
+        entity.setTransformation(centerOrigin(getFinalTransform()));
         entity.setInterpolationDelay(0);
         entity.setInterpolationDuration(time);
+    }
+
+    /**
+     * Re-derives {@code transformation}'s translation so the block model's own center - rather
+     * than its corner - lands on that translation, by subtracting the (rotated, scaled) offset
+     * from the model's corner to its center. This keeps the block centered on this object's
+     * position under scaling and rotation, instead of growing only toward the positive axes.
+     */
+    private Transformation centerOrigin(Transformation transformation) {
+        Vector3f centerOffset = new Vector3f(0.5f, 0.5f, 0.5f);
+        transformation.getRightRotation().transform(centerOffset);
+        centerOffset.mul(transformation.getScale());
+        transformation.getLeftRotation().transform(centerOffset);
+
+        Vector3f centeredTranslation = new Vector3f(transformation.getTranslation()).sub(centerOffset);
+
+        return new Transformation(centeredTranslation, transformation.getLeftRotation(), transformation.getScale(), transformation.getRightRotation());
     }
 
     /** Sets the billboard mode; takes effect on the entity next time it is spawned. */
