@@ -24,6 +24,7 @@ player's whole screen to a color, like a damage flash or a status effect).
 | [Block Highlighting](block-highlighting.md) | `BlockHighlighter` and its built-in pulse/glow/rainbow/ping effects |
 | [View Tinting](view-tinting.md) | `ViewTinter` and its built-in fade/pulse/color-shift effects |
 | [API Reference](api-reference.md) | Package-by-package index of every public type, and how to generate full Javadoc HTML |
+| [Development](development/README.md) | Module/build setup and the design patterns behind the package layout, for anyone working on the library itself rather than consuming it |
 
 > [!NOTE]
 > This documentation covers the `CraftersDisplayLibrary` module. The `DisplayTestPlugin` module in the same
