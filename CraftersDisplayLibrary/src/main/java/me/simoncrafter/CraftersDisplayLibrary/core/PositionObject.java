@@ -1,7 +1,7 @@
-package me.simoncrafter.CraftersDisplayLibrary.def;
+package me.simoncrafter.CraftersDisplayLibrary.core;
 
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -47,7 +47,7 @@ import java.util.function.Consumer;
  *     lerps/slerps this object's local transform from its current value to the target over
  *     {@code time} ticks. This is the implicit animation baked into every transform mutator.</li>
  *     <li>The {@code GlobalAnimationTickHandler}/{@code AnimationFactory} system is a separate,
- *     more explicit mechanism built on registered {@code AAnimationInterpolationFunction}s that
+ *     more explicit mechanism built on registered {@code AnimationInterpolationFunction}s that
  *     support easing curves. Its tick loop updates many objects' local transforms via the
  *     {@code *NoUpdate} methods below (skipping this class's own animation machinery and child
  *     propagation) and then performs one batched {@link #updateChildrenNow(int)} pass afterward.</li>
@@ -70,7 +70,7 @@ public class PositionObject implements IDisplayable {
     private Location location;
 
     /** Default parent/local transform composition: scale, then rotate, then translate. */
-    private BiFunction<Transformation, Transformation, Transformation> parentAplerFunction = (parent, local) -> {
+    private BiFunction<Transformation, Transformation, Transformation> parentApplierFunction = (parent, local) -> {
         // Apply transformation in correct order: scale → rotate → translate
         Vector3f scaledTranslation = new Vector3f(local.getTranslation()).mul(parent.getScale());
         Vector3f rotatedTranslation = new Vector3f(scaledTranslation)
@@ -437,12 +437,12 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void setParentApplierFunction(BiFunction<Transformation, Transformation, Transformation> func) {
-        parentAplerFunction = func;
+        parentApplierFunction = func;
     }
 
     @Override
     public BiFunction<Transformation, Transformation, Transformation> getParentApplierFunction() {
-        return parentAplerFunction;
+        return parentApplierFunction;
     }
 
     /** Recursively removes every child. Subclasses with a backing entity should also remove it and call {@code super.remove()}. */
@@ -455,7 +455,7 @@ public class PositionObject implements IDisplayable {
 
     /** Combines {@link #getParentTransform()} and {@link #getLocalTransform()} via the current {@link #getParentApplierFunction() applier function} into this object's resolved transform. */
     protected Transformation getFinalTransform() {
-        return parentAplerFunction.apply(parentTransform, localTransform);
+        return parentApplierFunction.apply(parentTransform, localTransform);
     }
 
     /**
@@ -522,11 +522,11 @@ public class PositionObject implements IDisplayable {
 
     /**
      * Converts a logical 1x1x1-unit local transform into the correct on-screen block size using
-     * {@link PluginHolder#BLOCK_SCALE}. Used by entity-backed subclasses (e.g. {@code ColorDisplay})
+     * {@link BlockScale#VALUE}. Used by entity-backed subclasses (e.g. {@code ColorDisplay})
      * when pushing a transform to a live Bukkit display entity.
      */
     protected Transformation scaleToBlock(Transformation transformation) {
-        return new Transformation(transformation.getTranslation().add(BLOCK_TEXT_DIFFERENCE), transformation.getLeftRotation(), transformation.getScale().mul(PluginHolder.BLOCK_SCALE), transformation.getRightRotation());
+        return new Transformation(transformation.getTranslation().add(BLOCK_TEXT_DIFFERENCE), transformation.getLeftRotation(), transformation.getScale().mul(BlockScale.VALUE), transformation.getRightRotation());
     }
 
 }

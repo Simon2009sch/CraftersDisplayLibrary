@@ -1,5 +1,6 @@
-package me.simoncrafter.CraftersDisplayLibrary;
+package me.simoncrafter.CraftersDisplayLibrary.core;
 
+import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import org.bukkit.NamespacedKey;
 
 /**

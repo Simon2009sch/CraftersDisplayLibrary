@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.interfaces;
+package me.simoncrafter.CraftersDisplayLibrary.core.interfaces;
 
 import org.bukkit.Color;
 

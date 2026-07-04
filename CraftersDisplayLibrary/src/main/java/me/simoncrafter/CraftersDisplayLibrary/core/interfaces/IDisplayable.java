@@ -1,6 +1,6 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.interfaces;
+package me.simoncrafter.CraftersDisplayLibrary.core.interfaces;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
