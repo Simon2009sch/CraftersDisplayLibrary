@@ -30,8 +30,40 @@ four `ColorDisplay` panels directly). The block and item displays in the next tw
 exception: each wraps a single real Minecraft entity directly and renders an actual block or item rather
 than a solid colour, so they do **not** implement `IColorableDisplay`.
 
-> [!NOTE]
-> `ColorDisplay.clone()` is currently unimplemented and returns `null`.
+## `TextDisplay`
+
+A real text display, wrapping Bukkit's `org.bukkit.entity.TextDisplay` directly rather than faking a panel
+out of it the way `ColorDisplay` does. A scale of `(1, 1, 1)` is Minecraft's normal text size — unlike
+`ColorDisplay`, no `scaleToBlock` correction is applied, since there's no block to match.
+
+```java
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.TextDisplay;
+import net.kyori.adventure.text.Component;
+
+TextDisplay label = TextDisplay.create(
+        location,
+        new Vector3f(1, 1, 1),      // scale
+        new Vector3f(0, 0, 0),      // translation
+        new Quaternionf()           // left rotation
+);
+label.spawnDisplay();
+
+label.setText(Component.text("Hello!"));
+label.setLineWidth(150);            // max pixels per line before wrapping
+label.setHasBackground(true);
+label.setBackgroundColor(Color.fromARGB(150, 0, 0, 0));
+```
+
+> [!IMPORTANT]
+> `TextDisplay` implements `IColorableDisplay`, but `setColor(Color)` tints the entity's **background**,
+> not the text itself — Minecraft text displays have no separate "text color" API distinct from the
+> `Component` styling of the text content (use `Component.text("...", TextColor.color(...))` to color the
+> text). `setColor` applies unconditionally, regardless of whether `setHasBackground(true)` was ever called,
+> so calling it after `setHasBackground(false)` will still tint the (otherwise-untouched) background color —
+> this is intentional, matching how a plain vanilla `TextDisplay`'s `setBackgroundColor` behaves.
+
+Two `create(...)` overloads are provided (full, with both rotation quaternions; and a fixed-billboard one
+with no right rotation), and `spawnDisplay()` / `respawnEntity()` behave the same as the other display types.
 
 ## `BlockDisplayObject`
 
@@ -55,16 +87,13 @@ BlockDisplayObject block = BlockDisplayObject.create(
 block.spawnDisplay();
 
 block.setBlock(Material.GOLD_BLOCK.createBlockData());   // swap the rendered block live
-block.setBillboard(Display.Billboard.VERTICAL);           // takes effect on next spawn
+block.setBillboard(Display.Billboard.VERTICAL);           // applies immediately to the live entity
 ```
 
 Three `create(...)` overloads are provided: a full one taking both rotation quaternions, a billboard, and
 the `BlockData`; a fixed-billboard one with no right rotation; and a fully-unrotated one. `spawnDisplay()`
 is idempotent — calling it again just returns the existing entity — and `respawnEntity()` tears down and
 re-spawns the backing entity for a full resync after a chunk reload.
-
-> [!NOTE]
-> `BlockDisplayObject.clone()` is currently unimplemented and returns `null`.
 
 ## `ItemDisplayObject`
 
@@ -98,9 +127,6 @@ The same three `create(...)` overload shapes as `BlockDisplayObject` are provide
 no-right-rotation / fully-unrotated), and `spawnDisplay()` / `respawnEntity()` behave identically. Item
 displays are handy for floating loot indicators, 3D icons, decorative props, or anything where a real item
 model reads better than a flat coloured plane.
-
-> [!NOTE]
-> `ItemDisplayObject.clone()` is currently unimplemented and returns `null`.
 
 ## `CubeColorDisplay`
 
