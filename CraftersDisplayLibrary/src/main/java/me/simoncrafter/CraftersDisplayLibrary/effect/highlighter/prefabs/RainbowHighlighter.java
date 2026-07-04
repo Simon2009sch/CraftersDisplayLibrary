@@ -1,18 +1,18 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.IHighlighterFunction;
 import org.bukkit.Color;
 
 /**
- * {@link IHighliterFunction} prefab that steps a {@link ICuboidDisplay} through a fixed 7-colour
+ * {@link IHighlighterFunction} prefab that steps a {@link ICuboidDisplay} through a fixed 7-colour
  * rainbow, one colour per animation cycle (no interpolation between colours).
  * <p>
  * Each instance keeps its own position in the cycle ({@code currentColorIndex}); highlighting
  * multiple blocks with the <em>same</em> {@code RainbowHighlighter} instance means they all share
  * and advance that one cycle position rather than each starting fresh at red.
  */
-public class RainbowHighlighter implements IHighliterFunction<ICuboidDisplay> {
+public class RainbowHighlighter implements IHighlighterFunction<ICuboidDisplay> {
 
     private static final Color[] RAINBOW_COLORS = {
         Color.fromRGB(255, 0, 0),

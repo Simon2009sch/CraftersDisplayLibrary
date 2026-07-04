@@ -1,18 +1,18 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
 import org.bukkit.Color;
 
 /**
  * {@link IViewTinterFunction} prefab that repeatedly oscillates a player's tint alpha between
  * {@code minAlpha} and {@code maxAlpha} following a sine wave, mirroring
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs.PulsingColorHighlighter}
- * but for {@link me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter} instead of
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter}.
+ * {@link me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs.PulsingColorHighlighter}
+ * but for {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter} instead of
+ * {@link me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.BlockHighlighter}.
  */
 public class PulsingTinter implements IViewTinterFunction {
 
@@ -49,7 +49,7 @@ public class PulsingTinter implements IViewTinterFunction {
         Color dummyStart = Color.fromARGB(minAlpha, r, g, b);
         Color dummyEnd = Color.fromARGB(maxAlpha, r, g, b);
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<>(cycleDuration, dummyStart, dummyEnd, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(cycleDuration, dummyStart, dummyEnd, (IColorableDisplay) object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 try {

@@ -1,10 +1,10 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
 import org.bukkit.Color;
 
 /**
@@ -35,7 +35,7 @@ public class ColorShiftTinter implements IViewTinterFunction {
 
     @Override
     public void onAnimationRestart(CubeColorDisplay object) {
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<>(cycleDuration, startColor, endColor, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(cycleDuration, startColor, endColor, (IColorableDisplay) object) {
             @Override
             public void nextTick(int duration, int tick, Color color1, Color color2, IColorableDisplay obj) {
                 try {

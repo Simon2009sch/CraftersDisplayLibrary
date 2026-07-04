@@ -1,13 +1,12 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter;
 
-import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.FilledWireframeCube.FilledWireframeCubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.display.filledwireframecube.FilledWireframeCubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.effect.internal.TimedEffectRegistry;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -15,28 +14,40 @@ import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Static registry that outlines {@link Block}s with a temporary, invisible-by-default
- * {@link ICuboidDisplay} and pulses it via a pluggable {@link IHighliterFunction}.
+ * {@link ICuboidDisplay} and pulses it via a pluggable {@link IHighlighterFunction}.
  * <p>
  * At most one highlight is tracked per block; starting a new highlight on an already-highlighted
  * block implicitly removes the old one first. The display spawns fully transparent
  * (see {@link #createDisplay}) so nothing is visible until the highlighter function - or the
  * caller - sets a real color on it.
  * <p>
- * See also {@link me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.ViewTinter}, which
+ * See also {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter}, which
  * is the same pattern applied to a player's screen instead of a block.
  */
 public class BlockHighlighter {
 
-    private static Map<Block, BlockHighlighterData> highlightedBlock = new HashMap<>();
-    private static Runnable lifetimeCheckTask;
+    /**
+     * Backing {@link TimedEffectRegistry}, held via composition rather than inheritance so this
+     * class's own public static API stays unchanged. Overrides {@link
+     * TimedEffectRegistry#initialTicksSinceLastAnimation} so a highlight's driving function fires on
+     * the very first tick after registration, matching this class's historical behaviour.
+     */
+    private static final TimedEffectRegistry<Block, ICuboidDisplay> registry = new TimedEffectRegistry<>() {
+        @Override
+        protected void onRemove(Block key, ICuboidDisplay display) {
+            display.remove();
+        }
+
+        @Override
+        protected int initialTicksSinceLastAnimation(int animationDuration) {
+            return animationDuration;
+        }
+    };
 
     /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display until manually removed. */
-    public static void highlightBlock(Block block, IHighliterFunction<ICuboidDisplay> function, int duration) {
+    public static void highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int duration) {
         highlightBlock(block, HighlightDisplayType.CUBE, function, duration);
     }
 
@@ -46,9 +57,9 @@ public class BlockHighlighter {
      * @param type     which kind of cuboid display to spawn
      * @param function called every {@code duration} ticks to drive the visual effect; may be
      *                  {@code null} for a static (non-animated) highlight
-     * @param duration animation cycle length in ticks, passed to {@link IHighliterFunction#onAnimationRestart}
+     * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
      */
-    public static void highlightBlock(Block block, HighlightDisplayType type, IHighliterFunction<ICuboidDisplay> function, int duration) {
+    public static void highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int duration) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -56,13 +67,11 @@ public class BlockHighlighter {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        BlockHighlighterData style = new BlockHighlighterData(duration, display, function);
-        highlightedBlock.put(block, style);
-        style.start();
+        registry.register(block, duration, display, function, -1);
     }
 
     /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display that auto-removes itself after {@code lifeTime} ticks. */
-    public static void highlightBlock(Block block, IHighliterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
+    public static void highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
         highlightBlock(block, HighlightDisplayType.CUBE, function, lifeTime, duration);
     }
 
@@ -76,9 +85,9 @@ public class BlockHighlighter {
      *                  {@code null} for a static (non-animated) highlight
      * @param lifeTime ticks until this highlight is automatically removed; a value {@code <= 0}
      *                  disables auto-removal for this highlight (but still starts the checker task)
-     * @param duration animation cycle length in ticks, passed to {@link IHighliterFunction#onAnimationRestart}
+     * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
      */
-    public static void highlightBlock(Block block, HighlightDisplayType type, IHighliterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
+    public static void highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -86,10 +95,7 @@ public class BlockHighlighter {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        BlockHighlighterData style = new BlockHighlighterData(duration, display, function, lifeTime);
-        highlightedBlock.put(block, style);
-        style.start();
-        startLifetimeChecker();
+        registry.register(block, duration, display, function, lifeTime);
     }
 
     /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that expires after {@code lifeTime} ticks. */
@@ -104,27 +110,17 @@ public class BlockHighlighter {
 
     /** Removes the highlight from {@code block}, if any, stopping its animation and despawning its display. */
     public static void unhighlightBlock(Block block) {
-        BlockHighlighterData style = highlightedBlock.get(block);
-        if (style != null) {
-            style.stop();
-            ICuboidDisplay display = style.getDisplay();
-            GlobalAnimationTickHandler.removeColorAnimation(display);
-            display.remove();
-            highlightedBlock.remove(block);
-        }
+        registry.remove(block);
     }
 
     /** Removes every currently active block highlight. */
     public static void unhighlightAllBlocks() {
-        for (Block block : new java.util.ArrayList<>(highlightedBlock.keySet())) {
-            unhighlightBlock(block);
-        }
+        registry.removeAll();
     }
 
     /** The display currently highlighting {@code block}, or {@code null} if it isn't highlighted. */
     public static ICuboidDisplay getHighlightDisplay(Block block) {
-        BlockHighlighterData style = highlightedBlock.get(block);
-        return style != null ? style.getDisplay() : null;
+        return registry.getDisplay(block);
     }
 
     /**
@@ -163,35 +159,6 @@ public class BlockHighlighter {
                     new WireframeCubeColorInformation(invisible)
             );
         };
-    }
-
-    /**
-     * Lazily starts the single shared repeating task that expires highlights whose {@code lifeTime}
-     * has elapsed. No-ops if already running; cancels itself once {@link #highlightedBlock} is empty.
-     */
-    private static void startLifetimeChecker() {
-        if (lifetimeCheckTask != null) return;
-
-        org.bukkit.scheduler.BukkitRunnable checker = new org.bukkit.scheduler.BukkitRunnable() {
-            @Override
-            public void run() {
-                java.util.ArrayList<Block> blocksToRemove = new java.util.ArrayList<>();
-                for (Map.Entry<Block, BlockHighlighterData> entry : highlightedBlock.entrySet()) {
-                    if (entry.getValue().getLifeTime() > 0 && entry.getValue().getTickCounter() >= entry.getValue().getLifeTime()) {
-                        blocksToRemove.add(entry.getKey());
-                    }
-                }
-                for (Block block : blocksToRemove) {
-                    unhighlightBlock(block);
-                }
-                if (highlightedBlock.isEmpty()) {
-                    cancel();
-                    lifetimeCheckTask = null;
-                }
-            }
-        };
-        lifetimeCheckTask = checker::run;
-        checker.runTaskTimer(PluginHolder.getPlugin(), 0, 1);
     }
 
 }

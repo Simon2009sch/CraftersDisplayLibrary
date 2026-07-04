@@ -1,6 +1,6 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter;
 
-/** Which kind of {@link me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay} to use for a block highlight. */
+/** Which kind of {@link me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay} to use for a block highlight. */
 public enum HighlightDisplayType {
     /** Solid coloured faces, no edges. */
     CUBE,

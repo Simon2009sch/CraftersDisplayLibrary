@@ -1,21 +1,21 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.AnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.IHighlighterFunction;
 import org.bukkit.Color;
 import org.joml.Vector3f;
 
 /**
- * {@link IHighliterFunction} prefab that grows a {@link ICuboidDisplay} from {@code minScale} to
+ * {@link IHighlighterFunction} prefab that grows a {@link ICuboidDisplay} from {@code minScale} to
  * {@code maxScale} while simultaneously fading its colour's alpha to 0, like a radar "ping" that
  * expands and disappears. Both animations run concurrently and restart together every cycle.
  */
-public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
+public class PingHighlighter implements IHighlighterFunction<ICuboidDisplay> {
 
     private final float minScale;
     private final float maxScale;
@@ -44,7 +44,7 @@ public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
         // is also a PositionObject, which is what the scale-animation registry operates on.
         PositionObject positionObject = (PositionObject) object;
 
-        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AAnimationInterpolationFunction<>(cycleDuration, startVector, endVector, positionObject) {
+        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AnimationInterpolationFunction<>(cycleDuration, startVector, endVector, positionObject) {
             @Override
             public void nextTick(int duration, int tick, Vector3f startScale, Vector3f endScale, PositionObject obj) {
                 if (tick >= duration) {
@@ -59,7 +59,7 @@ public class PingHighlighter implements IHighliterFunction<ICuboidDisplay> {
             }
         });
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<>(cycleDuration, color, color.setAlpha(0), object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(cycleDuration, color, color.setAlpha(0), object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 int startAlpha = startColor.getAlpha();

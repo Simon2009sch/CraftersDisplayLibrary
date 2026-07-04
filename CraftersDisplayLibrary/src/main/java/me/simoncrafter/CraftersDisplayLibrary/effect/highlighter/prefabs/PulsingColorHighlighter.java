@@ -1,18 +1,18 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.IHighlighterFunction;
 import org.bukkit.Color;
 
 /**
- * {@link IHighliterFunction} prefab that oscillates a {@link ICuboidDisplay}'s alpha between
+ * {@link IHighlighterFunction} prefab that oscillates a {@link ICuboidDisplay}'s alpha between
  * {@code minAlpha} and {@code maxAlpha} following a sine wave, for a smooth "breathing" pulse
  * rather than a linear fade back and forth.
  */
-public class PulsingColorHighlighter implements IHighliterFunction<ICuboidDisplay> {
+public class PulsingColorHighlighter implements IHighlighterFunction<ICuboidDisplay> {
 
     private final Color baseColor;
     private final int minAlpha;
@@ -47,7 +47,7 @@ public class PulsingColorHighlighter implements IHighliterFunction<ICuboidDispla
         Color dummyStart = Color.fromARGB(minAlpha, r, g, b);
         Color dummyEnd = Color.fromARGB(maxAlpha, r, g, b);
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dummyStart, dummyEnd, object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>(cycleDuration, dummyStart, dummyEnd, object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 try {

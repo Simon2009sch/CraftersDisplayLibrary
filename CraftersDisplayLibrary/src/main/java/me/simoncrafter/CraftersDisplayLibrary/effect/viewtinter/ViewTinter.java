@@ -1,18 +1,13 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter;
+package me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.effect.internal.TimedEffectRegistry;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Static registry that tints a player's screen by wrapping their head in a negatively-scaled
@@ -22,12 +17,45 @@ import java.util.Map;
  * <p>
  * At most one tint is tracked per player; calling {@link #tintPlayer} again for an already-tinted
  * player implicitly removes the old tint first. This mirrors
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.BlockHighlighter}, which is
+ * {@link me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.BlockHighlighter}, which is
  * the same pattern applied to blocks instead of a player's screen.
  */
 public class ViewTinter {
 
-    private static Map<Player, ViewTinterData> tintedPlayers = new HashMap<>();
+    /**
+     * Backing {@link TimedEffectRegistry}, held via composition rather than inheritance so this
+     * class's own public static API stays unchanged. {@link #onRemove} keeps the passenger-removal
+     * dance that is specific to tint cubes; that logic is intentionally not generalized into the
+     * shared base.
+     */
+    private static final TimedEffectRegistry<Player, CubeColorDisplay> registry = new TimedEffectRegistry<>() {
+        @Override
+        protected void onRemove(Player player, CubeColorDisplay display) {
+            try {
+                if (display.getTop() != null) {
+                    player.removePassenger(display.getTop().getEntity());
+                }
+                if (display.getBottom() != null) {
+                    player.removePassenger(display.getBottom().getEntity());
+                }
+                if (display.getLeft() != null) {
+                    player.removePassenger(display.getLeft().getEntity());
+                }
+                if (display.getRight() != null) {
+                    player.removePassenger(display.getRight().getEntity());
+                }
+                if (display.getFront() != null) {
+                    player.removePassenger(display.getFront().getEntity());
+                }
+                if (display.getBack() != null) {
+                    player.removePassenger(display.getBack().getEntity());
+                }
+                display.remove();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     /**
      * Tints {@code player}'s screen with {@code color}, driven by the optional {@code function}.
@@ -78,9 +106,7 @@ public class ViewTinter {
             return;
         }
 
-        ViewTinterData style = new ViewTinterData(duration, display, function);
-        tintedPlayers.put(player, style);
-        style.start();
+        registry.register(player, duration, display, function, -1);
     }
 
     /** Tints {@code player}'s screen with a static (non-animated) {@code color}. */
@@ -95,53 +121,21 @@ public class ViewTinter {
 
     /** Removes {@code player}'s tint, if any, stopping its animation and despawning the tint cube. */
     public static void untintPlayer(Player player) {
-        ViewTinterData style = tintedPlayers.get(player);
-        if (style != null) {
-            style.stop();
-            try {
-                CubeColorDisplay display = style.getDisplay();
-                if (display.getTop() != null) {
-                    player.removePassenger(display.getTop().getEntity());
-                }
-                if (display.getBottom() != null) {
-                    player.removePassenger(display.getBottom().getEntity());
-                }
-                if (display.getLeft() != null) {
-                    player.removePassenger(display.getLeft().getEntity());
-                }
-                if (display.getRight() != null) {
-                    player.removePassenger(display.getRight().getEntity());
-                }
-                if (display.getFront() != null) {
-                    player.removePassenger(display.getFront().getEntity());
-                }
-                if (display.getBack() != null) {
-                    player.removePassenger(display.getBack().getEntity());
-                }
-                display.remove();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            GlobalAnimationTickHandler.removeColorAnimation(style.getDisplay());
-            tintedPlayers.remove(player);
-        }
+        registry.remove(player);
     }
 
     /** Removes every currently active player tint. */
     public static void untintAllPlayers() {
-        for (Player player : new ArrayList<>(tintedPlayers.keySet())) {
-            untintPlayer(player);
-        }
+        registry.removeAll();
     }
 
     /** The tint cube currently applied to {@code player}, or {@code null} if they aren't tinted. */
     public static CubeColorDisplay getTintDisplay(Player player) {
-        ViewTinterData style = tintedPlayers.get(player);
-        return style != null ? style.getDisplay() : null;
+        return registry.getDisplay(player);
     }
 
     public static boolean isPlayerTinted(Player player) {
-        return tintedPlayers.containsKey(player);
+        return registry.isActive(player);
     }
 
     /**
@@ -149,10 +143,7 @@ public class ViewTinter {
      * and recreating the tint cube. No-ops if {@code player} isn't currently tinted.
      */
     public static void setPlayerAnimation(Player player, IViewTinterFunction animation, int duration) {
-        ViewTinterData style = tintedPlayers.get(player);
-        if (style != null) {
-            style.setAnimation(animation, duration);
-        }
+        registry.setAnimation(player, animation, duration);
     }
 
 }

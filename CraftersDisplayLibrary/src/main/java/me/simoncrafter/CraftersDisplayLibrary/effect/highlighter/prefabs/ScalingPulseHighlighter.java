@@ -1,20 +1,20 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.AAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.highlighter.IHighliterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.AnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.IHighlighterFunction;
 import org.joml.Vector3f;
 
 /**
- * {@link IHighliterFunction} prefab that linearly scales a {@link ICuboidDisplay} from
+ * {@link IHighlighterFunction} prefab that linearly scales a {@link ICuboidDisplay} from
  * {@code minScale} to {@code maxScale} every cycle - a plain grow pulse, with no colour change and
  * no shrink-back. Unlike {@link PingHighlighter}, which resets to {@code minScale} once a cycle
  * finishes, this prefab's scale animation simply stops advancing once it reaches {@code maxScale}
  * and holds there until the next {@link #onAnimationRestart} call restarts the grow from {@code minScale}.
  */
-public class ScalingPulseHighlighter implements IHighliterFunction<ICuboidDisplay> {
+public class ScalingPulseHighlighter implements IHighlighterFunction<ICuboidDisplay> {
 
     private final float minScale;
     private final float maxScale;
@@ -40,7 +40,7 @@ public class ScalingPulseHighlighter implements IHighliterFunction<ICuboidDispla
         // is also a PositionObject, which is what the scale-animation registry operates on.
         PositionObject positionObject = (PositionObject) object;
 
-        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AAnimationInterpolationFunction<>(cycleDuration, start, end, positionObject) {
+        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AnimationInterpolationFunction<>(cycleDuration, start, end, positionObject) {
             @Override
             public void nextTick(int duration, int tick, Vector3f startScale, Vector3f endScale, PositionObject obj) {
                 float progress = (float) tick / duration;

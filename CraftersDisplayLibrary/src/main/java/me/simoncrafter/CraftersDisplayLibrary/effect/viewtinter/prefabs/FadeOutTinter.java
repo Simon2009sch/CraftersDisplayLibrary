@@ -1,10 +1,10 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.prefabs;
+package me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.prefabs;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.ACustomTypeAnimationInterpolationFunction;
-import me.simoncrafter.CraftersDisplayLibrary.def.animation.GlobalAnimationTickHandler;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.util.viewTinter.IViewTinterFunction;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
+import me.simoncrafter.CraftersDisplayLibrary.animation.GlobalAnimationTickHandler;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
 import org.bukkit.Color;
 
 /**
@@ -39,7 +39,7 @@ public class FadeOutTinter implements IViewTinterFunction {
         Color opaqueColor = Color.fromARGB(color.getAlpha(), r, g, b);
         Color transparentColor = Color.fromARGB(0, r, g, b);
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new ACustomTypeAnimationInterpolationFunction<>(fadeDuration, opaqueColor, transparentColor, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(fadeDuration, opaqueColor, transparentColor, (IColorableDisplay) object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 try {
