@@ -72,14 +72,14 @@ public class ViewTinter {
         // the player's own viewpoint instead of presenting an outward-facing box to onlookers.
         CubeColorDisplay display = CubeColorDisplay.create(
                 playerHead,
-                new Vector3f(-0.4f, -1.2f, -0.4f),
+                new Vector3f(-0.4f, -1.1f, -0.4f),
                 new Vector3f(0, -0.3f, 0),
                 new Quaternionf(),
                 new CubeColorInformation(color)
         );
 
-        display.hideByDefault(true);
-        display.showForPlayer(player);
+        //display.hideByDefault(true);
+        //display.showForPlayer(player);
 
         try {
             display.spawnDisplay();

@@ -5,6 +5,7 @@
     <artifactId>CraftersDisplayLibrary</artifactId>
     <name>Archetype - CraftersDisplayLibrary</name>
     <url>http://maven.apache.org</url>
+    <version>1.1.0</version>
 
     <parent>
         <groupId>me.simoncrafter</groupId>
