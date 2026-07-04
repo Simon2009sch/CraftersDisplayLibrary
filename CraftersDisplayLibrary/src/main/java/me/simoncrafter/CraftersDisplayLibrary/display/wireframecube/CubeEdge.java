@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube;
+package me.simoncrafter.CraftersDisplayLibrary.display.wireframecube;
 
 import org.joml.Vector3f;
 

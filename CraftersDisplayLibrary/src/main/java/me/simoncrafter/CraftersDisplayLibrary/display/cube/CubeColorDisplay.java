@@ -1,11 +1,11 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.Cube;
+package me.simoncrafter.CraftersDisplayLibrary.display.cube;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
@@ -20,10 +20,10 @@ import java.util.function.BiFunction;
 
 /**
  * A cube with 6 independently colourable, solid faces, each rendered as a
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay}. This is the solid-face
- * counterpart to {@link me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay}
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay}. This is the solid-face
+ * counterpart to {@link me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorDisplay}
  * (edges only) and is combined with it inside
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.FilledWireframeCube.FilledWireframeCubeColorDisplay}.
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.filledwireframecube.FilledWireframeCubeColorDisplay}.
  * <p>
  * The 6 faces are added as children of this object, so all inherited transform controls (move /
  * rotate / scale, animated or not) propagate to them. Because a face on the Y axis (top/bottom) and
@@ -34,7 +34,7 @@ import java.util.function.BiFunction;
  */
 public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
-    private boolean seeTrough = false;
+    private boolean seeThrough = false;
     private boolean hiddenByDefault = false;
 
     private CubeColorInformation colorInformation = new CubeColorInformation();
@@ -81,7 +81,7 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
     private CubeColorDisplay(Transformation localTransform, Location location, CubeColorInformation colorInformation, boolean seeThrough) {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
         this.colorInformation = colorInformation;
-        this.seeTrough = seeThrough;
+        this.seeThrough = seeThrough;
     }
 
     /** Creates a cube with no right rotation and the given see-through state. */
@@ -125,12 +125,12 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
 
 
             // Create all faces with rotation-adjusted positions
-            if (top == null) top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getTop(), seeTrough, Display.Billboard.FIXED);
-            if (bottom == null) bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getBottom(), seeTrough, Display.Billboard.FIXED);
-            if (left == null) left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), new Quaternionf(), colorInformation.getLeft(), seeTrough, Display.Billboard.FIXED);
-            if (right == null) right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), new Quaternionf(), colorInformation.getRight(), seeTrough, Display.Billboard.FIXED);
-            if (front == null) front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getFront(), seeTrough, Display.Billboard.FIXED);
-            if (back == null) back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getBack(), seeTrough, Display.Billboard.FIXED);
+            if (top == null) top = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), topPos, new Quaternionf(-0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getTop(), seeThrough, Display.Billboard.FIXED);
+            if (bottom == null) bottom = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), bottomPos, new Quaternionf(0.707f, 0, 0, 0.707f), new Quaternionf(), colorInformation.getBottom(), seeThrough, Display.Billboard.FIXED);
+            if (left == null) left = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), leftPos, new Quaternionf(0, 0, 0, 1), new Quaternionf(), colorInformation.getLeft(), seeThrough, Display.Billboard.FIXED);
+            if (right == null) right = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), rightPos, new Quaternionf(0, 1, 0, 0), new Quaternionf(), colorInformation.getRight(), seeThrough, Display.Billboard.FIXED);
+            if (front == null) front = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), frontPos, new Quaternionf(0, 0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getFront(), seeThrough, Display.Billboard.FIXED);
+            if (back == null) back = ColorDisplay.create(getLocation(), new Vector3f(1, 1, 1), backPos, new Quaternionf(0, -0.707f, 0, 0.707f), new Quaternionf(), colorInformation.getBack(), seeThrough, Display.Billboard.FIXED);
 
             // Add faces as children and spawn
             addChild(top);
@@ -280,19 +280,19 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return right;
     }
 
-    public boolean isSeeTrough() {
-        return seeTrough;
+    public boolean isSeeThrough() {
+        return seeThrough;
     }
 
     /** Sets see-through on all 6 faces at once (faces not yet spawned are skipped). */
-    public void setSeeTrough(boolean seeTrough) {
-        this.seeTrough = seeTrough;
-        if (top != null) { top.setSeeTrough(seeTrough); }
-        if (bottom != null) { bottom.setSeeTrough(seeTrough); }
-        if (left != null) { left.setSeeTrough(seeTrough); }
-        if (right != null) { right.setSeeTrough(seeTrough); }
-        if (front != null) { front.setSeeTrough(seeTrough); }
-        if (back != null) { back.setSeeTrough(seeTrough); }
+    public void setSeeThrough(boolean seeThrough) {
+        this.seeThrough = seeThrough;
+        if (top != null) { top.setSeeThrough(seeThrough); }
+        if (bottom != null) { bottom.setSeeThrough(seeThrough); }
+        if (left != null) { left.setSeeThrough(seeThrough); }
+        if (right != null) { right.setSeeThrough(seeThrough); }
+        if (front != null) { front.setSeeThrough(seeThrough); }
+        if (back != null) { back.setSeeThrough(seeThrough); }
     }
 
     /** Colours all 6 faces the same colour. */

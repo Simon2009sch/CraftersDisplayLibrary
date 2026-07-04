@@ -1,18 +1,18 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.FilledWireframeCube;
+package me.simoncrafter.CraftersDisplayLibrary.display.filledwireframecube;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeEdge;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.CubeFace;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.display.line.LineColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.CubeEdge;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.CubeFace;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -140,12 +140,12 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
         faceCube.setColor(color);
     }
 
-    public boolean isFacesSeeTrough() {
-        return faceCube.isSeeTrough();
+    public boolean isFacesSeeThrough() {
+        return faceCube.isSeeThrough();
     }
 
-    public void setFacesSeeTrough(boolean seeTrough) {
-        faceCube.setSeeTrough(seeTrough);
+    public void setFacesSeeThrough(boolean seeThrough) {
+        faceCube.setSeeThrough(seeThrough);
     }
 
     // --- Edge controls (mirrors WireframeCubeColorDisplay) ---
@@ -188,12 +188,12 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
         wireframeCube.setThickness(thickness, duration);
     }
 
-    public boolean isEdgesSeeTrough() {
-        return wireframeCube.isSeeTrough();
+    public boolean isEdgesSeeThrough() {
+        return wireframeCube.isSeeThrough();
     }
 
-    public void setEdgesSeeTrough(boolean seeTrough) {
-        wireframeCube.setSeeTrough(seeTrough);
+    public void setEdgesSeeThrough(boolean seeThrough) {
+        wireframeCube.setSeeThrough(seeThrough);
     }
 
     // --- Combined controls ---
@@ -207,15 +207,15 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
 
     /** Sets see-through for both faces and edges at once. */
     @Override
-    public void setSeeTrough(boolean seeTrough) {
-        setFacesSeeTrough(seeTrough);
-        setEdgesSeeTrough(seeTrough);
+    public void setSeeThrough(boolean seeThrough) {
+        setFacesSeeThrough(seeThrough);
+        setEdgesSeeThrough(seeThrough);
     }
 
     /** True only if both faces and edges are currently see-through. */
     @Override
-    public boolean isSeeTrough() {
-        return isFacesSeeTrough() && isEdgesSeeTrough();
+    public boolean isSeeThrough() {
+        return isFacesSeeThrough() && isEdgesSeeThrough();
     }
 
     @Override

@@ -1,9 +1,9 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.Line;
+package me.simoncrafter.CraftersDisplayLibrary.display.line;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -17,9 +17,9 @@ import java.util.function.Consumer;
 
 /**
  * A 3D line/beam between two points, rendered via a {@link RawLineDisplay} (4 thin
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay} panels arranged around the
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay} panels arranged around the
  * line's axis). Used as the edge type for
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorDisplay}.
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorDisplay}.
  * <p>
  * This is a {@link PositionObject} wrapper: the start point and direction passed to
  * {@link #create}/{@link #createFromDirection} are kept as {@code baseStartPoint}/{@code baseDirection}
@@ -104,12 +104,12 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return rawLine.getColor();
     }
 
-    public boolean isSeeTrough() {
-        return rawLine.isSeeTrough();
+    public boolean isSeeThrough() {
+        return rawLine.isSeeThrough();
     }
 
-    public void setSeeTrough(boolean seeTrough) {
-        rawLine.setSeeTrough(seeTrough);
+    public void setSeeThrough(boolean seeThrough) {
+        rawLine.setSeeThrough(seeThrough);
     }
 
     /** The line's start point, in this object's local space. */

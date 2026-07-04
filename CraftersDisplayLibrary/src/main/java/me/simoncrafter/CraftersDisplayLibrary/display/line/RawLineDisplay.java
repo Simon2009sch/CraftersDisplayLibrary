@@ -1,6 +1,6 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.Line;
+package me.simoncrafter.CraftersDisplayLibrary.display.line;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.util.Transformation;
@@ -10,13 +10,13 @@ import org.joml.Vector3f;
 /**
  * Internal geometry engine behind {@link LineColorDisplay}. Given a start point, direction vector,
  * and a {@code worldLocation} origin, renders a line as 4 thin
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.ColorDisplay} "walls": each offset
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay} "walls": each offset
  * perpendicular to the line's axis by {@code thickness / 2} and rotated 90° apart around that axis.
  * This billboard-less arrangement means that from any horizontal viewing angle at least one wall
  * renders edge-on (thin) and one renders broadside (visible as a flat line), faking a line that looks
  * roughly line-like from every direction without needing an actual billboard entity type.
  * <p>
- * Unlike {@link LineColorDisplay}, this class is not a {@link me.simoncrafter.CraftersDisplayLibrary.def.PositionObject}
+ * Unlike {@link LineColorDisplay}, this class is not a {@link me.simoncrafter.CraftersDisplayLibrary.core.PositionObject}
  * - it operates directly in the coordinate space it's given and has no parent/child transform
  * propagation of its own.
  */
@@ -26,7 +26,7 @@ public class RawLineDisplay {
     private Vector3f direction;
     private float thickness;
     private Color color;
-    private boolean seeTrough;
+    private boolean seeThrough;
 
     private ColorDisplay display0;
     private ColorDisplay display1;
@@ -42,13 +42,13 @@ public class RawLineDisplay {
         this.color = color;
         this.worldLocation = worldLocation;
         this.thickness = thickness;
-        this.seeTrough = false;
+        this.seeThrough = false;
     }
 
     /** Spawns the 4 backing panel entities at their initial positions. */
     public void spawn() {
         float lineLength = direction.length();
-        Quaternionf directionRotation = vectorToQuaternion(direction);
+        Quaternionf directionRotation = LineColorDisplay.vectorToQuaternion(direction);
 
         // Create 4 displays arranged 90° apart
         // Each display i is rotated by i*90° around Y axis, then by direction rotation
@@ -59,7 +59,7 @@ public class RawLineDisplay {
             Vector3f offset = getOffsetForDisplay(i);
 
             ColorDisplay display = ColorDisplay.create(worldLocation, new Vector3f(thickness, lineLength, thickness), offset.add(startPoint), finalRotation, color);
-            display.setSeeTrough(seeTrough);
+            display.setSeeThrough(seeThrough);
             display.spawnDisplay();
 
             switch (i) {
@@ -121,12 +121,12 @@ public class RawLineDisplay {
     }
 
     /** Sets see-through on all 4 backing panels (panels not yet spawned are skipped). */
-    public void setSeeTrough(boolean seeTrough) {
-        this.seeTrough = seeTrough;
-        if (display0 != null) display0.setSeeTrough(seeTrough);
-        if (display1 != null) display1.setSeeTrough(seeTrough);
-        if (display2 != null) display2.setSeeTrough(seeTrough);
-        if (display3 != null) display3.setSeeTrough(seeTrough);
+    public void setSeeThrough(boolean seeThrough) {
+        this.seeThrough = seeThrough;
+        if (display0 != null) display0.setSeeThrough(seeThrough);
+        if (display1 != null) display1.setSeeThrough(seeThrough);
+        if (display2 != null) display2.setSeeThrough(seeThrough);
+        if (display3 != null) display3.setSeeThrough(seeThrough);
     }
 
     public Vector3f getStartPoint() {
@@ -154,8 +154,8 @@ public class RawLineDisplay {
         return color;
     }
 
-    public boolean isSeeTrough() {
-        return seeTrough;
+    public boolean isSeeThrough() {
+        return seeThrough;
     }
 
     /**
@@ -187,7 +187,7 @@ public class RawLineDisplay {
         if (display0 == null || display1 == null || display2 == null || display3 == null) return;
 
         float lineLength = direction.length();
-        Quaternionf directionRotation = vectorToQuaternion(direction);
+        Quaternionf directionRotation = LineColorDisplay.vectorToQuaternion(direction);
 
         for (int i = 0; i < 4; i++) {
             Quaternionf localRotation = new Quaternionf().rotateY((float) (i * Math.PI / 2f));
@@ -214,35 +214,5 @@ public class RawLineDisplay {
             case 3 -> new Vector3f(0, 0, -offset);     // -Z direction
             default -> new Vector3f();
         };
-    }
-
-    /**
-     * Computes the rotation that aligns the reference direction {@code (0, 1, 0)} to {@code direction},
-     * handling the parallel (identity) and antiparallel (180° about an arbitrary perpendicular axis)
-     * degenerate cases.
-     */
-    private static Quaternionf vectorToQuaternion(Vector3f direction) {
-        Vector3f normalizedDir = new Vector3f(direction).normalize();
-        Vector3f referenceDir = new Vector3f(0, 1, 0);
-
-        float dot = referenceDir.dot(normalizedDir);
-        dot = Math.max(-1.0f, Math.min(1.0f, dot));
-
-        if (Math.abs(dot - 1.0f) < 1e-6f) {
-            return new Quaternionf();
-        }
-
-        if (Math.abs(dot + 1.0f) < 1e-6f) {
-            return new Quaternionf().fromAxisAngleRad(new Vector3f(1, 0, 0), (float) Math.PI);
-        }
-
-        Vector3f axis = referenceDir.cross(normalizedDir, new Vector3f());
-        axis.normalize();
-
-        float theta = (float) Math.acos(dot);
-        Quaternionf quat = new Quaternionf();
-        quat.fromAxisAngleRad(axis, theta);
-
-        return quat.normalize();
     }
 }

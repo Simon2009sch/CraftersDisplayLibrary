@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.interfaces;
+package me.simoncrafter.CraftersDisplayLibrary.core.interfaces;
 
 /**
  * A colourable display shaped like a cuboid (a plain solid cube, a wireframe cube, or a filled
@@ -10,7 +10,7 @@ public interface ICuboidDisplay extends IColorableDisplay {
 
     void spawnDisplay();
 
-    boolean isSeeTrough();
+    boolean isSeeThrough();
 
-    void setSeeTrough(boolean seeTrough);
+    void setSeeThrough(boolean seeThrough);
 }

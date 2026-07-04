@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube;
+package me.simoncrafter.CraftersDisplayLibrary.display.wireframecube;
 
 /**
  * The 6 faces of a cube. Each face maps to the 4 {@link CubeEdge}s that border it,

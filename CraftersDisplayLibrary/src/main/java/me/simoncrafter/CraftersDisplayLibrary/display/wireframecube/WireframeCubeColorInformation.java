@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube;
+package me.simoncrafter.CraftersDisplayLibrary.display.wireframecube;
 
 import org.bukkit.Color;
 import org.jetbrains.annotations.Contract;
@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Immutable holder for the colours of a wireframe cube's 12 edges.
  * <p>
- * Mirrors {@link me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorInformation},
+ * Mirrors {@link me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation},
  * but keyed by {@link CubeEdge}. The {@code with...} methods return new instances.
  */
 public class WireframeCubeColorInformation {

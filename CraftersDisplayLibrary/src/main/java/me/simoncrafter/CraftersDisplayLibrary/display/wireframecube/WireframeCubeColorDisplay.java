@@ -1,11 +1,11 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube;
+package me.simoncrafter.CraftersDisplayLibrary.display.wireframecube;
 
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.active.Line.LineColorDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.ICuboidDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.display.line.LineColorDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -22,7 +22,7 @@ import java.util.List;
  * A wireframe cube whose 12 edges are {@link LineColorDisplay}s and whose faces are not drawn.
  * <p>
  * Built in the same style as
- * {@link me.simoncrafter.CraftersDisplayLibrary.def.active.Cube.CubeColorDisplay}: the edges are
+ * {@link me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay}: the edges are
  * children of this object, so all of the inherited transform controls (move / rotate / scale, with
  * or without animation) propagate to them. Non-uniform scaling turns the cube into a rectangular
  * box; edge thickness is kept constant regardless of scale.
@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class WireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
 
-    private boolean seeTrough;
+    private boolean seeThrough;
     private boolean hiddenByDefault = false;
     private float thickness;
     private WireframeCubeColorInformation colorInformation;
@@ -42,7 +42,7 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
     private WireframeCubeColorDisplay(Transformation localTransform, Location location, WireframeCubeColorInformation colorInformation, boolean seeThrough, float thickness) {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
         this.colorInformation = colorInformation;
-        this.seeTrough = seeThrough;
+        this.seeThrough = seeThrough;
         this.thickness = thickness;
     }
 
@@ -69,7 +69,7 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
                 Vector3f direction = edge.getDirection();
 
                 LineColorDisplay line = LineColorDisplay.createFromDirection(start, direction, colorInformation.getEdge(edge), getLocation(), thickness);
-                line.setSeeTrough(seeTrough);
+                line.setSeeThrough(seeThrough);
                 line.spawnDisplay();
                 line.hideByDefault(hiddenByDefault);
 
@@ -140,14 +140,14 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
         }
     }
 
-    public boolean isSeeTrough() {
-        return seeTrough;
+    public boolean isSeeThrough() {
+        return seeThrough;
     }
 
-    public void setSeeTrough(boolean seeTrough) {
-        this.seeTrough = seeTrough;
+    public void setSeeThrough(boolean seeThrough) {
+        this.seeThrough = seeThrough;
         for (LineColorDisplay line : edges.values()) {
-            line.setSeeTrough(seeTrough);
+            line.setSeeThrough(seeThrough);
         }
     }
 

@@ -1,18 +1,14 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active;
+package me.simoncrafter.CraftersDisplayLibrary.display.panel;
 
-import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
-import me.simoncrafter.CraftersDisplayLibrary.Tags;
-import me.simoncrafter.CraftersDisplayLibrary.def.PositionObject;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.def.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.core.Tags;
+import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
-import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -23,18 +19,18 @@ import java.util.List;
  * {@link BlockData} block (e.g. stone, diamond_block, a log) instead of a solid-colour panel.
  * <p>
  * This is the {@code BlockDisplay}-based counterpart to {@link ColorDisplay}: it extends
- * {@link PositionObject} and participates in the same scene-graph transform tree, but because
- * the backing entity renders a real block state rather than a coloured rectangle, it does
+ * {@link AbstractEntityBackedDisplay} and participates in the same scene-graph transform tree, but
+ * because the backing entity renders a real block state rather than a coloured rectangle, it does
  * <b>not</b> implement {@code IColorableDisplay}. Use {@link #setBlock(BlockData)} /
  * {@link #getBlock()} to control which block is shown.
  * <p>
  * Instances are created with {@link #create}; the constructor is private. Call
  * {@link #spawnDisplay()} once the object's transform/location is set up to actually spawn the
  * backing entity - it is idempotent and simply returns the existing entity on subsequent calls.
- * Every inherited transform-mutating method from {@link PositionObject} (move/rotate/scale,
- * animated or not) is overridden here to also push the new {@link Transformation} onto the live
- * entity via {@link #updateEntity(int)}. Unlike {@link ColorDisplay} (which fakes a colour panel
- * out of an empty {@code TextDisplay} and therefore needs the {@code scaleToBlock} correction), a
+ * Transform-mutating methods (move/rotate/scale, animated or not) are inherited from
+ * {@link AbstractEntityBackedDisplay}, which pushes every change onto the live entity via
+ * {@link #resolveEntityTransform()}. Unlike {@link ColorDisplay} (which fakes a colour panel out of
+ * an empty {@code TextDisplay} and therefore needs the {@code scaleToBlock} correction), a
  * {@link BlockDisplay} entity's own scale of 1 already renders as one full block, so no such
  * correction is applied here - a scale of {@code (1,1,1)} is one block, as expected.
  * <p>
@@ -44,12 +40,9 @@ import java.util.List;
  * corrects for this by re-deriving the translation so the block's own center lands on this
  * object's resolved position, keeping it centered under scaling and rotation alike.
  */
-public class BlockDisplayObject extends PositionObject implements IHidable {
+public class BlockDisplayObject extends AbstractEntityBackedDisplay<BlockDisplay> {
 
-    private BlockDisplay entity = null;
     private BlockData blockData;
-    private Display.Billboard billboard = Display.Billboard.FIXED;
-    private boolean hiddenByDefault = false;
 
     private BlockDisplayObject(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, BlockData blockData, Display.Billboard billboard) {
         super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
@@ -125,101 +118,10 @@ public class BlockDisplayObject extends PositionObject implements IHidable {
         return entity;
     }
 
-    /** {@inheritDoc} Also teleports the backing entity by the same delta. */
+    /** {@inheritDoc} Applies the {@link #centerOrigin} correction on top of the resolved final transform. */
     @Override
-    public void setLocation(Location loc) {
-        super.setLocation(loc);
-
-        if (entity != null) {
-            Vector oldLocation = entity.getLocation().toVector();
-            Vector newLocation = loc.toVector();
-            Vector difference = newLocation.subtract(oldLocation);
-
-            entity.teleport(entity.getLocation().clone().add(difference));
-        }
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void setParentTransform(Transformation transformation, int time) {
-        super.setParentTransform(transformation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void setLocalTransform(Transformation transformation, int time) {
-        super.setLocalTransform(transformation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void moveRelative(Vector3f movement, int time) {
-        super.moveRelative(movement, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void moveAbsolute(Vector3f position, int time) {
-        super.moveAbsolute(position, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void LRotateAbsolute(Quaternionf rotation, int time) {
-        super.LRotateAbsolute(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void LRotateRelative(Quaternionf rotation, int time) {
-        super.LRotateRelative(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void RRotateAbsolute(Quaternionf rotation, int time) {
-        super.RRotateAbsolute(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void RRotateRelative(Quaternionf rotation, int time) {
-        super.RRotateRelative(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void scaleAbsolute(Vector3f scale, int time) {
-        super.scaleAbsolute(scale, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void scaleRelative(Vector3f scale, int time) {
-        super.scaleRelative(scale, time);
-        updateEntity(time);
-    }
-
-
-    /**
-     * Pushes this object's current {@link #getFinalTransform() final transform} onto the live
-     * entity, with client-side interpolation over {@code time} ticks. A no-op if the entity
-     * hasn't been spawned yet or is no longer valid.
-     */
-    private void updateEntity(int time) {
-        if (entity == null || !entity.isValid()) return;
-        entity.setTransformation(centerOrigin(getFinalTransform()));
-        entity.setInterpolationDelay(0);
-        entity.setInterpolationDuration(time);
+    protected Transformation resolveEntityTransform() {
+        return centerOrigin(getFinalTransform());
     }
 
     /**
@@ -239,15 +141,6 @@ public class BlockDisplayObject extends PositionObject implements IHidable {
         return new Transformation(centeredTranslation, transformation.getLeftRotation(), transformation.getScale(), transformation.getRightRotation());
     }
 
-    /** Sets the billboard mode; takes effect on the entity next time it is spawned. */
-    public void setBillboard(Display.Billboard billboard) {
-        this.billboard = billboard;
-    }
-
-    public Display.Billboard getBillboard() {
-        return billboard;
-    }
-
     /**
      * Changes the block this display renders. Applies immediately to the live entity if already
      * spawned and valid.
@@ -264,53 +157,26 @@ public class BlockDisplayObject extends PositionObject implements IHidable {
         return blockData;
     }
 
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
-    /** {@inheritDoc} Applies immediately to the live entity if already spawned. */
-    @Override
-    public IDisplayable hideByDefault(boolean hide) {
-        hiddenByDefault = hide;
-        if (entity != null) {
-            entity.setVisibleByDefault(!hide);
-        }
-        return this;
-    }
-
-    @Override
-    public IDisplayable showForPlayer(Player player) {
-        if (entity != null) {
-            player.showEntity(PluginHolder.getPlugin(), entity);
-        }
-        return this;
-    }
-
-    @Override
-    public IDisplayable hideForPlayer(Player player) {
-        if (entity != null) {
-            player.hideEntity(PluginHolder.getPlugin(), entity);
-        }
-        return this;
-    }
-
     /**
      * {@inheritDoc}
      * <p>
-     * <b>Not implemented</b> - always returns {@code null}. This is a known gap rather than
-     * intentional behaviour.
+     * Produces a new, unspawned {@code BlockDisplayObject} with the same transform, location,
+     * children (shallow copy) and block data as this one. The copy's backing entity is always
+     * {@code null} - call {@link #spawnDisplay()} on it separately to bring it to life.
      */
     @Override
     public IDisplayable clone() {
-        return null;
-    }
-
-    /** {@inheritDoc} Also removes the backing entity from the world, if spawned. */
-    @Override
-    public void remove() {
-        super.remove();
-        if (entity != null) entity.remove();
-        entity = null;
+        Transformation local = getLocalTransform();
+        BlockDisplayObject copy = new BlockDisplayObject(
+                getLocation(),
+                new Vector3f(local.getScale()),
+                new Vector3f(local.getTranslation()),
+                new Quaternionf(local.getLeftRotation()),
+                new Quaternionf(local.getRightRotation()),
+                blockData,
+                billboard);
+        copy.setChildren(getChildren());
+        copy.hiddenByDefault = hiddenByDefault;
+        return copy;
     }
 }

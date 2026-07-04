@@ -1,4 +1,4 @@
-package me.simoncrafter.CraftersDisplayLibrary.def.active.Cube;
+package me.simoncrafter.CraftersDisplayLibrary.display.cube;
 
 import org.bukkit.Color;
 import org.jetbrains.annotations.Contract;
@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Contract;
 /**
  * Immutable holder for the colours of a {@link CubeColorDisplay}'s 6 faces.
  * <p>
- * Mirrors {@link me.simoncrafter.CraftersDisplayLibrary.def.active.WireframeCube.WireframeCubeColorInformation}
+ * Mirrors {@link me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation}
  * for the solid-face cube. Despite the name, the {@code setX(Color)} methods are not mutators: each
  * returns a new instance with one face recoloured, leaving the original unchanged
  * ({@code @Contract("_ -> new")}), builder-style.
