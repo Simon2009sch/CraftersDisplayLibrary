@@ -173,6 +173,7 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void addChild(IDisplayable child) {
+        rebaseChildLocation(child);
         children.add(child);
         updateChildren(0);
     }
@@ -184,8 +185,30 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void setChildren(List<IDisplayable> children) {
+        for (IDisplayable child : children) {
+            rebaseChildLocation(child);
+        }
         this.children = new ArrayList<>(children);
         updateChildren(0);
+    }
+
+    /**
+     * Re-anchors {@code child}'s {@link IDisplayable#getLocation() location} onto this object's own,
+     * compensating the child's local-transform translation so its current rendered position does not
+     * jump - the same trick {@code rebaseEntity} uses. This exists because parent-transform
+     * propagation ({@link #updateChildren(int)}/{@link #setParentTransform}) only ever affects the
+     * local transform's translation, never {@code Location}; a child whose own {@code Location}
+     * differs from this object's (e.g. two independently created displays parented together, or a
+     * structure assembled with per-block absolute locations) would otherwise render at
+     * {@code its own Location + finalTransform.translation}, so this object's rotation/scale - which
+     * only changes the translation component - would appear to have no effect on it at all.
+     */
+    private void rebaseChildLocation(IDisplayable child) {
+        Location childLocation = child.getLocation();
+        Location parentLocation = getLocation();
+        Vector3f compensation = childLocation.toVector().subtract(parentLocation.toVector()).toVector3f();
+        child.setLocation(parentLocation);
+        child.moveRelative(compensation, 0);
     }
 
     /** Runs {@code consumer} for every current child. */
@@ -454,7 +477,7 @@ public class PositionObject implements IDisplayable {
     }
 
     /** Combines {@link #getParentTransform()} and {@link #getLocalTransform()} via the current {@link #getParentApplierFunction() applier function} into this object's resolved transform. */
-    protected Transformation getFinalTransform() {
+    public Transformation getFinalTransform() {
         return parentApplierFunction.apply(parentTransform, localTransform);
     }
 

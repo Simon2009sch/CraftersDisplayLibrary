@@ -386,7 +386,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     }
 
     @Override
-    protected Transformation getFinalTransform() {
+    public Transformation getFinalTransform() {
         return super.getFinalTransform();
     }
 

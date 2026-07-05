@@ -5,7 +5,10 @@ import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.animation.spi.AnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
+import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
+import net.kyori.adventure.text.BlockNBTComponent;
 import org.bukkit.Color;
+import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.joml.Quaternionf;
@@ -35,8 +38,8 @@ public class GlobalAnimationTickHandler {
     private static Map<PositionObject, AnimationInterpolationFunction<Quaternionf>> RRotationAnimations = new HashMap<>();
     private static Map<PositionObject, AnimationInterpolationFunction<Vector3f>> translationAnimations = new HashMap<>();
     private static Map<PositionObject, AnimationInterpolationFunction<Vector3f>> scaleAnimations = new HashMap<>();
+    private static Map<PositionObject, CustomTypeAnimationInterpolationFunction<?, ?>> generalAnimation = new HashMap<>();
     private static Map<IColorableDisplay, CustomTypeAnimationInterpolationFunction<Color, IColorableDisplay>> colorAnimations = new HashMap<>();
-
 
     private static BukkitTask tickTask;
     private static GlobalAnimationTickHandler instance;
@@ -90,11 +93,16 @@ public class GlobalAnimationTickHandler {
         checkIfStarted();
     }
 
+    public static void registerNewGeneralAnimation(PositionObject obj, CustomTypeAnimationInterpolationFunction<?, ?> animationFunction) {
+        generalAnimation.put(obj, animationFunction);
+        checkIfStarted();
+    }
+
     /**
      * Cancels any in-progress colour animation on {@code obj} without applying its end value.
      * Used e.g. when a display is removed or its colour animation is being replaced by
      * higher-level code that manages its own transition (see
-     * {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinterData#setAnimation}).
+     * {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter#setPlayerAnimation(Player, IViewTinterFunction, int)}).
      */
     public static void removeColorAnimation(IColorableDisplay obj) {
         colorAnimations.remove(obj);
@@ -143,6 +151,18 @@ public class GlobalAnimationTickHandler {
         // remove finished animations
         for (IColorableDisplay colorable : listOfColorAnimationsToRemove) {
             colorAnimations.remove(colorable);
+        }
+
+        List<Object> listOfGeneralAnimationsToRemove = new ArrayList<>();
+        // have to handle in seperate loop becaues of type difference
+        for (Object anim : generalAnimation.keySet()) {
+            if (generalAnimation.containsKey(anim) && generalAnimation.get(anim).onTick()) {
+                listOfGeneralAnimationsToRemove.add(anim);
+            }
+        }
+        // remove finished animations
+        for (Object anim : listOfGeneralAnimationsToRemove) {
+            generalAnimation.remove(anim);
         }
 
         for (PositionObject obj : objectsToLoop) {

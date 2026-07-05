@@ -1,5 +1,6 @@
 package me.simoncrafter.mods.displayTestPlugin;
 
+import me.simoncrafter.CraftersDisplayLibrary.builder.StructureBuilder;
 import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
@@ -12,6 +13,7 @@ import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCub
 import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.TextDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.BlockDisplayObject;
+import me.simoncrafter.CraftersDisplayLibrary.entity.ShulkerBasedCollisionBox;
 import me.simoncrafter.CraftersDisplayLibrary.animation.AnimationFactory;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
@@ -35,10 +37,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.command.*;
 import org.bukkit.entity.*;
+import org.bukkit.util.Transformation;import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
@@ -65,6 +69,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
         typeHandlers.put("filledwireframe", new FilledWireframeDisplayHandler());
         typeHandlers.put("text", new TextDisplayHandler());
         typeHandlers.put("blockdisplay", new BlockDisplayHandler());
+        typeHandlers.put("collision", new CollisionBoxHandler());
+        typeHandlers.put("structure", new StructureHandler());
     }
 
     @Override
@@ -88,6 +94,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
             case "tint" -> handleTint(sender, args);
             case "cleartints" -> handleClearTints(sender, args);
             case "setanimation" -> handleSetAnimation(sender, args);
+            case "addcollision" -> handleAddCollision(sender, args);
+            case "addchild" -> handleAddChild(sender, args);
+            case "assemble" -> handleAssemble(sender, args);
+            case "disassemble" -> handleDisassemble(sender, args);
             default -> sender.sendMessage(Component.text("Unknown action: " + action, NamedTextColor.RED));
         }
 
@@ -207,6 +217,186 @@ public class testCommand implements CommandExecutor, TabExecutor {
             sender.sendMessage(Component.text("Failed to despawn \"" + id + "\"", NamedTextColor.RED));
         } else {
             sender.sendMessage(Component.text("Despawned \"" + id + "\"", NamedTextColor.GREEN));
+        }
+    }
+
+    private void handleAddCollision(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /test addcollision <parentId> [scale] [translation]", NamedTextColor.RED));
+            return;
+        }
+
+        String parentId = args[1];
+        PositionObject parent = objectMap.get(parentId);
+        if (parent == null) {
+            sender.sendMessage(Component.text("\"" + parentId + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        String childId = parentId + "/colision";
+        if (objectMap.containsKey(childId)) {
+            sender.sendMessage(Component.text("\"" + childId + "\" already exists!", NamedTextColor.RED));
+            return;
+        }
+
+        Vector3f scale = new Vector3f(1, 1, 1);
+        if (args.length > 2) {
+            Vector3f parsed = parseVector(args[2]);
+            if (parsed == null) {
+                sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                return;
+            }
+            scale = parsed;
+        }
+
+        Vector3f translation = new Vector3f(0, 0, 0);
+        if (args.length > 3) {
+            Vector3f parsed = parseVector(args[3]);
+            if (parsed == null) {
+                sender.sendMessage(Component.text("Invalid translation format. Use x,y,z", NamedTextColor.RED));
+                return;
+            }
+            translation = parsed;
+        }
+
+        ShulkerBasedCollisionBox collisionBox = ShulkerBasedCollisionBox.create(parent.getLocation(), scale, translation);
+        objectMap.put(childId, collisionBox);
+        parent.addChild(collisionBox);
+
+        sender.sendMessage(Component.text("Added collision box \"" + childId + "\" as a child of \"" + parentId + "\" - use /test spawn " + childId + " to spawn it", NamedTextColor.GREEN));
+    }
+
+    private void handleAddChild(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /test addchild <parentId> <childId>", NamedTextColor.RED));
+            return;
+        }
+
+        String parentId = args[1];
+        String childId = args[2];
+
+        if (parentId.equals(childId)) {
+            sender.sendMessage(Component.text("An object cannot be its own child!", NamedTextColor.RED));
+            return;
+        }
+
+        PositionObject parent = objectMap.get(parentId);
+        if (parent == null) {
+            sender.sendMessage(Component.text("\"" + parentId + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        PositionObject child = objectMap.get(childId);
+        if (child == null) {
+            sender.sendMessage(Component.text("\"" + childId + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        parent.addChild(child);
+        sender.sendMessage(Component.text("Added \"" + childId + "\" as a child of \"" + parentId + "\"", NamedTextColor.GREEN));
+    }
+
+    private void handleAssemble(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("This command can only be used by players", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /test assemble [id] <startX,startY,startZ> <endX,endY,endZ> [spawn] [removeblocks] [addcollision]", NamedTextColor.RED));
+            return;
+        }
+
+        String id;
+        int startArgIndex;
+        Vector3f startVec = parseVector(args[1]);
+
+        if (startVec != null) {
+            id = "structure_" + System.currentTimeMillis();
+            startArgIndex = 1;
+        } else {
+            id = args[1];
+            startArgIndex = 2;
+        }
+
+        if (objectMap.containsKey(id)) {
+            sender.sendMessage(Component.text("\"" + id + "\" already exists!", NamedTextColor.RED));
+            return;
+        }
+
+        if (startVec == null) {
+            startVec = parseVector(args[startArgIndex]);
+        }
+        if (startVec == null) {
+            sender.sendMessage(Component.text("Invalid start vector format. Use x,y,z", NamedTextColor.RED));
+            return;
+        }
+
+        int endArgIndex = startArgIndex + 1;
+        if (endArgIndex >= args.length) {
+            sender.sendMessage(Component.text("Missing end vector. Usage: /test assemble [id] <startX,startY,startZ> <endX,endY,endZ> [spawn] [removeblocks] [addcollision]", NamedTextColor.RED));
+            return;
+        }
+
+        Vector3f endVec = parseVector(args[endArgIndex]);
+        if (endVec == null) {
+            sender.sendMessage(Component.text("Invalid end vector format. Use x,y,z", NamedTextColor.RED));
+            return;
+        }
+
+        boolean spawn = false;
+        boolean removeBlocks = false;
+        boolean addCollision = false;
+
+        for (int i = endArgIndex + 1; i < args.length; i++) {
+            switch (args[i].toLowerCase()) {
+                case "spawn" -> spawn = true;
+                case "removeblocks" -> removeBlocks = true;
+                case "addcollision" -> addCollision = true;
+            }
+        }
+
+        World world = player.getWorld();
+        Vector corner1 = new Vector(startVec.x, startVec.y, startVec.z);
+        Vector corner2 = new Vector(endVec.x, endVec.y, endVec.z);
+
+        PositionObject structure = StructureBuilder.assembleOutOfBlocks(
+                world, corner1, corner2,
+                List.of(Material.AIR, Material.WATER, Material.LAVA),              // blocksToIgnore — none by default
+                addCollision,
+                removeBlocks,
+                Material.AIR,            // removeBlockMaterial
+                spawn
+        );
+        objectMap.put(id, structure);
+
+        int blockCount = structure.getChildren().size();
+        sender.sendMessage(Component.text("Assembled structure \"" + id + "\" from " + blockCount + " blocks"
+                + (spawn ? " (spawned)" : " (not spawned — use /test spawn " + id + ")")
+                + (removeBlocks ? " (blocks removed)" : "")
+                + (addCollision ? " (collision added)" : ""), NamedTextColor.GREEN));
+    }
+
+    private void handleDisassemble(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /test disassemble <id>", NamedTextColor.RED));
+            return;
+        }
+
+        String id = args[1];
+        PositionObject obj = objectMap.get(id);
+        if (obj == null) {
+            sender.sendMessage(Component.text("\"" + id + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        try {
+            int blockCount = obj.getChildren().size();
+            StructureBuilder.disassembleOutOfObject(obj);
+            obj.remove();
+            sender.sendMessage(Component.text("Disassembled \"" + id + "\" (" + blockCount + " blocks placed in world)", NamedTextColor.GREEN));
+        } catch (Exception e) {
+            sender.sendMessage(Component.text("Error disassembling structure: " + e.getMessage(), NamedTextColor.RED));
         }
     }
 
@@ -476,15 +666,27 @@ public class testCommand implements CommandExecutor, TabExecutor {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if (args.length == 1) {
-            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation"), args[0]);
+            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble"), args[0]);
         }
 
         if (args[0].equalsIgnoreCase("create") && args.length == 3) {
             return recommendListThatContainsObject(typeHandlers.keySet(), args[2]);
         }
 
-        if ((args[0].equalsIgnoreCase("edit") || args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("spawn") || args[0].equalsIgnoreCase("despawn")) && args.length == 2) {
+        if ((args[0].equalsIgnoreCase("edit") || args[0].equalsIgnoreCase("remove") || args[0].equalsIgnoreCase("spawn") || args[0].equalsIgnoreCase("despawn") || args[0].equalsIgnoreCase("disassemble")) && args.length == 2) {
             return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if ((args[0].equalsIgnoreCase("addcollision") || args[0].equalsIgnoreCase("addchild")) && args.length == 2) {
+            return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("assemble") && args.length >= 4) {
+            return recommendListThatContainsObject(List.of("spawn", "removeblocks", "addcollision"), args[args.length - 1]);
+        }
+
+        if (args[0].equalsIgnoreCase("addchild") && args.length == 3) {
+            return recommendListThatContainsObject(objectMap.keySet(), args[2]);
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 3) {
@@ -2354,6 +2556,248 @@ public class testCommand implements CommandExecutor, TabExecutor {
                     }
                     String interpolation = " (" + getInterpolationMode(values) + ")";
                     sender.sendMessage(Component.text("Updated right rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                default -> false;
+            };
+        }
+    }
+
+    class CollisionBoxHandler implements DisplayTypeHandler {
+        @Override
+        public PositionObject create(Location loc) {
+            return ShulkerBasedCollisionBox.create(loc, new Vector3f(1, 1, 1), new Vector3f());
+        }
+
+        @Override
+        public boolean canHandle(PositionObject obj) {
+            return obj instanceof ShulkerBasedCollisionBox;
+        }
+
+        @Override
+        public boolean spawn(PositionObject obj, CommandSender sender) {
+            ShulkerBasedCollisionBox box = (ShulkerBasedCollisionBox) obj;
+            try {
+                box.spawnEntity();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error spawning collision box: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean despawn(PositionObject obj, CommandSender sender) {
+            ShulkerBasedCollisionBox box = (ShulkerBasedCollisionBox) obj;
+            try {
+                box.remove();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error despawning collision box: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean edit(PositionObject obj, String property, String[] values, CommandSender sender) {
+            ShulkerBasedCollisionBox box = (ShulkerBasedCollisionBox) obj;
+
+            return switch (property) {
+                case "position" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f pos = parseVector(values[0]);
+                    if (pos == null) {
+                        sender.sendMessage(Component.text("Invalid position format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentPos = box.getLocalTransform().getTranslation();
+                        Vector3f targetPos = isRelative(values) ? new Vector3f(currentPos).add(pos) : pos;
+                        AnimationFactory.registerTranslationAnimationSmooth(box, duration, currentPos, targetPos);
+                    } else {
+                        if (isRelative(values)) {
+                            box.moveRelative(pos, duration);
+                        } else {
+                            box.moveAbsolute(pos, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "scale" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f scale = parseVector(values[0]);
+                    if (scale == null) {
+                        sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Vector3f currentScale = box.getLocalTransform().getScale();
+                        Vector3f targetScale = isRelative(values) ? new Vector3f(currentScale).add(scale) : scale;
+                        AnimationFactory.registerScalingAnimationSmooth(box, duration, currentScale, targetScale);
+                    } else {
+                        if (isRelative(values)) {
+                            box.scaleRelative(scale, duration);
+                        } else {
+                            box.scaleAbsolute(scale, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration] [linear|smooth]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (duration > 0 && hasSmoothInterpolation(values)) {
+                        Quaternionf currentRot = box.getLocalTransform().getLeftRotation();
+                        Quaternionf targetRot = isRelative(values) ? new Quaternionf(currentRot).mul(rot) : rot;
+                        AnimationFactory.registerLRotationAnimationSmooth(box, duration, currentRot, targetRot);
+                    } else {
+                        if (isRelative(values)) {
+                            box.LRotateRelative(rot, duration);
+                        } else {
+                            box.LRotateAbsolute(rot, duration);
+                        }
+                    }
+                    String interpolation = " (" + getInterpolationMode(values) + ")";
+                    sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + interpolation + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                default -> false;
+            };
+        }
+    }
+
+    class StructureHandler implements DisplayTypeHandler {
+        @Override
+        public PositionObject create(Location loc) {
+            return new PositionObject(new ArrayList<>(), new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf()), loc);
+        }
+
+        @Override
+        public boolean canHandle(PositionObject obj) {
+            return obj instanceof PositionObject && !(obj instanceof ColorDisplay) && !(obj instanceof CubeColorDisplay)
+                    && !(obj instanceof LineColorDisplay) && !(obj instanceof WireframeCubeColorDisplay)
+                    && !(obj instanceof FilledWireframeCubeColorDisplay) && !(obj instanceof TextDisplay)
+                    && !(obj instanceof BlockDisplayObject) && !(obj instanceof ShulkerBasedCollisionBox);
+        }
+
+        @Override
+        public boolean spawn(PositionObject obj, CommandSender sender) {
+            try {
+                obj.getChildren().forEach(child -> {
+                    if (child instanceof ColorDisplay) {
+                        ((ColorDisplay) child).spawnDisplay();
+                    }
+                });
+                sender.sendMessage(Component.text("Spawned structure children", NamedTextColor.GREEN));
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error spawning structure: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean despawn(PositionObject obj, CommandSender sender) {
+            try {
+                obj.remove();
+                sender.sendMessage(Component.text("Despawned structure", NamedTextColor.GREEN));
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error despawning structure: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean edit(PositionObject obj, String property, String[] values, CommandSender sender) {
+            return switch (property) {
+                case "position" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> position <x,y,z> [absolute|relative] [duration]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f pos = parseVector(values[0]);
+                    if (pos == null) {
+                        sender.sendMessage(Component.text("Invalid position format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (isRelative(values)) {
+                        obj.moveRelative(pos, duration);
+                    } else {
+                        obj.moveAbsolute(pos, duration);
+                    }
+                    sender.sendMessage(Component.text("Updated position (" + modeStr + ")" + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "rotation" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> rotation <x,y,z,w> [absolute|relative] [duration]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Quaternionf rot = parseQuaternion(values[0]);
+                    if (rot == null) {
+                        sender.sendMessage(Component.text("Invalid rotation format. Use x,y,z,w", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (isRelative(values)) {
+                        obj.LRotateRelative(rot, duration);
+                    } else {
+                        obj.LRotateAbsolute(rot, duration);
+                    }
+                    sender.sendMessage(Component.text("Updated rotation (" + modeStr + ")" + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
+                    yield true;
+                }
+                case "scale" -> {
+                    if (values.length < 1) {
+                        sender.sendMessage(Component.text("Usage: /test edit <id> scale <x,y,z> [absolute|relative] [duration]", NamedTextColor.RED));
+                        yield false;
+                    }
+                    Vector3f scale = parseVector(values[0]);
+                    if (scale == null) {
+                        sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                        yield false;
+                    }
+                    int duration = parseDuration(values);
+                    String modeStr = isRelative(values) ? "relative" : "absolute";
+
+                    if (isRelative(values)) {
+                        obj.scaleRelative(scale, duration);
+                    } else {
+                        obj.scaleAbsolute(scale, duration);
+                    }
+                    sender.sendMessage(Component.text("Updated scale (" + modeStr + ")" + (duration > 0 ? " over " + duration + " ticks" : ""), NamedTextColor.GREEN));
                     yield true;
                 }
                 default -> false;

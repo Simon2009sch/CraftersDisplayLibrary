@@ -1,38 +1,44 @@
 package me.simoncrafter.CraftersDisplayLibrary.core;
 
-import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
-import org.bukkit.util.Vector;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
 
 import java.util.List;
 
 /**
  * Shared base for the four "leaf" panel-family displays ({@code ColorDisplay}, {@code TextDisplay},
  * {@code BlockDisplayObject}, {@code ItemDisplayObject}) that are each backed directly by a single
- * live Bukkit {@link Display} entity of type {@code E} and previously each independently
- * re-implemented an identical block of transform-mutator boilerplate.
+ * live Bukkit {@link Display} entity of type {@code E}.
  * <p>
- * Every inherited transform-mutating method from {@link PositionObject} (move/rotate/scale, animated
- * or not) is overridden here to also push the new {@link Transformation} onto the live entity via
- * {@link #updateEntity(int)}. Subclasses supply {@link #resolveEntityTransform()} to compute the
- * actual transform to push (plain {@link #getFinalTransform()}, a {@code scaleToBlock(...)}-corrected
- * version, or a {@code centerOrigin(...)}-corrected version, depending on how their entity type
- * interprets scale/translation), and may override {@link #afterUpdateEntity()} to run extra resync
- * logic after every transform push (e.g. {@code ColorDisplay} resyncing its see-through flag).
+ * All entity-agnostic boilerplate (the {@code entity}/{@code hiddenByDefault} fields, every
+ * transform-mutator override that resyncs the live entity via {@link #updateEntity(int)},
+ * {@link #setLocation(Location)}, {@link #rebaseEntity(Location)}, and the {@link IHidable}
+ * delegation) lives in {@link AbstractEntityBackedPositionObject} and is inherited as-is; this class
+ * only adds what is specific to {@link Display} entities:
+ * <ul>
+ *     <li>{@link #updateEntity(int)} is overridden to push {@link #resolveEntityTransform()} onto
+ *     the entity via {@code Display.setTransformation}/{@code setInterpolationDuration}, instead of
+ *     the generic {@link AbstractEntityBackedPositionObject}'s {@code LivingEntity}-scale-attribute
+ *     sync (a {@link Display} is not a {@code LivingEntity}, so that generic logic would be a no-op
+ *     here regardless).</li>
+ *     <li>{@link #setBillboard(Display.Billboard)}/{@link #getBillboard()}, which have no equivalent
+ *     on the generic entity base since billboard mode is a {@link Display}-only concept.</li>
+ * </ul>
+ * Subclasses supply {@link #resolveEntityTransform()} to compute the actual transform to push (plain
+ * {@link #getFinalTransform() final transform}, a {@code scaleToBlock(...)}-corrected version, or a
+ * {@code centerOrigin(...)}-corrected version, depending on how their entity type interprets
+ * scale/translation), and may override {@link #afterUpdateEntity()} to run extra resync logic after
+ * every transform push (e.g. {@code ColorDisplay} resyncing its see-through flag).
  * <p>
- * {@link #setLocation(Location)} always null-checks the backing entity before teleporting it -
- * previously {@code ColorDisplay} did not, which was a latent NPE risk; that bug is fixed here as a
- * side effect of the deduplication. {@link #setBillboard(Display.Billboard)} applies immediately to
- * the live entity if spawned, for all four subclasses - previously only {@code TextDisplay} did this,
- * while the other three only applied the billboard mode on next spawn; this is an intentional,
- * approved behaviour change made uniform here.
+ * {@link #setLocation(Location)} (inherited) always null-checks the backing entity before teleporting
+ * it - previously {@code ColorDisplay} did not, which was a latent NPE risk; that bug was fixed as a
+ * side effect of the original deduplication into this class. {@link #setBillboard(Display.Billboard)}
+ * applies immediately to the live entity if spawned, for all four subclasses - previously only
+ * {@code TextDisplay} did this, while the other three only applied the billboard mode on next spawn;
+ * this is an intentional, approved behaviour change made uniform here.
  * <p>
  * <b>Known asymmetry - intentionally not addressed here:</b> {@code moveEntityStatic(Location)} is
  * deliberately NOT part of this base class. {@code ColorDisplay}, {@code BlockDisplayObject} and
@@ -44,17 +50,12 @@ import java.util.List;
  * <p>
  * {@link #rebaseEntity(Location)}, unlike {@code moveEntityStatic}, teleports the backing entity's
  * raw location <i>without</i> moving the visible display - it compensates the local transform
- * translation to cancel out the jump, and is implemented once here for all four subclasses.
+ * translation to cancel out the jump, and is implemented once in {@link AbstractEntityBackedPositionObject}
+ * for all four subclasses.
  *
  * @param <E> the concrete Bukkit {@link Display} subtype backing this display
  */
-public abstract class AbstractEntityBackedDisplay<E extends Display> extends PositionObject implements IHidable {
-
-    /** The backing entity, or {@code null} if not yet spawned (or after {@link #remove()}). */
-    protected E entity = null;
-
-    /** Whether this display is hidden from players by default. See {@link IHidable}. */
-    protected boolean hiddenByDefault = false;
+public abstract class AbstractEntityBackedDisplay<E extends Display> extends AbstractEntityBackedPositionObject<E> {
 
     /** The billboard mode; applied immediately to the live entity by {@link #setBillboard(Display.Billboard)}. */
     protected Display.Billboard billboard = Display.Billboard.FIXED;
@@ -64,156 +65,17 @@ public abstract class AbstractEntityBackedDisplay<E extends Display> extends Pos
     }
 
     /**
-     * Computes the {@link Transformation} that should be pushed onto the live entity for the current
-     * {@link #getFinalTransform() final transform}, applying whatever per-entity-type correction
-     * (block-scale, origin-centering, or none) this subclass' entity type needs.
-     */
-    protected abstract Transformation resolveEntityTransform();
-
-    /**
-     * Extension point invoked at the end of {@link #updateEntity(int)}, after the transform and
-     * interpolation timing have been pushed to the live entity. No-op by default; overridden by
-     * subclasses that need to resync additional per-entity state immediately after every transform
-     * push (e.g. {@code ColorDisplay} resyncing its see-through flag).
-     */
-    protected void afterUpdateEntity() {
-    }
-
-    /**
      * Pushes {@link #resolveEntityTransform()} onto the live entity, with client-side interpolation
      * over {@code time} ticks, then invokes {@link #afterUpdateEntity()}. A no-op if the entity hasn't
      * been spawned yet or is no longer valid.
      */
+    @Override
     protected void updateEntity(int time) {
         if (entity == null || !entity.isValid()) return;
         entity.setTransformation(resolveEntityTransform());
         entity.setInterpolationDelay(0);
         entity.setInterpolationDuration(time);
         afterUpdateEntity();
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void setParentTransform(Transformation transformation, int time) {
-        super.setParentTransform(transformation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void setLocalTransform(Transformation transformation, int time) {
-        super.setLocalTransform(transformation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void moveRelative(Vector3f movement, int time) {
-        super.moveRelative(movement, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void moveAbsolute(Vector3f position, int time) {
-        super.moveAbsolute(position, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void LRotateAbsolute(Quaternionf rotation, int time) {
-        super.LRotateAbsolute(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void LRotateRelative(Quaternionf rotation, int time) {
-        super.LRotateRelative(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void RRotateAbsolute(Quaternionf rotation, int time) {
-        super.RRotateAbsolute(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void RRotateRelative(Quaternionf rotation, int time) {
-        super.RRotateRelative(rotation, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void scaleAbsolute(Vector3f scale, int time) {
-        super.scaleAbsolute(scale, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also resyncs the backing entity's transform. */
-    @Override
-    public void scaleRelative(Vector3f scale, int time) {
-        super.scaleRelative(scale, time);
-        updateEntity(time);
-    }
-
-    /** {@inheritDoc} Also teleports the backing entity by the same delta, if spawned. */
-    @Override
-    public void setLocation(Location loc) {
-        super.setLocation(loc);
-
-        if (entity != null) {
-            Vector oldLocation = entity.getLocation().toVector();
-            Vector newLocation = loc.toVector();
-            Vector difference = newLocation.subtract(oldLocation);
-
-            entity.teleport(entity.getLocation().clone().add(difference));
-        }
-    }
-
-    /**
-     * Teleports the backing entity's raw location to {@code newLocation}, compensating this
-     * object's local transform translation so the display's rendered position does not change -
-     * a "rebase" that moves the entity's coordinate anchor without any visible jump.
-     * <p>
-     * Contrast with {@code moveEntityStatic(Location)} (declared per-subclass rather than here -
-     * see the class Javadoc), which teleports the entity <i>and</i> moves the visible display to
-     * match. This method is for the opposite case: re-anchoring a long-lived display's raw
-     * coordinates (e.g. after it has drifted far from its spawn point through many small
-     * {@link #moveRelative} calls, or before a change of world) while it keeps rendering exactly
-     * where it already was.
-     * <p>
-     * Correctly updates this object's tracked {@link #getLocation() location} to
-     * {@code newLocation} as part of the rebase. This matters: it means a later
-     * {@link #setLocation(Location)} call - even one passing the exact same coordinates that were
-     * previously used as a local-space {@link #moveRelative} offset - computes its move relative
-     * to the entity's actual current position rather than a stale pre-rebase one, so it will not
-     * unexpectedly re-apply that offset on top of the rebase.
-     * <p>
-     * If the entity hasn't been spawned yet, this simply updates the tracked location without
-     * touching the local transform, since there is nothing rendered yet whose position needs
-     * preserving.
-     *
-     * @param newLocation the world-space location to move the backing entity's raw position to
-     */
-    public void rebaseEntity(Location newLocation) {
-        Location originalLocation = getLocation();
-
-        if (entity == null) {
-            setLocationNoUpdate(newLocation);
-            return;
-        }
-
-        Vector3f delta = newLocation.toVector().subtract(originalLocation.toVector()).toVector3f();
-
-        entity.teleport(newLocation);
-        setLocationNoUpdate(newLocation);
-        moveRelative(delta.negate(), 0);
     }
 
     /** Sets the billboard mode; applies immediately to the live entity if already spawned and valid. */
@@ -227,44 +89,5 @@ public abstract class AbstractEntityBackedDisplay<E extends Display> extends Pos
     /** Gets the current billboard mode. */
     public Display.Billboard getBillboard() {
         return billboard;
-    }
-
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
-    /** {@inheritDoc} Applies immediately to the live entity if already spawned and valid. */
-    @Override
-    public IDisplayable hideByDefault(boolean hide) {
-        hiddenByDefault = hide;
-        if (entity != null && entity.isValid()) {
-            entity.setVisibleByDefault(!hide);
-        }
-        return this;
-    }
-
-    @Override
-    public IDisplayable showForPlayer(Player player) {
-        if (entity != null && entity.isValid()) {
-            player.showEntity(PluginHolder.getPlugin(), entity);
-        }
-        return this;
-    }
-
-    @Override
-    public IDisplayable hideForPlayer(Player player) {
-        if (entity != null && entity.isValid()) {
-            player.hideEntity(PluginHolder.getPlugin(), entity);
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} Also removes the backing entity from the world, if spawned. */
-    @Override
-    public void remove() {
-        super.remove();
-        if (entity != null) entity.remove();
-        entity = null;
     }
 }
