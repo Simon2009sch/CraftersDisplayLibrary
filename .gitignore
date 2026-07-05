@@ -21,6 +21,10 @@
 .springBeans
 .sts4-cache
 
+# AI
+.agentbridge
+.claude
+
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
