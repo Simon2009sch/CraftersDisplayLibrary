@@ -93,8 +93,8 @@
     </dependency>
   </dependencies>
   <properties>
-    <java.version>21</java.version>
-    <plugin.deploy.dir>C:\Coden\minecraftServer\PL-TEST\plugins</plugin.deploy.dir>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>21</java.version>
+    <plugin.deploy.dir>/home/simon/Coden/Java/MCCodeCamp/server/plugins</plugin.deploy.dir>
   </properties>
 </project>

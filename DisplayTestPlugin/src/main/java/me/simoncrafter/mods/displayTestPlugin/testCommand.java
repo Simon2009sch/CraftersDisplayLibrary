@@ -2,6 +2,7 @@ package me.simoncrafter.mods.displayTestPlugin;
 
 import me.simoncrafter.CraftersDisplayLibrary.builder.StructureBuilder;
 import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.core.PropertyLock;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.cube.CubeColorInformation;
@@ -98,6 +99,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             case "addchild" -> handleAddChild(sender, args);
             case "assemble" -> handleAssemble(sender, args);
             case "disassemble" -> handleDisassemble(sender, args);
+            case "propertylock" -> handlePropertyLock(sender, args);
             default -> sender.sendMessage(Component.text("Unknown action: " + action, NamedTextColor.RED));
         }
 
@@ -368,6 +370,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
                 Material.AIR,            // removeBlockMaterial
                 spawn
         );
+        structure.moveAbsolute(new Vector3f(0.5f, 0.5f, 0.5f), 0);
         objectMap.put(id, structure);
 
         int blockCount = structure.getChildren().size();
@@ -398,6 +401,87 @@ public class testCommand implements CommandExecutor, TabExecutor {
         } catch (Exception e) {
             sender.sendMessage(Component.text("Error disassembling structure: " + e.getMessage(), NamedTextColor.RED));
         }
+    }
+
+    private static final List<String> PROPERTY_LOCK_NAMES = List.of(
+            "leftxrot", "leftyrot", "leftzrot", "rightxrot", "rightyrot", "rightzrot",
+            "xscale", "yscale", "zscale", "xtranslation", "ytranslation", "ztranslation");
+
+    private static final List<String> ROTATION_LOCK_NAMES = List.of(
+            "leftxrot", "leftyrot", "leftzrot", "rightxrot", "rightyrot", "rightzrot");
+
+    private void handlePropertyLock(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /test propertylock <id> <none|all|prop1,prop2,...> [self|recursive|children]", NamedTextColor.RED));
+            return;
+        }
+
+        String id = args[1];
+        PositionObject obj = objectMap.get(id);
+        if (obj == null) {
+            sender.sendMessage(Component.text("\"" + id + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        PropertyLock lock = parsePropertyLock(args[2]);
+        if (lock == null) {
+            sender.sendMessage(Component.text("Invalid property list. Use \"none\", \"all\", \"rotation\" (locks all rotation axes), or a comma-separated list of: "
+                    + String.join(",", PROPERTY_LOCK_NAMES), NamedTextColor.RED));
+            return;
+        }
+
+        String target = args.length > 3 ? args[3].toLowerCase() : "self";
+        String targetInfo;
+        switch (target) {
+            case "recursive" -> {
+                obj.setPropertyLockRecursive(lock);
+                targetInfo = " and all its descendants";
+            }
+            case "children" -> {
+                obj.setChildrenPropertyLockRecursive(lock);
+                targetInfo = "'s descendants only (not itself)";
+            }
+            case "self" -> {
+                obj.setPropertyLock(lock);
+                targetInfo = "";
+            }
+            default -> {
+                sender.sendMessage(Component.text("Invalid target: " + target + ". Use \"self\", \"recursive\", or \"children\"", NamedTextColor.RED));
+                return;
+            }
+        }
+
+        sender.sendMessage(Component.text("Set property lock on \"" + id + "\"" + targetInfo
+                + " (" + args[2].toLowerCase() + ")", NamedTextColor.GREEN));
+    }
+
+    private PropertyLock parsePropertyLock(String arg) {
+        if (arg.equalsIgnoreCase("none")) {
+            return new PropertyLock(false, false, false, false, false, false, false, false, false, false, false, false);
+        }
+        if (arg.equalsIgnoreCase("all")) {
+            return new PropertyLock(true, true, true, true, true, true, true, true, true, true, true, true);
+        }
+
+        Set<String> locked = new HashSet<>();
+        for (String part : arg.split(",")) {
+            String name = part.trim().toLowerCase();
+            if (name.equals("rotation")) {
+                locked.addAll(ROTATION_LOCK_NAMES);
+                continue;
+            }
+            if (!PROPERTY_LOCK_NAMES.contains(name)) {
+                return null;
+            }
+            locked.add(name);
+        }
+
+        return new PropertyLock(
+                locked.contains("leftxrot"), locked.contains("leftyrot"), locked.contains("leftzrot"),
+                locked.contains("rightxrot"), locked.contains("rightyrot"), locked.contains("rightzrot"),
+                locked.contains("xscale"), locked.contains("yscale"), locked.contains("zscale"),
+                locked.contains("xtranslation"), locked.contains("ytranslation"), locked.contains("ztranslation")
+        );
     }
 
     private void handleHighlight(CommandSender sender, String[] args) {
@@ -666,7 +750,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if (args.length == 1) {
-            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble"), args[0]);
+            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble", "propertylock"), args[0]);
         }
 
         if (args[0].equalsIgnoreCase("create") && args.length == 3) {
@@ -679,6 +763,20 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         if ((args[0].equalsIgnoreCase("addcollision") || args[0].equalsIgnoreCase("addchild")) && args.length == 2) {
             return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("propertylock") && args.length == 2) {
+            return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("propertylock") && args.length == 3) {
+            List<String> options = new ArrayList<>(List.of("none", "all", "rotation"));
+            options.addAll(PROPERTY_LOCK_NAMES);
+            return recommendListThatContainsObject(options, args[2]);
+        }
+
+        if (args[0].equalsIgnoreCase("propertylock") && args.length == 4) {
+            return recommendListThatContainsObject(List.of("self", "recursive", "children"), args[3]);
         }
 
         if (args[0].equalsIgnoreCase("assemble") && args.length >= 4) {

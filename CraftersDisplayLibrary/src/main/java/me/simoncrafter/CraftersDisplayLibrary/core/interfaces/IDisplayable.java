@@ -1,6 +1,7 @@
 package me.simoncrafter.CraftersDisplayLibrary.core.interfaces;
 
 import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
+import me.simoncrafter.CraftersDisplayLibrary.core.PropertyLock;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
@@ -84,6 +85,18 @@ public interface IDisplayable {
 
     /** The transform currently inherited from this object's parent (identity if it has none). */
     Transformation getParentTransform();
+
+    /** The lock defining which of this object's properties should not inherit from its parent ({@code null} if none). */
+    PropertyLock getPropertyLock();
+
+    /** Sets the lock defining which of this object's properties should not inherit from its parent. */
+    void setPropertyLock(PropertyLock propertyLock);
+
+    /** Sets the property lock on this object and recursively on every descendant. */
+    void setPropertyLockRecursive(PropertyLock propertyLock);
+
+    /** Sets the property lock recursively on every descendant, leaving this object's own lock untouched. */
+    void setChildrenPropertyLockRecursive(PropertyLock propertyLock);
 
     /**
      * Translates this object relative to its current local position.

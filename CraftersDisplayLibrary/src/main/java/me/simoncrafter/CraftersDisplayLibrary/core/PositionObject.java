@@ -2,10 +2,8 @@ package me.simoncrafter.CraftersDisplayLibrary.core;
 
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -68,6 +66,7 @@ public class PositionObject implements IDisplayable {
     private List<IDisplayable> children = new ArrayList<>();
     private Transformation localTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(0, 0, 0, 1), new Vector3f(1, 1, 1), new Quaternionf(0, 0, 0, 1));
     private Location location;
+    private PropertyLock propertyLock;
 
     /** Default parent/local transform composition: scale, then rotate, then translate. */
     private BiFunction<Transformation, Transformation, Transformation> parentApplierFunction = (parent, local) -> {
@@ -105,6 +104,20 @@ public class PositionObject implements IDisplayable {
         this.localTransform = localTransform;
         this.location = location;
     }
+
+    /**
+     * @param children      initial children, copied into a new list
+     * @param localTransform initial local transform (position/rotation/scale relative to the parent)
+     * @param location      world-space origin the local transform is relative to
+     * @param propertyLock  The lock object, on what properties should be locked in that object (not interred by parent)
+     */
+    public PositionObject(List<IDisplayable> children, Transformation localTransform, Location location, PropertyLock propertyLock) {
+        this.children = new ArrayList<>(children);
+        this.localTransform = localTransform;
+        this.location = location;
+        this.propertyLock = propertyLock;
+    }
+
 
     @Override
     public Location getLocation() {
@@ -162,13 +175,72 @@ public class PositionObject implements IDisplayable {
 
     @Override
     public void setParentTransform(Transformation transformation, int time) {
-        parentTransform = new Transformation(transformation.getTranslation(), transformation.getLeftRotation(), transformation.getScale(), transformation.getRightRotation());
+        Vector3f translation = transformation.getTranslation();
+        Quaternionf leftRot = transformation.getLeftRotation();
+        Vector3f scale = transformation.getScale();
+        Quaternionf rightRot = transformation.getRightRotation();
+
+        if (propertyLock != null) {
+            translation = applyLock(translation, parentTransform.getTranslation(),
+                    propertyLock.xTranslation(), propertyLock.yTranslation(), propertyLock.zTranslation());
+
+            scale = applyLock(scale, parentTransform.getScale(),
+                    propertyLock.xScale(), propertyLock.yScale(), propertyLock.zScale());
+
+            if (propertyLock.leftXRot() || propertyLock.leftYRot() || propertyLock.leftZRot()) {
+                Vector3f newEuler = leftRot.getEulerAnglesXYZ(new Vector3f());
+                Vector3f oldEuler = parentTransform.getLeftRotation().getEulerAnglesXYZ(new Vector3f());
+                Vector3f lockedEuler = applyLock(newEuler, oldEuler,
+                        propertyLock.leftXRot(), propertyLock.leftYRot(), propertyLock.leftZRot());
+                leftRot = new Quaternionf().rotationXYZ(lockedEuler.x, lockedEuler.y, lockedEuler.z);
+            }
+
+            if (propertyLock.rightXRot() || propertyLock.rightYRot() || propertyLock.rightZRot()) {
+                Vector3f newEuler = rightRot.getEulerAnglesXYZ(new Vector3f());
+                Vector3f oldEuler = parentTransform.getRightRotation().getEulerAnglesXYZ(new Vector3f());
+                Vector3f lockedEuler = applyLock(newEuler, oldEuler,
+                        propertyLock.rightXRot(), propertyLock.rightYRot(), propertyLock.rightZRot());
+                rightRot = new Quaternionf().rotationXYZ(lockedEuler.x, lockedEuler.y, lockedEuler.z);
+            }
+        }
+
+        parentTransform = new Transformation(translation, leftRot, scale, rightRot);
         updateChildren(time);
+    }
+
+    /** Returns a vector with each locked axis taken from {@code oldValue} and each unlocked axis taken from {@code newValue}. */
+    private Vector3f applyLock(Vector3f newValue, Vector3f oldValue, boolean lockX, boolean lockY, boolean lockZ) {
+        return new Vector3f(
+                lockX ? oldValue.x : newValue.x,
+                lockY ? oldValue.y : newValue.y,
+                lockZ ? oldValue.z : newValue.z
+        );
     }
 
     @Override
     public Transformation getParentTransform() {
         return new Transformation(parentTransform.getTranslation(), parentTransform.getLeftRotation(), parentTransform.getScale(), parentTransform.getRightRotation());
+    }
+
+    @Override
+    public PropertyLock getPropertyLock() {
+        return propertyLock;
+    }
+
+    @Override
+    public void setPropertyLock(PropertyLock propertyLock) {
+        this.propertyLock = propertyLock;
+    }
+
+    @Override
+    public void setPropertyLockRecursive(PropertyLock propertyLock) {
+        setPropertyLock(propertyLock);
+        runForEveryChild(child -> child.setPropertyLockRecursive(propertyLock));
+    }
+
+    @Override
+    public void setChildrenPropertyLockRecursive(PropertyLock propertyLock) {
+        runForEveryChild(child -> child.setPropertyLockRecursive(propertyLock));
     }
 
     @Override

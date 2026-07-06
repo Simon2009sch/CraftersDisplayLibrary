@@ -22,7 +22,7 @@ public class StructureBuilder {
 
     public static PositionObject assembleOutOfBlocks(World world, Vector origenLocation, List<Vector> blocks, List<Material> blocksToIgnore, boolean addCollision, boolean removeBlocks, Material removeBlockMaterial, boolean spawn) {
         Location handleLocation = origenLocation.toLocation(world);
-        PositionObject handle = new PositionObject(new ArrayList<>(), new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf()), handleLocation);
+        PositionObject handle = new PositionObject(new ArrayList<>(), new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf()), handleLocation);
 
         for (Vector v : blocks) {
             Block block = v.toLocation(world).getBlock();

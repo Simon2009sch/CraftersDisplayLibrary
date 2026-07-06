@@ -15,6 +15,7 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Shulker;
+import org.bukkit.loot.LootTables;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
@@ -118,6 +119,7 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
         shulker.setSilent(true);
         shulker.setGravity(false);
         shulker.setInvisible(true);
+        shulker.setLootTable(LootTables.EMPTY.getLootTable());
         shulker.setVisibleByDefault(!hiddenByDefault);
         shulker.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 
@@ -198,7 +200,7 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
         entity.removePassenger(shulker);
         entity.teleport(location);
         if (shulker != null && shulker.isValid()) {
-            shulker.teleport(location);
+            shulker.teleport(location.add(0, MOUNT_HEIGHT_OFFSET, 0));
             entity.addPassenger(shulker);
         }
     }
