@@ -363,14 +363,13 @@ public class testCommand implements CommandExecutor, TabExecutor {
         Vector corner2 = new Vector(endVec.x, endVec.y, endVec.z);
 
         PositionObject structure = StructureBuilder.assembleOutOfBlocks(
-                world, corner1, corner2,
+                world, corner1.add(new Vector(0.5f, 0.5f, 0.5f)), corner1, corner2,
                 List.of(Material.AIR, Material.WATER, Material.LAVA),              // blocksToIgnore — none by default
                 addCollision,
                 removeBlocks,
                 Material.AIR,            // removeBlockMaterial
                 spawn
         );
-        structure.moveAbsolute(new Vector3f(0.5f, 0.5f, 0.5f), 0);
         objectMap.put(id, structure);
 
         int blockCount = structure.getChildren().size();

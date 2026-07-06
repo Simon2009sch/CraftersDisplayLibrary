@@ -20,6 +20,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import org.w3c.dom.Attr;
 
 import java.util.List;
 
@@ -119,6 +120,8 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
         shulker.setSilent(true);
         shulker.setGravity(false);
         shulker.setInvisible(true);
+        shulker.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(999999999999999999d);
+        shulker.getAttribute(Attribute.GENERIC_ARMOR).setBaseValue(999999999999999999d);
         shulker.setLootTable(LootTables.EMPTY.getLootTable());
         shulker.setVisibleByDefault(!hiddenByDefault);
         shulker.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);

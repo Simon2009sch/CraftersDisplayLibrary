@@ -35,7 +35,7 @@ public class StructureBuilder {
             Vector3f relativePos = block.getLocation().toVector().subtract(handleLocation.toVector()).toVector3f();
             Location relativeLocation = handleLocation.clone().add(relativePos.x, relativePos.y, relativePos.z);
 
-            BlockDisplayObject display = BlockDisplayObject.create(relativeLocation, new Vector3f(1, 1, 1), new Vector3f(), block.getBlockData());
+            BlockDisplayObject display = BlockDisplayObject.create(relativeLocation, new Vector3f(1, 1, 1), new Vector3f(0.5f, 0.5f ,0.5f), block.getBlockData());
             if (removeBlocks) block.setType(removeBlockMaterial);
             ShulkerBasedCollisionBox coll = null;
             if (addCollision) {
@@ -48,7 +48,6 @@ public class StructureBuilder {
             }
             handle.addChild(display);
         }
-
         return handle;
 
     }
@@ -82,6 +81,26 @@ public class StructureBuilder {
         }
 
         return assembleOutOfBlocks(world, corner1, blocks, blocksToIgnore, addCollision, removeBlocks, removeBlockMaterial, spawn);
+    }
+    /** Area-based: generates a block list from two corner vectors, then delegates to the full overload. */
+    public static PositionObject assembleOutOfBlocks(World world, Vector handlePos, Vector corner1, Vector corner2, List<Material> blocksToIgnore, boolean addCollision, boolean removeBlocks, Material removeBlockMaterial, boolean spawn) {
+        int minX = Math.min(corner1.getBlockX(), corner2.getBlockX());
+        int minY = Math.min(corner1.getBlockY(), corner2.getBlockY());
+        int minZ = Math.min(corner1.getBlockZ(), corner2.getBlockZ());
+        int maxX = Math.max(corner1.getBlockX(), corner2.getBlockX());
+        int maxY = Math.max(corner1.getBlockY(), corner2.getBlockY());
+        int maxZ = Math.max(corner1.getBlockZ(), corner2.getBlockZ());
+
+        List<Vector> blocks = new ArrayList<>();
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    blocks.add(new BlockVector(x, y, z));
+                }
+            }
+        }
+
+        return assembleOutOfBlocks(world, handlePos, blocks, blocksToIgnore, addCollision, removeBlocks, removeBlockMaterial, spawn);
     }
 
     /** Area-based minimal — no collision, no block removal, no ignore list, just build and (optionally) spawn. */
