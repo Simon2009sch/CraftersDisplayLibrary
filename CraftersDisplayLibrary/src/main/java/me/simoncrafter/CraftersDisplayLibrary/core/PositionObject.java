@@ -284,7 +284,7 @@ public class PositionObject implements IDisplayable {
     }
 
     /** Runs {@code consumer} for every current child. */
-    protected void forEveryChild(Consumer<IDisplayable> consumer) {
+    public void forEveryChild(Consumer<IDisplayable> consumer) {
         for (IDisplayable display : children) {
             consumer.accept(display);
         }
@@ -481,7 +481,7 @@ public class PositionObject implements IDisplayable {
     }
 
     /** Runs {@code action} for every current child. */
-    protected void runForEveryChild(Consumer<IDisplayable> action) {
+    public void runForEveryChild(Consumer<IDisplayable> action) {
         for (IDisplayable child : children) {
             action.accept(child);
         }

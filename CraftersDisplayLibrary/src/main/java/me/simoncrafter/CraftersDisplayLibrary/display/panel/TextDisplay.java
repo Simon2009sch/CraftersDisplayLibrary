@@ -35,6 +35,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 	private boolean hasBackground = false;
 	private Color backgroundColor = Color.fromARGB(0, 0, 0, 0);
 	private int lineWidth = 200;
+	private org.bukkit.entity.TextDisplay.TextAlignment alignment = org.bukkit.entity.TextDisplay.TextAlignment.LEFT;
 
 	private TextDisplay(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation) {
 		super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
@@ -64,6 +65,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		entity.setVisibleByDefault(!hiddenByDefault);
 		entity.setTransformation(getFinalTransform());
 		entity.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
+		entity.setAlignment(alignment);
 
 		return entity;
 	}
@@ -179,6 +181,17 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		return lineWidth;
 	}
 
+	public org.bukkit.entity.TextDisplay.TextAlignment getAlignment() {
+		return alignment;
+	}
+
+	public void setAlignment(org.bukkit.entity.TextDisplay.TextAlignment alignment) {
+		this.alignment = alignment;
+		if (entity != null) {
+			entity.setAlignment(alignment);
+		}
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -203,6 +216,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		copy.lineWidth = lineWidth;
 		copy.billboard = billboard;
 		copy.hiddenByDefault = hiddenByDefault;
+		copy.alignment = alignment;
 		return copy;
 	}
 }

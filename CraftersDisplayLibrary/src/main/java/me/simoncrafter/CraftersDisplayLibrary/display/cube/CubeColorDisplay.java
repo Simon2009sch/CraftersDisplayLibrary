@@ -311,40 +311,37 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         return hiddenByDefault;
     }
 
-    /** {@inheritDoc} Applies to all 6 faces (faces not yet spawned are skipped, then picked up in {@link #spawnDisplay()}). */
+    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces (faces not yet spawned are skipped, then picked up in {@link #spawnDisplay()}). */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
         hiddenByDefault = hide;
-        if (top != null) top.hideByDefault(hide);
-        if (bottom != null) bottom.hideByDefault(hide);
-        if (left != null) left.hideByDefault(hide);
-        if (right != null) right.hideByDefault(hide);
-        if (front != null) front.hideByDefault(hide);
-        if (back != null) back.hideByDefault(hide);
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
+            });
+        }
         return this;
     }
 
-    /** {@inheritDoc} Applies to all 6 faces. */
+    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces. */
     @Override
-    public IDisplayable showForPlayer(Player player) {
-        if (top != null) top.showForPlayer(player);
-        if (bottom != null) bottom.showForPlayer(player);
-        if (left != null) left.showForPlayer(player);
-        if (right != null) right.showForPlayer(player);
-        if (front != null) front.showForPlayer(player);
-        if (back != null) back.showForPlayer(player);
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
+            });
+        }
         return this;
     }
 
-    /** {@inheritDoc} Applies to all 6 faces. */
+    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces. */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
-        if (top != null) top.hideForPlayer(player);
-        if (bottom != null) bottom.hideForPlayer(player);
-        if (left != null) left.hideForPlayer(player);
-        if (right != null) right.hideForPlayer(player);
-        if (front != null) front.hideForPlayer(player);
-        if (back != null) back.hideForPlayer(player);
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
+            });
+        }
         return this;
     }
 

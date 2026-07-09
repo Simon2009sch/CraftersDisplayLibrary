@@ -170,27 +170,36 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
         return hiddenByDefault;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
         hiddenByDefault = hide;
-        for (LineColorDisplay line : edges.values()) {
-            line.hideByDefault(hide);
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
+            });
         }
         return this;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
     @Override
-    public IDisplayable showForPlayer(Player player) {
-        for (LineColorDisplay line : edges.values()) {
-            line.showForPlayer(player);
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
+            });
         }
         return this;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
-        for (LineColorDisplay line : edges.values()) {
-            line.hideForPlayer(player);
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
+            });
         }
         return this;
     }

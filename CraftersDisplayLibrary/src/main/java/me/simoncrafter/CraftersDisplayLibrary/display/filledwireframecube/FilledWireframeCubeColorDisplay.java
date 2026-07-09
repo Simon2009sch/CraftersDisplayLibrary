@@ -236,25 +236,37 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
         return hiddenByDefault;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
         hiddenByDefault = hide;
-        faceCube.hideByDefault(hide);
-        wireframeCube.hideByDefault(hide);
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
+            });
+        }
         return this;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
     @Override
-    public IDisplayable showForPlayer(Player player) {
-        faceCube.showForPlayer(player);
-        wireframeCube.showForPlayer(player);
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
+            });
+        }
         return this;
     }
 
+    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
-        faceCube.hideForPlayer(player);
-        wireframeCube.hideForPlayer(player);
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
+            });
+        }
         return this;
     }
 }

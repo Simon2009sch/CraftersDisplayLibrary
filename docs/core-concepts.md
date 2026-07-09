@@ -38,6 +38,17 @@ faces directly for a rigid-body transform.
 You can build your own hierarchies the same way with `addChild`/`removeChild`/`setChildren` on any
 `IDisplayable` — for example, parenting a small indicator cube to a larger display so it rides along with it.
 
+`PositionObject` also exposes `forEveryChild(Consumer<IDisplayable>)` / `runForEveryChild(Consumer<IDisplayable>)`
+(two equivalent, public methods — pick whichever name reads better at the call site) to run arbitrary logic
+over an object's *immediate* children without needing to call `getChildren()` yourself:
+
+```java
+cube.forEveryChild(child -> child.setLocationNoUpdate(child.getLocation()));
+```
+
+These are not recursive on their own — see `IHidable`'s `recursive` flag below for the pattern this library
+uses when a whole-subtree walk is needed.
+
 ## Two rotation channels
 
 Bukkit's `Transformation` (and the underlying Minecraft display entity) has two independent rotation
@@ -105,6 +116,19 @@ Two small interfaces sit alongside `IDisplayable`:
 
   This is exactly how [view tinting](view-tinting.md) works: the tint box is hidden by default and shown only
   to the one player it belongs to.
+
+  All three methods have a `recursive` overload — `hideByDefault(boolean, boolean)`,
+  `showForPlayer(Player, boolean)`, `hideForPlayer(Player, boolean)` — where the extra `boolean` controls
+  whether the call cascades down to every descendant (via `getChildren()`, walked recursively) or applies to
+  just that one object. The no-flag versions above are convenience wrappers that pass `true`, so a call like
+  `cube.hideByDefault(true)` on a `CubeColorDisplay` already hides all six faces (and, for a composite like
+  `FilledWireframeCubeColorDisplay`, everything under both the face cube and the wireframe cube). Pass `false`
+  explicitly to affect only the object the method was called on:
+
+  ```java
+  filledCube.hideByDefault(true, false); // only this object's own bookkeeping flag flips; children untouched
+  filledCube.hideByDefault(true);        // == hideByDefault(true, true): hides faces + edges recursively
+  ```
 
 ## Location vs. local transform
 

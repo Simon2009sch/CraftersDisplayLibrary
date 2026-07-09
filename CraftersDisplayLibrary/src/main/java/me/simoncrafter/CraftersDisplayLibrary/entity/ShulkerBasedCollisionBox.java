@@ -256,8 +256,8 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
 
     /** {@inheritDoc} Also applies to the {@link Shulker} passenger, which is what actually needs to disappear/appear for a given player. */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
-        super.hideByDefault(hide);
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
+        super.hideByDefault(hide, recursive);
         if (shulker != null && shulker.isValid()) {
             shulker.setVisibleByDefault(!hide);
         }
@@ -266,8 +266,8 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
 
     /** {@inheritDoc} Also applies to the {@link Shulker} passenger, which is what actually needs to disappear/appear for a given player. */
     @Override
-    public IDisplayable showForPlayer(Player player) {
-        super.showForPlayer(player);
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        super.showForPlayer(player, recursive);
         if (shulker != null && shulker.isValid()) {
             player.showEntity(PluginHolder.getPlugin(), shulker);
         }
@@ -276,8 +276,8 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
 
     /** {@inheritDoc} Also applies to the {@link Shulker} passenger, which is what actually needs to disappear/appear for a given player. */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
-        super.hideForPlayer(player);
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
+        super.hideForPlayer(player, recursive);
         if (shulker != null && shulker.isValid()) {
             player.hideEntity(PluginHolder.getPlugin(), shulker);
         }

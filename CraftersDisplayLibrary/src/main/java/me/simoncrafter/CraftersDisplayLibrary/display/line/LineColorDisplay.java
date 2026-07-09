@@ -267,7 +267,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     }
 
     @Override
-    protected void forEveryChild(Consumer<IDisplayable> consumer) {
+    public void forEveryChild(Consumer<IDisplayable> consumer) {
         super.forEveryChild(consumer);
     }
 
@@ -352,7 +352,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     }
 
     @Override
-    protected void runForEveryChild(Consumer<IDisplayable> action) {
+    public void runForEveryChild(Consumer<IDisplayable> action) {
         super.runForEveryChild(action);
     }
 
@@ -400,33 +400,60 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return hiddenByDefault;
     }
 
-    /** {@inheritDoc} Applies to all 4 backing panels (panels not yet spawned are skipped). */
+    /**
+     * {@inheritDoc} Always applies to all 4 backing panels (panels not yet spawned are skipped) -
+     * they are this line's own rendering, not "children" in the {@link #getChildren()} sense. If
+     * {@code recursive}, also applies to any actual children attached via {@link #addChild}.
+     */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
         hiddenByDefault = hide;
         for (int i = 0; i < 4; i++) {
             var display = rawLine.getDisplay(i);
-            if (display != null) display.hideByDefault(hide);
+            if (display != null) display.hideByDefault(hide, true);
+        }
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
+            });
         }
         return this;
     }
 
-    /** {@inheritDoc} Applies to all 4 backing panels. */
+    /**
+     * {@inheritDoc} Always applies to all 4 backing panels - they are this line's own rendering,
+     * not "children" in the {@link #getChildren()} sense. If {@code recursive}, also applies to
+     * any actual children attached via {@link #addChild}.
+     */
     @Override
-    public IDisplayable showForPlayer(Player player) {
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
         for (int i = 0; i < 4; i++) {
             var display = rawLine.getDisplay(i);
-            if (display != null) display.showForPlayer(player);
+            if (display != null) display.showForPlayer(player, true);
+        }
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
+            });
         }
         return this;
     }
 
-    /** {@inheritDoc} Applies to all 4 backing panels. */
+    /**
+     * {@inheritDoc} Always applies to all 4 backing panels - they are this line's own rendering,
+     * not "children" in the {@link #getChildren()} sense. If {@code recursive}, also applies to
+     * any actual children attached via {@link #addChild}.
+     */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
         for (int i = 0; i < 4; i++) {
             var display = rawLine.getDisplay(i);
-            if (display != null) display.hideForPlayer(player);
+            if (display != null) display.hideForPlayer(player, true);
+        }
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
+            });
         }
         return this;
     }

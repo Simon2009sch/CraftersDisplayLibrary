@@ -269,28 +269,45 @@ public abstract class AbstractEntityBackedPositionObject<E extends Entity> exten
         return hiddenByDefault;
     }
 
-    /** {@inheritDoc} Applies immediately to the live entity if already spawned and valid. */
+    /** {@inheritDoc} Applies immediately to the live entity if already spawned and valid; if {@code recursive}, also to every child. */
     @Override
-    public IDisplayable hideByDefault(boolean hide) {
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
         hiddenByDefault = hide;
         if (entity != null && entity.isValid()) {
             entity.setVisibleByDefault(!hide);
         }
-        return this;
-    }
-
-    @Override
-    public IDisplayable showForPlayer(Player player) {
-        if (entity != null && entity.isValid()) {
-            player.showEntity(PluginHolder.getPlugin(), entity);
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
+            });
         }
         return this;
     }
 
+    /** {@inheritDoc} If {@code recursive}, also applies to every child. */
     @Override
-    public IDisplayable hideForPlayer(Player player) {
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        if (entity != null && entity.isValid()) {
+            player.showEntity(PluginHolder.getPlugin(), entity);
+        }
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
+            });
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} If {@code recursive}, also applies to every child. */
+    @Override
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
         if (entity != null && entity.isValid()) {
             player.hideEntity(PluginHolder.getPlugin(), entity);
+        }
+        if (recursive) {
+            forEveryChild(child -> {
+                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
+            });
         }
         return this;
     }

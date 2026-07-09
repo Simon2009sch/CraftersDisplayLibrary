@@ -24,7 +24,7 @@ public final class BlockScale {
     private static Vector3f getBlockScaleForVersion() {
         String version = Bukkit.getVersion();
 
-        if (version.contains("1.21")) {
+        if (version.equalsIgnoreCase("1.21.1")) {
             return new Vector3f(40, 1.905f, 40);
         } else if (version.contains("1.20")) {
             return new Vector3f(40, 2f, 40);
