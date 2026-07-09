@@ -63,8 +63,9 @@ public class ViewTinter {
      * @param color    the tint colour (its alpha controls opacity)
      * @param duration ticks per animation cycle, passed to {@link IViewTinterFunction#onAnimationRestart}
      * @param function called to animate the tint; may be {@code null} for a static tint
+     * @return the tint cube backing this tint, or {@code null} if spawning it failed
      */
-    public static void tintPlayer(Player player, Color color, int duration, IViewTinterFunction function) {
+    public static CubeColorDisplay tintPlayer(Player player, Color color, int duration, IViewTinterFunction function) {
         untintPlayer(player);
 
         Location playerHead = player.getEyeLocation().toVector().toLocation(player.getWorld());
@@ -103,20 +104,21 @@ public class ViewTinter {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            return;
+            return null;
         }
 
         registry.register(player, duration, display, function, -1);
+        return display;
     }
 
     /** Tints {@code player}'s screen with a static (non-animated) {@code color}. */
-    public static void tintPlayer(Player player, Color color, int duration) {
-        tintPlayer(player, color, duration, null);
+    public static CubeColorDisplay tintPlayer(Player player, Color color, int duration) {
+        return tintPlayer(player, color, duration, null);
     }
 
     /** Tints {@code player}'s screen with a static (non-animated) {@code color} using a default 20-tick cycle length. */
-    public static void tintPlayer(Player player, Color color) {
-        tintPlayer(player, color, 20, null);
+    public static CubeColorDisplay tintPlayer(Player player, Color color) {
+        return tintPlayer(player, color, 20, null);
     }
 
     /** Removes {@code player}'s tint, if any, stopping its animation and despawning the tint cube. */

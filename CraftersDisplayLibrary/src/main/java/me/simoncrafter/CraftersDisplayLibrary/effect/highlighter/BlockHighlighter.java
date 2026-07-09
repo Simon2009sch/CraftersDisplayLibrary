@@ -47,8 +47,8 @@ public class BlockHighlighter {
     };
 
     /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display until manually removed. */
-    public static void highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int duration) {
-        highlightBlock(block, HighlightDisplayType.CUBE, function, duration);
+    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int duration) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, function, duration);
     }
 
     /**
@@ -58,8 +58,9 @@ public class BlockHighlighter {
      * @param function called every {@code duration} ticks to drive the visual effect; may be
      *                  {@code null} for a static (non-animated) highlight
      * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
+     * @return the display backing this highlight
      */
-    public static void highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int duration) {
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int duration) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -68,11 +69,12 @@ public class BlockHighlighter {
             e.printStackTrace();
         }
         registry.register(block, duration, display, function, -1);
+        return display;
     }
 
     /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display that auto-removes itself after {@code lifeTime} ticks. */
-    public static void highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
-        highlightBlock(block, HighlightDisplayType.CUBE, function, lifeTime, duration);
+    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, function, lifeTime, duration);
     }
 
     /**
@@ -86,8 +88,9 @@ public class BlockHighlighter {
      * @param lifeTime ticks until this highlight is automatically removed; a value {@code <= 0}
      *                  disables auto-removal for this highlight (but still starts the checker task)
      * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
+     * @return the display backing this highlight
      */
-    public static void highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -96,16 +99,17 @@ public class BlockHighlighter {
             e.printStackTrace();
         }
         registry.register(block, duration, display, function, lifeTime);
+        return display;
     }
 
     /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that expires after {@code lifeTime} ticks. */
-    public static void highlightBlock(Block block, int lifeTime) {
-        highlightBlock(block, HighlightDisplayType.CUBE, null, lifeTime, 20);
+    public static ICuboidDisplay highlightBlock(Block block, int lifeTime) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, null, lifeTime, 20);
     }
 
     /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that never expires on its own. */
-    public static void highlightBlock(Block block) {
-        highlightBlock(block, -1);
+    public static ICuboidDisplay highlightBlock(Block block) {
+        return highlightBlock(block, -1);
     }
 
     /** Removes the highlight from {@code block}, if any, stopping its animation and despawning its display. */
