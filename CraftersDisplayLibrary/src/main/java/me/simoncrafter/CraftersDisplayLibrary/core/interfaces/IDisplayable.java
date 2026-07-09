@@ -3,7 +3,9 @@ package me.simoncrafter.CraftersDisplayLibrary.core.interfaces;
 import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.core.PropertyLock;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Contract;
@@ -222,4 +224,32 @@ public interface IDisplayable {
      * bypassing the transform/animation system entirely - a direct teleport rather than a move.
      */
     void moveEntityStatic(Location location);
+
+    /**
+     * Applies a single persistent-data entry directly to every live Bukkit entity this display
+     * owns. Equivalent to {@link #setPersistentData(NamespacedKey, PersistentDataType, Object,
+     * boolean) setPersistentData(key, type, value, false)} - applies only to this object's own
+     * entity/entities, not its descendants.
+     *
+     * @param key   the persistent-data key
+     * @param type  the persistent-data type describing how {@code value} is (de)serialized
+     * @param value the value to store
+     */
+    default <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value) {
+        setPersistentData(key, type, value, false);
+    }
+
+    /**
+     * Applies a single persistent-data entry directly to every live Bukkit entity this display
+     * owns. A no-op for a composite display that owns no entity of its own (e.g. {@code
+     * CubeColorDisplay}), unless {@code recursive} reaches an entity-backed descendant.
+     *
+     * @param key       the persistent-data key
+     * @param type      the persistent-data type describing how {@code value} is (de)serialized
+     * @param value     the value to store
+     * @param recursive if {@code true}, also applies to every descendant reachable via
+     *                  {@link #getChildren()}; if {@code false} (the default used by the
+     *                  no-flag overload), applies only to this object's own entity/entities
+     */
+    <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value, boolean recursive);
 }

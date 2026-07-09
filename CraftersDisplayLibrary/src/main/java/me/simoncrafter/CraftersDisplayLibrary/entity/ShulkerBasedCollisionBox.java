@@ -10,6 +10,7 @@ import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.ArmorStand;
@@ -294,5 +295,14 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
         super.remove();
         if (shulker != null) shulker.remove();
         shulker = null;
+    }
+
+    /** {@inheritDoc} Also applies to the {@link Shulker} passenger, which provides the actual collision. */
+    @Override
+    public <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value, boolean recursive) {
+        super.setPersistentData(key, type, value, recursive);
+        if (shulker != null && shulker.isValid()) {
+            shulker.getPersistentDataContainer().set(key, type, value);
+        }
     }
 }

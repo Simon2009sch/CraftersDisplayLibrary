@@ -6,7 +6,9 @@ import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -383,6 +385,22 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     public void remove() {
         super.remove();
         rawLine.remove();
+    }
+
+    /**
+     * {@inheritDoc} Always applies to all 4 backing panels (panels not yet spawned are skipped) -
+     * they are this line's own rendering, not "children" in the {@link #getChildren()} sense. If
+     * {@code recursive}, also applies to any actual children attached via {@link #addChild}.
+     */
+    @Override
+    public <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value, boolean recursive) {
+        for (int i = 0; i < 4; i++) {
+            var display = rawLine.getDisplay(i);
+            if (display != null) display.setPersistentData(key, type, value, true);
+        }
+        if (recursive) {
+            forEveryChild(child -> child.setPersistentData(key, type, value, true));
+        }
     }
 
     @Override

@@ -130,6 +130,26 @@ Two small interfaces sit alongside `IDisplayable`:
   filledCube.hideByDefault(true);        // == hideByDefault(true, true): hides faces + edges recursively
   ```
 
+## Tagging entities with persistent data
+
+`IDisplayable` itself exposes `setPersistentData(NamespacedKey, PersistentDataType<T, Z>, Z)`, which writes
+one entry directly into the `PersistentDataContainer` of every live Bukkit entity this display owns — the
+same mechanism the library uses internally to tag its own entities with `Tags.CDL_ENTITY`.
+
+```java
+cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id");
+```
+
+Like `IHidable`, there's a `recursive` overload — `setPersistentData(key, type, value, boolean)` — but with
+the **opposite default**: the no-flag version above only tags this object's own entity/entities, not its
+descendants. A composite display with no entity of its own (`CubeColorDisplay`, `WireframeCubeColorDisplay`,
+`FilledWireframeCubeColorDisplay`) is therefore a no-op when called without `recursive = true`:
+
+```java
+cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id");       // no-op: CubeColorDisplay owns no entity
+cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id", true); // tags all 6 face entities
+```
+
 ## Location vs. local transform
 
 Every `PositionObject` tracks two separate things that both affect where it renders:

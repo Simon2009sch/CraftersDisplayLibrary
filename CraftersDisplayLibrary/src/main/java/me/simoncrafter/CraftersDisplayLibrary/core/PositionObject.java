@@ -4,6 +4,8 @@ import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
@@ -545,6 +547,18 @@ public class PositionObject implements IDisplayable {
     public void remove() {
         for (IDisplayable obj : getChildren()) {
             obj.remove();
+        }
+    }
+
+    /**
+     * {@inheritDoc} A no-op on a plain {@code PositionObject} (which owns no entity of its own)
+     * beyond the {@code recursive} descent - entity-backed subclasses (see
+     * {@link AbstractEntityBackedPositionObject}) override this to actually tag their entity.
+     */
+    @Override
+    public <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> child.setPersistentData(key, type, value, true));
         }
     }
 

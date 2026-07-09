@@ -6,11 +6,13 @@ import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
 import org.joml.Quaternionf;
@@ -318,6 +320,20 @@ public abstract class AbstractEntityBackedPositionObject<E extends Entity> exten
         super.remove();
         if (entity != null) entity.remove();
         entity = null;
+    }
+
+    /**
+     * {@inheritDoc} Applies to the backing entity's {@link org.bukkit.persistence.PersistentDataContainer}
+     * if already spawned and valid; if {@code recursive}, also to every child.
+     */
+    @Override
+    public <T, Z> void setPersistentData(NamespacedKey key, PersistentDataType<T, Z> type, Z value, boolean recursive) {
+        if (entity != null && entity.isValid()) {
+            entity.getPersistentDataContainer().set(key, type, value);
+        }
+        if (recursive) {
+            forEveryChild(child -> child.setPersistentData(key, type, value, true));
+        }
     }
 
 }
