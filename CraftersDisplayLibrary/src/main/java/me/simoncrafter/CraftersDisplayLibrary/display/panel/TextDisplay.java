@@ -36,6 +36,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 	private Color backgroundColor = Color.fromARGB(0, 0, 0, 0);
 	private int lineWidth = 200;
 	private org.bukkit.entity.TextDisplay.TextAlignment alignment = org.bukkit.entity.TextDisplay.TextAlignment.LEFT;
+	private boolean seeThrough = false;
 
 	private TextDisplay(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation) {
 		super(List.of(), new Transformation(translation, leftRotation, scale, rightRotation), loc);
@@ -66,6 +67,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		entity.setTransformation(getFinalTransform());
 		entity.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 		entity.setAlignment(alignment);
+		entity.setSeeThrough(seeThrough);
 
 		return entity;
 	}
@@ -192,6 +194,18 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		}
 	}
 
+	/** Toggles see-through rendering (visible through blocks), applying it to the live entity immediately if spawned. */
+	public void setSeeThrough(boolean seeThrough) {
+		this.seeThrough = seeThrough;
+		if (entity != null) {
+			entity.setSeeThrough(seeThrough);
+		}
+	}
+
+	public boolean isSeeThrough() {
+		return seeThrough;
+	}
+
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -217,6 +231,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 		copy.billboard = billboard;
 		copy.hiddenByDefault = hiddenByDefault;
 		copy.alignment = alignment;
+		copy.seeThrough = seeThrough;
 		return copy;
 	}
 }

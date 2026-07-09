@@ -52,6 +52,7 @@ label.setText(Component.text("Hello!"));
 label.setLineWidth(150);            // max pixels per line before wrapping
 label.setHasBackground(true);
 label.setBackgroundColor(Color.fromARGB(150, 0, 0, 0));
+label.setSeeThrough(true);          // visible through blocks
 ```
 
 > [!IMPORTANT]
