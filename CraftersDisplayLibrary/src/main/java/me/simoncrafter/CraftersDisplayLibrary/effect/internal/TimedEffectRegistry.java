@@ -57,14 +57,16 @@ public abstract class TimedEffectRegistry<K, D extends IColorableDisplay> {
     /**
      * Registers a new timed effect under {@code key}, replacing any previous bookkeeping under the
      * same key (callers are expected to have already torn down an old entry via {@link #remove}
-     * first, as {@code BlockHighlighter}/{@code ViewTinter} do). Starts the entry's own tick task,
-     * and lazily starts the shared lifetime-expiry checker if {@code lifeTime > 0}.
+     * first, as {@code BlockHighlighter}/{@code ViewTinter} do). The animation cadence is derived
+     * from {@code function}'s own {@link EffectFunction#getInherentCycleDuration()} (or {@code 0}
+     * if {@code function} is {@code null}). Starts the entry's own tick task, and lazily starts the
+     * shared lifetime-expiry checker if {@code lifeTime > 0}.
      *
-     * @param animationDuration ticks between calls to {@code function}, for repeating functions
-     * @param function          may be {@code null} for a static (non-animated) effect
-     * @param lifeTime          ticks until this entry is automatically removed; {@code <= 0} disables auto-removal
+     * @param function may be {@code null} for a static (non-animated) effect
+     * @param lifeTime ticks until this entry is automatically removed; {@code <= 0} disables auto-removal
      */
-    public void register(K key, int animationDuration, D display, EffectFunction<D> function, int lifeTime) {
+    public void register(K key, D display, EffectFunction<D> function, int lifeTime) {
+        int animationDuration = function != null ? function.getInherentCycleDuration() : 0;
         Entry entry = new Entry(animationDuration, display, function, lifeTime);
         entries.put(key, entry);
         entry.start();
@@ -104,9 +106,11 @@ public abstract class TimedEffectRegistry<K, D extends IColorableDisplay> {
 
     /**
      * Swaps the active {@link EffectFunction} on an already-registered key without removing and
-     * recreating its display. No-ops if {@code key} isn't currently registered.
+     * recreating its display. The animation cadence is re-derived from {@code function}'s own
+     * {@link EffectFunction#getInherentCycleDuration()} (or {@code 0} if {@code function} is
+     * {@code null}). No-ops if {@code key} isn't currently registered.
      */
-    public void setAnimation(K key, EffectFunction<D> function, int animationDuration) {
+    public void setAnimation(K key, EffectFunction<D> function) {
         Entry entry = entries.get(key);
         if (entry == null) return;
 
@@ -114,10 +118,34 @@ public abstract class TimedEffectRegistry<K, D extends IColorableDisplay> {
         entry.stop();
 
         entry.function = function;
-        entry.animationDuration = animationDuration;
+        entry.animationDuration = function != null ? function.getInherentCycleDuration() : 0;
         entry.transitionAnimationPlayed = false;
 
         entry.start();
+    }
+
+    /**
+     * Updates an existing entry's {@code lifeTime} without disturbing its display, driving function,
+     * or animation cadence. No-ops if {@code key} isn't currently registered.
+     * <p>
+     * If the entry had no running tick task (the fully-static, non-expiring case per {@link
+     * Entry#start()}'s guard - no function and no prior lifetime) and {@code lifeTime} is now
+     * positive, its task is started so {@code tickCounter} actually advances, and the shared
+     * lifetime checker is lazily started if it wasn't already running.
+     */
+    public void updateLifeTime(K key, int lifeTime) {
+        Entry entry = entries.get(key);
+        if (entry == null) return;
+
+        boolean wasDormant = entry.task == null;
+        entry.lifeTime = lifeTime;
+
+        if (wasDormant) {
+            entry.start();
+        }
+        if (lifeTime > 0) {
+            startLifetimeChecker();
+        }
     }
 
     /**
@@ -155,7 +183,7 @@ public abstract class TimedEffectRegistry<K, D extends IColorableDisplay> {
 
     /** Per-key timed-effect state: display, driving function, animation cadence, tick task, lifetime bookkeeping. */
     private final class Entry {
-        private final int lifeTime;
+        private int lifeTime;
         private int animationDuration;
         private int tickCounter = 0;
         private final D display;
@@ -172,11 +200,13 @@ public abstract class TimedEffectRegistry<K, D extends IColorableDisplay> {
 
         /**
          * Starts the repeating tick task that drives {@code function}, honouring
-         * {@link EffectFunction#isRepeating()}. No-ops if there is no function to run, or if already started.
+         * {@link EffectFunction#isRepeating()}, and increments {@code tickCounter} for lifetime
+         * bookkeeping. No-ops if already started, or if there is neither a function to drive nor a
+         * lifetime to expire (a fully static, non-expiring effect needs no task at all).
          */
         void start() {
             if (task != null) return;
-            if (function == null && animationDuration > 0) return;
+            if (function == null && lifeTime <= 0) return; // nothing to drive, nothing to expire
 
             task = new BukkitRunnable() {
                 int ticksSinceLastAnimation = initialTicksSinceLastAnimation(animationDuration);

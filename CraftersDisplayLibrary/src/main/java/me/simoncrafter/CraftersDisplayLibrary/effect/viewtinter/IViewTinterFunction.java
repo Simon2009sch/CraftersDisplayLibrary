@@ -14,6 +14,5 @@ import me.simoncrafter.CraftersDisplayLibrary.effect.internal.EffectFunction;
  * ticks if {@link #isRepeating()} is {@code true}, or exactly once if it's {@code false}. Both
  * members are inherited unchanged from {@link EffectFunction}.
  */
-@FunctionalInterface
 public interface IViewTinterFunction extends EffectFunction<CubeColorDisplay> {
 }

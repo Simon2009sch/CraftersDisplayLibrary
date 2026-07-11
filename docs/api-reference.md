@@ -20,8 +20,8 @@ Output lands in `CraftersDisplayLibrary/target/site/apidocs/index.html`.
 
 | Type | Purpose |
 |---|---|
-| `PluginHolder` | Holds the `JavaPlugin` instance every other class needs. Call `setPlugin(this)` in `onEnable()` before anything else. |
-| `Tags` | The `NamespacedKey` used to tag entities this library spawns. |
+| `PluginHolder` | Holds the `JavaPlugin` instance every other class needs. Call `setPlugin(this)` in `onEnable()` before anything else. Also records `getRegisterTimestamp()` — one timestamp per `setPlugin()` call, used as the "iteration" identifier by [Persistence](persistence.md). |
+| `Tags` | The `NamespacedKey`s used to tag entities this library spawns — `CDL_ENTITY` plus, for [Persistence](persistence.md), `CDL_PLUGIN`/`CDL_ITERATION`/`CDL_DISPLAY_UUID`/`CDL_PARENT_UUID`/`CDL_DISPLAY_TYPE`/`CDL_ENTITY_ROLE`/`CDL_DISPLAY_DATA`/`CDL_ANCESTOR_CHAIN`. |
 
 ### `core` — the transform tree
 
@@ -35,10 +35,9 @@ Output lands in `CraftersDisplayLibrary/target/site/apidocs/index.html`.
 
 | Type | Purpose |
 |---|---|
-| `IDisplayable` | The core contract: transform, children, move/rotate/scale, location, lifecycle. |
-| `IColorableDisplay` | Extends `IDisplayable`; adds `setColor(Color)`. |
-| `ICuboidDisplay` | Extends `IColorableDisplay`; the common contract for box-shaped displays (`spawnDisplay`, `isSeeThrough`/`setSeeThrough`). |
-| `IHidable` | Per-player visibility control on top of Bukkit's default-visibility API. |
+| `IDisplayable` | The core contract: transform, children, move/rotate/scale, location, lifecycle, **and** per-player visibility control (`hideByDefault`/`showForPlayer`/`hideForPlayer`, layered on Bukkit's default-visibility API — every display supports this directly, it's not a separate opt-in interface). |
+| `IColorableDisplay` | Extends `IDisplayable`; adds `setColor(Color)` plus see-through control (`isSeeThrough()`/`setSeeThrough(boolean)`). |
+| `ICuboidDisplay` | Extends `IColorableDisplay`; the common contract for box-shaped displays — adds `spawnDisplay()` and a convenience `asPositionObject()` cast. |
 
 ### `display.panel` — single-entity panel displays
 
@@ -112,7 +111,7 @@ See [Animations](animations.md).
 
 | Type | Purpose |
 |---|---|
-| `EffectFunction<D>` | Shared functional interface behind `IHighlighterFunction` and `IViewTinterFunction`: `onAnimationRestart(D)` plus `default isRepeating() = true`. |
+| `EffectFunction<D>` | Shared interface behind `IHighlighterFunction` and `IViewTinterFunction`: `onAnimationRestart(D)`, `getInherentCycleDuration()` (this function's own cadence in ticks — the sole source of truth for how often it fires; no longer a separate `@FunctionalInterface`/lambda target since it has 2 abstract methods now), plus `default isRepeating() = true`. |
 | `TimedEffectRegistry<K, D>` | *(internal)* shared registry/tick-task base generalizing the highlighter/view-tinter timed-effect pattern. |
 
 ### `effect.highlighter` — block highlighting
@@ -136,8 +135,20 @@ See [View Tinting](view-tinting.md).
 | `IViewTinterFunction` | Interface for pluggable tint animations (repeating or one-shot); extends `EffectFunction<CubeColorDisplay>`. |
 | `prefabs.*` | `ColorShiftTinter`, `FadeInTinter`, `FadeOutTinter`, `PulsingTinter`. |
 
+### `persistence` — surviving a restart
+
+See [Persistence](persistence.md).
+
+| Type | Purpose |
+|---|---|
+| `DisplayPersistence` | Public API: `tag(root)`, `readWorld(World)`/`readChunk(Chunk)`, `listIterationTimestamps`, `removeIteration`/`removeAllIterations`. |
+| `DisplayDataCodec` | *(internal)* length-prefixed string encode/decode helper backing the `CDL_DISPLAY_DATA`/`CDL_ANCESTOR_CHAIN` tag blobs. |
+
 ## Internal-only types
 
 A couple of types are marked `@ApiStatus.Internal` and aren't meant to be used directly by consumers:
-`effect.internal.TimedEffectRegistry` and `PositionObject.updateChildrenNow`. They're documented in the
-source for maintainers, but treat them as implementation detail subject to change without notice.
+`effect.internal.TimedEffectRegistry`, `PositionObject.updateChildrenNow`, `persistence.DisplayDataCodec`,
+and the `adopt(...)`/`assemble(...)` reconstruction factories on the display classes (used by
+`DisplayPersistence` to wrap already-spawned entities — the normal `create(...)` factories, which always
+spawn fresh entities, are what you want for anything else). They're documented in the source for
+maintainers, but treat them as implementation detail subject to change without notice.

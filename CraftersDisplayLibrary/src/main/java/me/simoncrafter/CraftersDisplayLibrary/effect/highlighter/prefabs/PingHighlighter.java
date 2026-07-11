@@ -38,20 +38,14 @@ public class PingHighlighter implements IHighlighterFunction<ICuboidDisplay> {
     @Override
     public void onAnimationRestart(ICuboidDisplay object) {
         Vector3f startVector = new Vector3f(minScale, minScale, minScale);
-        Vector3f endVector = new Vector3f(maxScale, maxScale, maxScale);
 
         // Every ICuboidDisplay (CubeColorDisplay/WireframeCubeColorDisplay/FilledWireframeCubeColorDisplay)
         // is also a PositionObject, which is what the scale-animation registry operates on.
-        PositionObject positionObject = (PositionObject) object;
+        PositionObject positionObject = object.asPositionObject();
 
-        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AnimationInterpolationFunction<>(cycleDuration, startVector, endVector, positionObject) {
+        GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AnimationInterpolationFunction<>(cycleDuration, startVector, startVector, positionObject) {
             @Override
             public void nextTick(int duration, int tick, Vector3f startScale, Vector3f endScale, PositionObject obj) {
-                if (tick >= duration) {
-                    obj.scaleAbsoluteNoUpdate(new Vector3f(minScale, minScale, minScale));
-                    return;
-                }
-
                 float progress = (float) tick / duration;
                 float scale = minScale + (maxScale - minScale) * progress;
 
@@ -74,5 +68,10 @@ public class PingHighlighter implements IHighlighterFunction<ICuboidDisplay> {
                 obj.setColor(startColor.setAlpha(currentAlpha));
             }
         });
+    }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
     }
 }

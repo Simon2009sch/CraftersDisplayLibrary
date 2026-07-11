@@ -19,9 +19,9 @@ import org.bukkit.entity.Shulker;
 import org.bukkit.loot.LootTables;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
-import org.w3c.dom.Attr;
 
 import java.util.List;
 
@@ -81,6 +81,24 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
     /** Creates an axis-aligned collision box with no rotation. */
     public static ShulkerBasedCollisionBox create(Location loc, Vector3f scale, Vector3f translation) {
         return new ShulkerBasedCollisionBox(loc, scale, translation, new Quaternionf(0, 0, 0, 1));
+    }
+
+    /**
+     * Wraps an <strong>already-spawned</strong> marker {@link ArmorStand} and its {@link Shulker}
+     * passenger as a {@code ShulkerBasedCollisionBox}, instead of spawning new ones - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live wrapper object around entities found already sitting in the world (e.g. after a
+     * restart), from a previously-serialized blob. Not part of the public creation API - use
+     * {@link #create} to spawn a brand new collision box.
+     */
+    @ApiStatus.Internal
+    public static ShulkerBasedCollisionBox adopt(ArmorStand marker, Shulker shulker, Location loc, Transformation localTransform) {
+        ShulkerBasedCollisionBox obj = new ShulkerBasedCollisionBox(loc, new Vector3f(localTransform.getScale()), new Vector3f(localTransform.getTranslation()),
+                new Quaternionf(localTransform.getLeftRotation()));
+        obj.hiddenByDefault = !marker.isVisibleByDefault();
+        obj.entity = marker;
+        obj.shulker = shulker;
+        return obj;
     }
 
     /**

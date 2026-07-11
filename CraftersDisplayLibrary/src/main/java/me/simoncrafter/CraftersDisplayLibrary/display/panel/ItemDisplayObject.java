@@ -4,11 +4,13 @@ import me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import org.bukkit.Location;
+import org.bukkit.Color;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -65,6 +67,7 @@ public class ItemDisplayObject extends AbstractEntityBackedDisplay<ItemDisplay> 
 
         entity = getLocation().getWorld().spawn(getLocation(), ItemDisplay.class);
         entity.setBillboard(billboard);
+        applyGenericDisplayProperties(entity);
         entity.setItemStack(item);
         entity.setItemDisplayTransform(itemDisplayTransform);
         entity.setVisibleByDefault(!hiddenByDefault);
@@ -103,6 +106,30 @@ public class ItemDisplayObject extends AbstractEntityBackedDisplay<ItemDisplay> 
     /** Creates a fixed-billboard item display with FIXED item transform and no rotation at all. */
     public static ItemDisplayObject create(Location loc, Vector3f scale, Vector3f translation, ItemStack item) {
         return new ItemDisplayObject(loc, scale, translation, new Quaternionf(0, 0, 0, 1), new Quaternionf(0, 0, 0, 1), item, ItemDisplay.ItemDisplayTransform.FIXED, Display.Billboard.FIXED);
+    }
+
+    /**
+     * Wraps an <strong>already-spawned</strong> {@link ItemDisplay} entity as an
+     * {@code ItemDisplayObject}, instead of spawning a new one - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live wrapper object around an entity found already sitting in the world (e.g. after a
+     * restart), from a previously-serialized blob. Not part of the public creation API - use
+     * {@link #create} to spawn a brand new display.
+     */
+    @ApiStatus.Internal
+    public static ItemDisplayObject adopt(ItemDisplay entity, Location loc, Transformation localTransform, ItemStack item, ItemDisplay.ItemDisplayTransform itemDisplayTransform,
+                                           Display.Billboard billboard, int teleportDuration, float viewRange, float shadowRadius, float shadowStrength, Color glowColorOverride, Display.Brightness brightness) {
+        ItemDisplayObject obj = new ItemDisplayObject(loc, new Vector3f(localTransform.getScale()), new Vector3f(localTransform.getTranslation()),
+                new Quaternionf(localTransform.getLeftRotation()), new Quaternionf(localTransform.getRightRotation()), item, itemDisplayTransform, billboard);
+        obj.teleportDuration = teleportDuration;
+        obj.viewRange = viewRange;
+        obj.shadowRadius = shadowRadius;
+        obj.shadowStrength = shadowStrength;
+        obj.glowColorOverride = glowColorOverride;
+        obj.brightness = brightness;
+        obj.hiddenByDefault = !entity.isVisibleByDefault();
+        obj.entity = entity;
+        return obj;
     }
 
     /**

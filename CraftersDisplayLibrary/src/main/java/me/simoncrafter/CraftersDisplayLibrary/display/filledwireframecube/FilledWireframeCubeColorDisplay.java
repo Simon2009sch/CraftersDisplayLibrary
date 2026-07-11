@@ -11,13 +11,11 @@ import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCub
 import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCubeColorInformation;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -33,11 +31,10 @@ import java.util.List;
  * the same controls as {@link CubeColorDisplay}; edges expose the same controls as
  * {@link WireframeCubeColorDisplay} (including edge thickness).
  */
-public class FilledWireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
+public class FilledWireframeCubeColorDisplay extends PositionObject implements IColorableDisplay, ICuboidDisplay {
 
     private final CubeColorDisplay faceCube;
     private final WireframeCubeColorDisplay wireframeCube;
-    private boolean hiddenByDefault = false;
 
     private FilledWireframeCubeColorDisplay(Transformation localTransform, Location location, CubeColorInformation faceColors, WireframeCubeColorInformation edgeColors, boolean facesSeeThrough, boolean edgesSeeThrough, float edgeThickness) {
         super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
@@ -46,6 +43,13 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
         // entirely from the parent-transform this object propagates to them as children.
         this.faceCube = CubeColorDisplay.create(location, new Vector3f(1, 1, 1), new Vector3f(0, 0, 0), new Quaternionf(), new Quaternionf(), faceColors, facesSeeThrough);
         this.wireframeCube = WireframeCubeColorDisplay.create(location, new Vector3f(1.01f, 1.01f, 1.01f), new Vector3f(0, 0, 0), new Quaternionf(), new Quaternionf(), edgeColors, edgesSeeThrough, edgeThickness);
+    }
+
+    /** Used only by {@link #assemble} - takes already-built sub-cubes instead of constructing fresh ones. */
+    private FilledWireframeCubeColorDisplay(Transformation localTransform, Location location, CubeColorDisplay faceCube, WireframeCubeColorDisplay wireframeCube) {
+        super(List.of(), new Transformation(localTransform.getTranslation(), localTransform.getLeftRotation(), localTransform.getScale(), localTransform.getRightRotation()), location);
+        this.faceCube = faceCube;
+        this.wireframeCube = wireframeCube;
     }
 
     public static FilledWireframeCubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, CubeColorInformation faceColors, WireframeCubeColorInformation edgeColors, boolean facesSeeThrough, boolean edgesSeeThrough, float edgeThickness) {
@@ -58,6 +62,22 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
 
     public static FilledWireframeCubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, CubeColorInformation faceColors, WireframeCubeColorInformation edgeColors) {
         return create(loc, scale, translation, leftRotation, faceColors, edgeColors, false, false, 0.1f);
+    }
+
+    /**
+     * Assembles a {@code FilledWireframeCubeColorDisplay} out of an already-reconstructed
+     * {@link CubeColorDisplay}/{@link WireframeCubeColorDisplay} pair (e.g. themselves assembled from
+     * adopted entities), instead of building fresh ones via {@link #spawnDisplay()} - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live tree from entities found already sitting in the world. Wires both sub-cubes up via the
+     * normal public {@link #addChild} rather than reaching into private state.
+     */
+    @ApiStatus.Internal
+    public static FilledWireframeCubeColorDisplay assemble(Location loc, Transformation localTransform, CubeColorDisplay faceCube, WireframeCubeColorDisplay wireframeCube) {
+        FilledWireframeCubeColorDisplay obj = new FilledWireframeCubeColorDisplay(localTransform, loc, faceCube, wireframeCube);
+        obj.addChild(faceCube);
+        obj.addChild(wireframeCube);
+        return obj;
     }
 
     public void spawnDisplay() {
@@ -231,42 +251,4 @@ public class FilledWireframeCubeColorDisplay extends PositionObject implements I
         wireframeCube.moveEntityStatic(location);
     }
 
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
-    @Override
-    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
-        hiddenByDefault = hide;
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
-    @Override
-    public IDisplayable showForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to both the face cube and the wireframe cube (and, transitively, everything under them). */
-    @Override
-    public IDisplayable hideForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
-            });
-        }
-        return this;
-    }
 }

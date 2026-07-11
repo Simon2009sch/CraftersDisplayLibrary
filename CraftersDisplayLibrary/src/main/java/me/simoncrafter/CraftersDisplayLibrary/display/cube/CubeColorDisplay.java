@@ -5,13 +5,12 @@ import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -32,10 +31,9 @@ import java.util.function.BiFunction;
  * installed as custom {@linkplain IDisplayable#setParentApplierFunction parent-transform appliers}
  * on those faces; left/right use the default XYZ applier.
  */
-public class CubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
+public class CubeColorDisplay extends PositionObject implements IColorableDisplay, ICuboidDisplay {
 
     private boolean seeThrough = false;
-    private boolean hiddenByDefault = false;
 
     private CubeColorInformation colorInformation = new CubeColorInformation();
     private ColorDisplay top;
@@ -99,6 +97,35 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
     /** Creates a cube centred at the origin (no translation) with no right rotation. */
     public static CubeColorDisplay create(Location loc, Vector3f scale, Quaternionf leftRotation, CubeColorInformation colorInformation, boolean seeThrough) {
         return new CubeColorDisplay(new Transformation(new Vector3f(0, 0, 0), leftRotation, scale, new Quaternionf(0, 0, 0, 1)), loc, colorInformation, seeThrough);
+    }
+
+    /**
+     * Assembles a {@code CubeColorDisplay} out of 6 already-reconstructed {@link ColorDisplay} faces
+     * (e.g. adopted from already-spawned entities), instead of building new ones via
+     * {@link #spawnDisplay()} - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live tree from entities found already sitting in the world. Wires the faces up via the normal
+     * public {@link #addChild} rather than reaching into private state, then re-runs
+     * {@link #updateChildren} once so the {@link #topBottomApplier}/{@link #frontBackApplier} parent
+     * appliers get (re-)installed exactly as {@link #spawnDisplay()} would have left them.
+     */
+    @ApiStatus.Internal
+    public static CubeColorDisplay assemble(Location loc, Transformation localTransform, boolean seeThrough, CubeColorInformation colorInformation,
+                                             ColorDisplay top, ColorDisplay bottom, ColorDisplay left, ColorDisplay right, ColorDisplay front, ColorDisplay back) {
+        CubeColorDisplay obj = new CubeColorDisplay(localTransform, loc, colorInformation, seeThrough);
+        obj.top = top;
+        obj.bottom = bottom;
+        obj.left = left;
+        obj.right = right;
+        obj.front = front;
+        obj.back = back;
+        obj.addChild(top);
+        obj.addChild(bottom);
+        obj.addChild(left);
+        obj.addChild(right);
+        obj.addChild(front);
+        obj.addChild(back);
+        return obj;
     }
 
     /**
@@ -304,45 +331,6 @@ public class CubeColorDisplay extends PositionObject implements IHidable, IColor
         right.setColor(color);
         front.setColor(color);
         back.setColor(color);
-    }
-
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces (faces not yet spawned are skipped, then picked up in {@link #spawnDisplay()}). */
-    @Override
-    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
-        hiddenByDefault = hide;
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces. */
-    @Override
-    public IDisplayable showForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 6 faces. */
-    @Override
-    public IDisplayable hideForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
-            });
-        }
-        return this;
     }
 
     /**

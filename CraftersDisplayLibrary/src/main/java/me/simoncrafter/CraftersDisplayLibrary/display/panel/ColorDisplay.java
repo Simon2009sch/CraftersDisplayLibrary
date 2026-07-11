@@ -11,6 +11,7 @@ import org.bukkit.entity.Display;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -59,6 +60,7 @@ public class ColorDisplay extends AbstractEntityBackedDisplay<TextDisplay> imple
 
         entity = getLocation().getWorld().spawn(getLocation(), TextDisplay.class);
         entity.setBillboard(billboard);
+        applyGenericDisplayProperties(entity);
         entity.setBackgroundColor(color);
         entity.setDefaultBackground(false);
         entity.setSeeThrough(seeThrough);
@@ -95,6 +97,30 @@ public class ColorDisplay extends AbstractEntityBackedDisplay<TextDisplay> imple
     /** Creates a fixed-billboard, non-see-through colour panel with no right rotation. */
     public static ColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Color color) {
         return new ColorDisplay(loc, scale, translation, leftRotation, new Quaternionf(0, 0, 0, 1), color, false, Display.Billboard.FIXED);
+    }
+
+    /**
+     * Wraps an <strong>already-spawned</strong> {@link TextDisplay} entity as a {@code ColorDisplay},
+     * instead of spawning a new one - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live wrapper object around an entity found already sitting in the world (e.g. after a
+     * restart), from a previously-serialized blob. Not part of the public creation API - use
+     * {@link #create} to spawn a brand new display.
+     */
+    @ApiStatus.Internal
+    public static ColorDisplay adopt(TextDisplay entity, Location loc, Transformation localTransform, Color color, boolean seeThrough, Display.Billboard billboard,
+                                      int teleportDuration, float viewRange, float shadowRadius, float shadowStrength, Color glowColorOverride, Display.Brightness brightness) {
+        ColorDisplay obj = new ColorDisplay(loc, new Vector3f(localTransform.getScale()), new Vector3f(localTransform.getTranslation()),
+                new Quaternionf(localTransform.getLeftRotation()), new Quaternionf(localTransform.getRightRotation()), color, seeThrough, billboard);
+        obj.teleportDuration = teleportDuration;
+        obj.viewRange = viewRange;
+        obj.shadowRadius = shadowRadius;
+        obj.shadowStrength = shadowStrength;
+        obj.glowColorOverride = glowColorOverride;
+        obj.brightness = brightness;
+        obj.hiddenByDefault = !entity.isVisibleByDefault();
+        obj.entity = entity;
+        return obj;
     }
 
     /**

@@ -10,6 +10,5 @@ import me.simoncrafter.CraftersDisplayLibrary.effect.internal.EffectFunction;
  * @param <V> the display type this function drives, typically
  *            {@link me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay}
  */
-@FunctionalInterface
 public interface IHighlighterFunction<V> extends EffectFunction<V> {
 }

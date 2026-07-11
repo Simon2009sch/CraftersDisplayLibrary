@@ -14,15 +14,15 @@ import org.bukkit.Color;
 public class FadeOutTinter implements IViewTinterFunction {
 
     private final Color color;
-    private final int fadeDuration;
+    private final int cycleDuration;
 
     /**
-     * @param color        the tint's RGB and starting alpha
-     * @param fadeDuration ticks the fade-out takes
+     * @param color         the tint's RGB and starting alpha
+     * @param cycleDuration ticks the fade-out takes
      */
-    public FadeOutTinter(Color color, int fadeDuration) {
+    public FadeOutTinter(Color color, int cycleDuration) {
         this.color = color;
-        this.fadeDuration = fadeDuration;
+        this.cycleDuration = cycleDuration;
     }
 
     @Override
@@ -39,7 +39,7 @@ public class FadeOutTinter implements IViewTinterFunction {
         Color opaqueColor = Color.fromARGB(color.getAlpha(), r, g, b);
         Color transparentColor = Color.fromARGB(0, r, g, b);
 
-        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(fadeDuration, opaqueColor, transparentColor, (IColorableDisplay) object) {
+        GlobalAnimationTickHandler.registerNewColorAnimation(object, new CustomTypeAnimationInterpolationFunction<>(cycleDuration, opaqueColor, transparentColor, (IColorableDisplay) object) {
             @Override
             public void nextTick(int duration, int tick, Color startColor, Color endColor, IColorableDisplay obj) {
                 try {
@@ -52,5 +52,10 @@ public class FadeOutTinter implements IViewTinterFunction {
                 }
             }
         });
+    }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
     }
 }

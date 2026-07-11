@@ -3,12 +3,14 @@ package me.simoncrafter.CraftersDisplayLibrary.display.panel;
 import me.simoncrafter.CraftersDisplayLibrary.core.AbstractEntityBackedDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.Tags;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.Display;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -65,6 +67,7 @@ public class BlockDisplayObject extends AbstractEntityBackedDisplay<BlockDisplay
 
         entity = getLocation().getWorld().spawn(getLocation(), BlockDisplay.class);
         entity.setBillboard(billboard);
+        applyGenericDisplayProperties(entity);
         entity.setBlock(blockData);
         entity.setVisibleByDefault(!hiddenByDefault);
         entity.setTransformation(centerOrigin(getFinalTransform()));
@@ -102,6 +105,30 @@ public class BlockDisplayObject extends AbstractEntityBackedDisplay<BlockDisplay
     /** Creates a fixed-billboard block display with no rotation at all. */
     public static BlockDisplayObject create(Location loc, Vector3f scale, Vector3f translation, BlockData blockData) {
         return new BlockDisplayObject(loc, scale, translation, new Quaternionf(0, 0, 0, 1), new Quaternionf(0, 0, 0, 1), blockData, Display.Billboard.FIXED);
+    }
+
+    /**
+     * Wraps an <strong>already-spawned</strong> {@link BlockDisplay} entity as a
+     * {@code BlockDisplayObject}, instead of spawning a new one - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live wrapper object around an entity found already sitting in the world (e.g. after a
+     * restart), from a previously-serialized blob. Not part of the public creation API - use
+     * {@link #create} to spawn a brand new display.
+     */
+    @ApiStatus.Internal
+    public static BlockDisplayObject adopt(BlockDisplay entity, Location loc, Transformation localTransform, BlockData blockData, Display.Billboard billboard,
+                                            int teleportDuration, float viewRange, float shadowRadius, float shadowStrength, Color glowColorOverride, Display.Brightness brightness) {
+        BlockDisplayObject obj = new BlockDisplayObject(loc, new Vector3f(localTransform.getScale()), new Vector3f(localTransform.getTranslation()),
+                new Quaternionf(localTransform.getLeftRotation()), new Quaternionf(localTransform.getRightRotation()), blockData, billboard);
+        obj.teleportDuration = teleportDuration;
+        obj.viewRange = viewRange;
+        obj.shadowRadius = shadowRadius;
+        obj.shadowStrength = shadowStrength;
+        obj.glowColorOverride = glowColorOverride;
+        obj.brightness = brightness;
+        obj.hiddenByDefault = !entity.isVisibleByDefault();
+        obj.entity = entity;
+        return obj;
     }
 
     /**

@@ -38,7 +38,7 @@ public class ScalingPulseHighlighter implements IHighlighterFunction<ICuboidDisp
 
         // Every ICuboidDisplay (CubeColorDisplay/WireframeCubeColorDisplay/FilledWireframeCubeColorDisplay)
         // is also a PositionObject, which is what the scale-animation registry operates on.
-        PositionObject positionObject = (PositionObject) object;
+        PositionObject positionObject = object.asPositionObject();
 
         GlobalAnimationTickHandler.registerNewScaleAnimation(positionObject, new AnimationInterpolationFunction<>(cycleDuration, start, end, positionObject) {
             @Override
@@ -52,5 +52,10 @@ public class ScalingPulseHighlighter implements IHighlighterFunction<ICuboidDisp
                 obj.scaleAbsoluteNoUpdate(new Vector3f(x, y, z));
             }
         });
+    }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
     }
 }

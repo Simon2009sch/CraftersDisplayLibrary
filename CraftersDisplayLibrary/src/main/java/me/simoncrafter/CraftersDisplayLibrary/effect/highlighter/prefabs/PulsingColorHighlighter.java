@@ -64,4 +64,9 @@ public class PulsingColorHighlighter implements IHighlighterFunction<ICuboidDisp
             }
         });
     }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
+    }
 }

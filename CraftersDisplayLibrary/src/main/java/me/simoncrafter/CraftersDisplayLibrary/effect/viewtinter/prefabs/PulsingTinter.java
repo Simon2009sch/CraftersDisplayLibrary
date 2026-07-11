@@ -66,4 +66,9 @@ public class PulsingTinter implements IViewTinterFunction {
             }
         });
     }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
+    }
 }

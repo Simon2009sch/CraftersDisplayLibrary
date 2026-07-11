@@ -6,7 +6,6 @@ import me.simoncrafter.CraftersDisplayLibrary.animation.spi.AnimationInterpolati
 import me.simoncrafter.CraftersDisplayLibrary.animation.spi.CustomTypeAnimationInterpolationFunction;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.IViewTinterFunction;
-import net.kyori.adventure.text.BlockNBTComponent;
 import org.bukkit.Color;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -102,7 +101,7 @@ public class GlobalAnimationTickHandler {
      * Cancels any in-progress colour animation on {@code obj} without applying its end value.
      * Used e.g. when a display is removed or its colour animation is being replaced by
      * higher-level code that manages its own transition (see
-     * {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter#setPlayerAnimation(Player, IViewTinterFunction, int)}).
+     * {@link me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter#setPlayerAnimation(Player, IViewTinterFunction)}).
      */
     public static void removeColorAnimation(IColorableDisplay obj) {
         colorAnimations.remove(obj);

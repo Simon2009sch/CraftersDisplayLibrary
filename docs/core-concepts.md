@@ -46,8 +46,9 @@ over an object's *immediate* children without needing to call `getChildren()` yo
 cube.forEveryChild(child -> child.setLocationNoUpdate(child.getLocation()));
 ```
 
-These are not recursive on their own — see `IHidable`'s `recursive` flag below for the pattern this library
-uses when a whole-subtree walk is needed.
+These are not recursive on their own — see the `recursive` flag on `hideByDefault`/`showForPlayer`/
+`hideForPlayer` below (declared directly on `IDisplayable`) for the pattern this library uses when a
+whole-subtree walk is needed.
 
 ## Two rotation channels
 
@@ -102,14 +103,16 @@ property per object.
 
 ## Coloring and visibility
 
-Two small interfaces sit alongside `IDisplayable`:
-
-- **`IColorableDisplay`** — adds `setColor(Color)`. Implemented by every display type that renders a solid
-  color. The two entity-backed displays — `BlockDisplayObject` and `ItemDisplayObject` — intentionally do
-  **not** implement it, since they render a real block/item rather than a flat colour; use their
-  `setBlock(BlockData)` / `setItem(ItemStack)` methods instead. This is also the type the color-animation
-  system operates on.
-- **`IHidable`** — per-player visibility control, layered on top of Bukkit's own
+- **`IColorableDisplay`** — extends `IDisplayable`; adds `setColor(Color)` plus see-through control
+  (`isSeeThrough()`/`setSeeThrough(boolean)`). Implemented by every display type that renders a solid
+  color: `ColorDisplay`, `TextDisplay` (panel), `CubeColorDisplay`, `WireframeCubeColorDisplay`,
+  `FilledWireframeCubeColorDisplay`, `LineColorDisplay`. The two entity-backed displays —
+  `BlockDisplayObject` and `ItemDisplayObject` — intentionally do **not** implement it, since they render a
+  real block/item rather than a flat colour (and Bukkit's own `Display` interface only declares
+  see-through on `TextDisplay` to begin with); use their `setBlock(BlockData)` / `setItem(ItemStack)`
+  methods instead. `IColorableDisplay` is also the type the color-animation system operates on.
+- **Hide/show** — every `IDisplayable`, not just colorable ones, carries per-player visibility control
+  directly (it's part of the base interface, not a separate opt-in one), layered on top of Bukkit's own
   `Display.setVisibleByDefault`/`Player.showEntity`/`hideEntity`:
   - `hideByDefault(true)` makes the display invisible to everyone by default;
   - `showForPlayer(player)` / `hideForPlayer(player)` then override that default for specific players.
@@ -130,6 +133,9 @@ Two small interfaces sit alongside `IDisplayable`:
   filledCube.hideByDefault(true);        // == hideByDefault(true, true): hides faces + edges recursively
   ```
 
+  Since hide/show lives on `IDisplayable` itself, every display in the library supports it out of the box —
+  there's nothing extra to implement or opt into.
+
 ## Tagging entities with persistent data
 
 `IDisplayable` itself exposes `setPersistentData(NamespacedKey, PersistentDataType<T, Z>, Z)`, which writes
@@ -140,8 +146,8 @@ same mechanism the library uses internally to tag its own entities with `Tags.CD
 cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id");
 ```
 
-Like `IHidable`, there's a `recursive` overload — `setPersistentData(key, type, value, boolean)` — but with
-the **opposite default**: the no-flag version above only tags this object's own entity/entities, not its
+Like hide/show above, there's a `recursive` overload — `setPersistentData(key, type, value, boolean)` — but
+with the **opposite default**: the no-flag version above only tags this object's own entity/entities, not its
 descendants. A composite display with no entity of its own (`CubeColorDisplay`, `WireframeCubeColorDisplay`,
 `FilledWireframeCubeColorDisplay`) is therefore a no-op when called without `recursive = true`:
 
@@ -149,6 +155,12 @@ descendants. A composite display with no entity of its own (`CubeColorDisplay`, 
 cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id");       // no-op: CubeColorDisplay owns no entity
 cube.setPersistentData(myKey, PersistentDataType.STRING, "some-id", true); // tags all 6 face entities
 ```
+
+> [!NOTE]
+> `setPersistentData` is a one-off, low-level way to stamp arbitrary data onto a display's entities. For the
+> higher-level concern of making a whole display tree **survive a server restart** — tag it once, read it
+> back out of the world as live objects, and clean it up in bulk by plugin-load "iteration" — see
+> [Persistence](persistence.md), which is built on this same PDC mechanism plus its own dedicated `Tags` keys.
 
 ## Location vs. local transform
 
@@ -186,9 +198,12 @@ panel.rebaseEntity(panel.getLocation().add(new Vector(0, 0, 5))); // re-anchors 
 
 ## Cuboid displays
 
-`ICuboidDisplay` (extended by `IColorableDisplay`) is the common interface for anything box-shaped:
-`CubeColorDisplay`, `WireframeCubeColorDisplay`, and `FilledWireframeCubeColorDisplay` all implement it, which
-is what lets [`BlockHighlighter`](block-highlighting.md) spawn any of the three interchangeably based on a
-`HighlightDisplayType` argument.
+`ICuboidDisplay` (which *extends* `IColorableDisplay`, not the other way around) is the common interface for
+anything box-shaped: `CubeColorDisplay`, `WireframeCubeColorDisplay`, and `FilledWireframeCubeColorDisplay`
+all implement it, which is what lets [`BlockHighlighter`](block-highlighting.md) spawn any of the three
+interchangeably based on a `HighlightDisplayType` argument. It only adds `spawnDisplay()` and a convenience
+`asPositionObject()` cast (every current implementor is also a `PositionObject`) on top of what it inherits —
+see-through control (`isSeeThrough()`/`setSeeThrough(boolean)`) lives up on `IColorableDisplay` now, not
+declared separately here.
 
 Continue to [Displays](displays.md) for a tour of each concrete display type.

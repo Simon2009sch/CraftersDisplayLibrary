@@ -1,7 +1,7 @@
 package me.simoncrafter.CraftersDisplayLibrary.core;
 
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.util.Transformation;
@@ -15,7 +15,7 @@ import java.util.List;
  * <p>
  * All entity-agnostic boilerplate (the {@code entity}/{@code hiddenByDefault} fields, every
  * transform-mutator override that resyncs the live entity via {@link #updateEntity(int)},
- * {@link #setLocation(Location)}, {@link #rebaseEntity(Location)}, and the {@link IHidable}
+ * {@link #setLocation(Location)}, {@link #rebaseEntity(Location)}, and the per-player-visibility
  * delegation) lives in {@link AbstractEntityBackedPositionObject} and is inherited as-is; this class
  * only adds what is specific to {@link Display} entities:
  * <ul>
@@ -60,6 +60,24 @@ public abstract class AbstractEntityBackedDisplay<E extends Display> extends Abs
     /** The billboard mode; applied immediately to the live entity by {@link #setBillboard(Display.Billboard)}. */
     protected Display.Billboard billboard = Display.Billboard.FIXED;
 
+    /** The teleport duration; applied immediately to the live entity by {@link #setTeleportDuration(int)}. */
+    protected int teleportDuration = 0;
+
+    /** The view range; applied immediately to the live entity by {@link #setViewRange(float)}. */
+    protected float viewRange = 1.0f;
+
+    /** The shadow radius; applied immediately to the live entity by {@link #setShadowRadius(float)}. */
+    protected float shadowRadius = 0f;
+
+    /** The shadow strength; applied immediately to the live entity by {@link #setShadowStrength(float)}. */
+    protected float shadowStrength = 1f;
+
+    /** The glow color override; applied immediately to the live entity by {@link #setGlowColorOverride(Color)}. */
+    protected Color glowColorOverride = null;
+
+    /** The brightness override; applied immediately to the live entity by {@link #setBrightness(Display.Brightness)}. */
+    protected Display.Brightness brightness = null;
+
     protected AbstractEntityBackedDisplay(List<IDisplayable> children, Transformation localTransform, Location location) {
         super(children, localTransform, location);
     }
@@ -89,5 +107,93 @@ public abstract class AbstractEntityBackedDisplay<E extends Display> extends Abs
     /** Gets the current billboard mode. */
     public Display.Billboard getBillboard() {
         return billboard;
+    }
+
+    /** Sets the teleport duration; applies immediately to the live entity if already spawned and valid. */
+    public void setTeleportDuration(int teleportDuration) {
+        this.teleportDuration = teleportDuration;
+        if (entity != null && entity.isValid()) {
+            entity.setTeleportDuration(teleportDuration);
+        }
+    }
+
+    /** Gets the current teleport duration. */
+    public int getTeleportDuration() {
+        return teleportDuration;
+    }
+
+    /** Sets the view range; applies immediately to the live entity if already spawned and valid. */
+    public void setViewRange(float viewRange) {
+        this.viewRange = viewRange;
+        if (entity != null && entity.isValid()) {
+            entity.setViewRange(viewRange);
+        }
+    }
+
+    /** Gets the current view range. */
+    public float getViewRange() {
+        return viewRange;
+    }
+
+    /** Sets the shadow radius; applies immediately to the live entity if already spawned and valid. */
+    public void setShadowRadius(float shadowRadius) {
+        this.shadowRadius = shadowRadius;
+        if (entity != null && entity.isValid()) {
+            entity.setShadowRadius(shadowRadius);
+        }
+    }
+
+    /** Gets the current shadow radius. */
+    public float getShadowRadius() {
+        return shadowRadius;
+    }
+
+    /** Sets the shadow strength; applies immediately to the live entity if already spawned and valid. */
+    public void setShadowStrength(float shadowStrength) {
+        this.shadowStrength = shadowStrength;
+        if (entity != null && entity.isValid()) {
+            entity.setShadowStrength(shadowStrength);
+        }
+    }
+
+    /** Gets the current shadow strength. */
+    public float getShadowStrength() {
+        return shadowStrength;
+    }
+
+    /** Sets the glow color override; applies immediately to the live entity if already spawned and valid. */
+    public void setGlowColorOverride(Color glowColorOverride) {
+        this.glowColorOverride = glowColorOverride;
+        if (entity != null && entity.isValid()) {
+            entity.setGlowColorOverride(glowColorOverride);
+        }
+    }
+
+    /** Gets the current glow color override. */
+    public Color getGlowColorOverride() {
+        return glowColorOverride;
+    }
+
+    /** Sets the brightness override; applies immediately to the live entity if already spawned and valid. */
+    public void setBrightness(Display.Brightness brightness) {
+        this.brightness = brightness;
+        if (entity != null && entity.isValid()) {
+            entity.setBrightness(brightness);
+        }
+    }
+
+    /** Gets the current brightness override. */
+    public Display.Brightness getBrightness() {
+        return brightness;
+    }
+
+    /** Applies all generic {@link Display} properties to {@code entity}; used during initial entity spawn. */
+    protected void applyGenericDisplayProperties(E entity) {
+        entity.setTeleportDuration(teleportDuration);
+        entity.setViewRange(viewRange);
+        entity.setShadowRadius(shadowRadius);
+        entity.setShadowStrength(shadowStrength);
+        entity.setGlowColorOverride(glowColorOverride);
+        entity.setBrightness(brightness);
     }
 }

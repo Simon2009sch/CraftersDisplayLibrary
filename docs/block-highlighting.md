@@ -10,19 +10,28 @@ by a repeating pulse effect and/or an automatic expiry time. It's a static regis
 import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.BlockHighlighter;
 import me.simoncrafter.CraftersDisplayLibrary.effect.highlighter.HighlightDisplayType;
 
-// Highlight indefinitely, no pulse animation
+// Highlight indefinitely, no pulse animation, fully transparent until you set a color
 BlockHighlighter.highlightBlock(block);
 
 // Highlight for 100 ticks (5 seconds), then auto-remove
 BlockHighlighter.highlightBlock(block, 100);
 
-// Full control: shape, animation, no expiry
-BlockHighlighter.highlightBlock(block, HighlightDisplayType.WIREFRAME, new RainbowHighlighter(), 20);
+// Solid color, no animation, until manually removed
+BlockHighlighter.highlightBlock(block, Color.RED);
 
-// Full control with an expiry time (lifeTime) and a pulse duration (animationDuration)
-BlockHighlighter.highlightBlock(block, HighlightDisplayType.CUBE, new PulsingColorHighlighter(Color.RED, 20), 100, 20);
+// Solid color of a chosen shape, expires after 100 ticks
+BlockHighlighter.highlightBlock(block, HighlightDisplayType.WIREFRAME, Color.RED, 100);
 
-// Set the color/see-through after highlighting (the display starts fully transparent)
+// Animated, chosen shape, no expiry — the function's own cycle duration drives its cadence
+BlockHighlighter.highlightBlock(block, HighlightDisplayType.WIREFRAME, new RainbowHighlighter());
+
+// Animated, chosen shape, expires after 100 ticks
+BlockHighlighter.highlightBlock(block, HighlightDisplayType.CUBE, new PulsingColorHighlighter(Color.RED, 20), 100);
+
+// Swap the running animation on an already-highlighted block, in place (no respawn)
+BlockHighlighter.setBlockAnimation(block, new GlowingHighlighter(Color.AQUA, 20));
+
+// Set the color directly (works with the function-driven overloads too, if you want a starting color)
 BlockHighlighter.getHighlightDisplay(block).setColor(Color.RED);
 
 // Remove early
@@ -30,9 +39,11 @@ BlockHighlighter.unhighlightBlock(block);
 BlockHighlighter.unhighlightAllBlocks();
 ```
 
-The display always spawns **fully transparent** and centered on the block at 1.01× block scale (to avoid
-z-fighting with the block's own faces) — you set a visible color yourself, either directly via
-`getHighlightDisplay(block).setColor(...)` or through the animation function you pass in.
+There's no `animationDuration`-style parameter anywhere in this API anymore — each animation function
+carries its own inherent cycle length (see below), so it can never drift out of sync with what the function
+actually draws. The function-driven and no-color overloads spawn the display **fully transparent**, centered
+on the block at 1.01× block scale (to avoid z-fighting with the block's own faces); the new `Color`-only
+overloads skip that step and apply the color immediately instead.
 
 ## Shapes
 
@@ -46,25 +57,36 @@ z-fighting with the block's own faces) — you set a visible color yourself, eit
 
 ## Built-in animations (`IHighlighterFunction`)
 
-Pass any `IHighlighterFunction<ICuboidDisplay>` as the animation argument — it's called every
-`animationDuration` ticks (default 20, i.e. once per second) with the live display. Five ready-made ones
-live in `effect.highlighter.prefabs`:
+Pass any `IHighlighterFunction<ICuboidDisplay>` as the animation argument. There's no separate duration
+parameter to pass alongside it: every `IHighlighterFunction` (via `EffectFunction`) declares its own
+`getInherentCycleDuration()`, backed by whatever `cycleDuration` (or equivalent) you gave its constructor,
+and that value alone now drives how often `onAnimationRestart` fires — it can no longer drift out of sync
+with `BlockHighlighter` the way a separately-passed duration could. Five ready-made ones live in
+`effect.highlighter.prefabs`:
 
 | Class | Effect |
 |---|---|
-| `PulsingColorHighlighter(color, cycleDuration)` | Smooth sine-wave alpha breathing between two alpha values |
-| `GlowingHighlighter(baseColor, cycleDuration)` | Fades from a dimmed version of the color up to full brightness each cycle |
-| `RainbowHighlighter()` | Steps through a fixed 7-color rainbow, one color per cycle |
+| `PulsingColorHighlighter(color, cycleDuration)` / `(color, minAlpha, maxAlpha, cycleDuration)` | Smooth sine-wave alpha breathing between two alpha values |
+| `GlowingHighlighter(baseColor, cycleDuration)` / `(baseColor, minBrightness, maxBrightness, cycleDuration)` | Fades from a dimmed version of the color up to full brightness each cycle |
+| `RainbowHighlighter()` / `RainbowHighlighter(cycleDuration)` | Steps through a fixed 7-color rainbow, one color per cycle (no-arg default: 20 ticks) |
 | `ScalingPulseHighlighter(minScale, maxScale, cycleDuration)` | Repeating linear grow/shrink pulse |
 | `PingHighlighter(minScale, maxScale, color, cycleDuration)` | Grows while fading out — a radar-style "ping" |
 
 ```java
-BlockHighlighter.highlightBlock(block, new GlowingHighlighter(Color.AQUA, 20), -1);
+BlockHighlighter.highlightBlock(block, new GlowingHighlighter(Color.AQUA, 20));
 ```
 
-Write your own by implementing the single-method `IHighlighterFunction<ICuboidDisplay>` interface — most
-prefabs just register a small custom color/scale interpolator (see [Animations](animations.md)) each time
-`onAnimationRestart` fires.
+Write your own by implementing `IHighlighterFunction<ICuboidDisplay>` — it now has two required methods,
+`onAnimationRestart(ICuboidDisplay)` and `getInherentCycleDuration()` (plus the existing `default
+isRepeating()`), so it's no longer a valid lambda target (no highlighter/tinter in this library ever was
+constructed as one). Most prefabs just register a small custom color/scale interpolator (see
+[Animations](animations.md)) each time `onAnimationRestart` fires.
+
+> [!IMPORTANT]
+> `GlowingHighlighter`'s 4-argument constructor is `(baseColor, minBrightness, maxBrightness, cycleDuration)`
+> — duration last, matching every other prefab's convention. If you have older call sites using
+> `(baseColor, cycleDuration, minBrightness, maxBrightness)`, update the argument order; the 2-argument
+> `(baseColor, cycleDuration)` convenience constructor is unaffected.
 
 > [!NOTE]
 > `RainbowHighlighter` keeps its color-cycle position as instance state. Reuse one instance across multiple
@@ -77,11 +99,12 @@ The `lifeTime` overloads schedule automatic removal after a fixed number of tick
 lazily-started "lifetime checker" task that self-cancels once nothing has a pending expiry:
 
 ```java
-BlockHighlighter.highlightBlock(block, HighlightDisplayType.CUBE, new RainbowHighlighter(), 200, 10);
-//                                                                                     ^lifeTime  ^animationDuration
+BlockHighlighter.highlightBlock(block, HighlightDisplayType.CUBE, new RainbowHighlighter(), 200); // lifeTime = 200 ticks
 ```
 
 Pass `-1` (or omit it, via the shorter overloads) for a highlight that lasts until you explicitly call
-`unhighlightBlock`.
+`unhighlightBlock`. A highlight with a `lifeTime` but **no** animation function now reliably expires too —
+previously the internal checker task never started ticking for a purely static, timed highlight, so its
+lifetime silently never counted down.
 
 Continue to [View Tinting](view-tinting.md) for the equivalent full-screen effect on a player.

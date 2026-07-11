@@ -499,7 +499,6 @@ public class testCommand implements CommandExecutor, TabExecutor {
         boolean seeThrough = false;
         IHighlighterFunction<ICuboidDisplay> animation = null;
         int lifeTime = -1;
-        int animationDuration = 20;
         HighlightDisplayType shape = HighlightDisplayType.CUBE;
 
         if (args.length > 1) {
@@ -544,18 +543,22 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
 
         targetBlock.setType(targetBlock.getType());
-        if (lifeTime > 0) {
-            BlockHighlighter.highlightBlock(targetBlock, shape, animation, lifeTime, animationDuration);
+        ICuboidDisplay display;
+        if (animation != null) {
+            // The animation's own onAnimationRestart fires on the very first tick after
+            // registration and already carries this same `color` (baked into the prefab's
+            // constructor by createAnimation), so no separate setColor is needed here.
+            display = lifeTime > 0
+                    ? BlockHighlighter.highlightBlock(targetBlock, shape, animation, lifeTime)
+                    : BlockHighlighter.highlightBlock(targetBlock, shape, animation);
         } else {
-            BlockHighlighter.highlightBlock(targetBlock, shape, animation, animationDuration);
+            display = lifeTime > 0
+                    ? BlockHighlighter.highlightBlock(targetBlock, shape, color, lifeTime)
+                    : BlockHighlighter.highlightBlock(targetBlock, shape, color);
         }
 
-        ICuboidDisplay display = BlockHighlighter.getHighlightDisplay(targetBlock);
-        if (display != null) {
-            display.setColor(color);
-            if (seeThrough) {
-                display.setSeeThrough(true);
-            }
+        if (display != null && seeThrough) {
+            display.setSeeThrough(true);
         }
 
         String highlightInfo = "Color: " + color.getRed() + "," + color.getGreen() + "," + color.getBlue() + " | Shape: " + shape.name();
@@ -584,7 +587,6 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         Color color = Color.WHITE;
         IViewTinterFunction tintAnimation = null;
-        int duration = 20;
 
         if (args.length > 1) {
             String colorArg = args[1].toLowerCase();
@@ -606,22 +608,17 @@ public class testCommand implements CommandExecutor, TabExecutor {
             }
         }
 
-        if (args.length > 3) {
-            try {
-                duration = Integer.parseInt(args[3]);
-            } catch (NumberFormatException e) {
-                sender.sendMessage(Component.text("Invalid duration: " + args[3], NamedTextColor.RED));
-                return;
-            }
+        // No more separate "duration" arg: each tint animation now carries its own inherent
+        // cycle duration (see IViewTinterFunction#getInherentCycleDuration()), so the old
+        // duration-passed-twice parameter that used to be threaded through here is gone.
+        if (tintAnimation != null) {
+            ViewTinter.tintPlayer(player, color, tintAnimation);
+        } else {
+            ViewTinter.tintPlayer(player, color);
         }
-
-        ViewTinter.tintPlayer(player, color, duration, tintAnimation);
         String tintInfo = "Color: " + color.getRed() + "," + color.getGreen() + "," + color.getBlue();
         if (tintAnimation != null) {
             tintInfo += " | Animation: " + args[2];
-        }
-        if (duration > 0) {
-            tintInfo += " | Duration: " + duration + " ticks";
         }
         sender.sendMessage(Component.text("Applied view tint - " + tintInfo, NamedTextColor.GREEN));
     }
@@ -648,21 +645,11 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /cdl setanimation <animation> [duration]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /cdl setanimation <animation>", NamedTextColor.RED));
             return;
         }
 
         String animationName = args[1].toLowerCase();
-        int duration = 20;
-
-        if (args.length > 2) {
-            try {
-                duration = Integer.parseInt(args[2]);
-            } catch (NumberFormatException e) {
-                sender.sendMessage(Component.text("Invalid duration: " + args[2], NamedTextColor.RED));
-                return;
-            }
-        }
 
         IViewTinterFunction animation = createTintAnimation(animationName, Color.WHITE);
         if (animation == null && !animationName.equals("none")) {
@@ -670,8 +657,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return;
         }
 
-        ViewTinter.setPlayerAnimation(player, animation, duration);
-        String animInfo = "Animation: " + animationName + " | Duration: " + duration + " ticks";
+        // No more separate "duration" arg: the animation's own inherent cycle duration
+        // (see IViewTinterFunction#getInherentCycleDuration()) now drives its cadence.
+        ViewTinter.setPlayerAnimation(player, animation);
+        String animInfo = "Animation: " + animationName;
         if (animation != null) {
             animInfo += " | Type: " + (animation.isRepeating() ? "Repeating" : "Transition");
         }

@@ -46,21 +46,43 @@ public class BlockHighlighter {
         }
     };
 
-    /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display until manually removed. */
-    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int duration) {
-        return highlightBlock(block, HighlightDisplayType.CUBE, function, duration);
+    /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that never expires on its own. */
+    public static ICuboidDisplay highlightBlock(Block block) {
+        return highlightBlock(block, -1);
+    }
+
+    /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that expires after {@code lifeTime} ticks. */
+    public static ICuboidDisplay highlightBlock(Block block, int lifeTime) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, (IHighlighterFunction<ICuboidDisplay>) null, lifeTime);
+    }
+
+    /** Highlights {@code block} with a solid {@code color}, {@link HighlightDisplayType#CUBE} display until manually removed. */
+    public static ICuboidDisplay highlightBlock(Block block, Color color) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, color);
+    }
+
+    /** Highlights {@code block} with a solid {@code color} display of the given {@code type} until manually removed. */
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, Color color) {
+        return highlightBlock(block, type, color, -1);
+    }
+
+    /** Highlights {@code block} with a solid {@code color}, {@link HighlightDisplayType#CUBE} display that expires after {@code lifeTime} ticks. */
+    public static ICuboidDisplay highlightBlock(Block block, Color color, int lifeTime) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, color, lifeTime);
     }
 
     /**
-     * Highlights {@code block} until manually removed with {@link #unhighlightBlock}.
+     * Highlights {@code block} with a solid, non-animated {@code color} display of the given
+     * {@code type}, automatically calling {@link #unhighlightBlock} once {@code lifeTime} ticks have
+     * elapsed (a value {@code <= 0} disables auto-removal).
      *
      * @param type     which kind of cuboid display to spawn
-     * @param function called every {@code duration} ticks to drive the visual effect; may be
-     *                  {@code null} for a static (non-animated) highlight
-     * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
+     * @param color    the solid color applied to the display once spawned
+     * @param lifeTime ticks until this highlight is automatically removed; a value {@code <= 0}
+     *                  disables auto-removal for this highlight (but still starts the checker task)
      * @return the display backing this highlight
      */
-    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int duration) {
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, Color color, int lifeTime) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -68,13 +90,31 @@ public class BlockHighlighter {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        registry.register(block, duration, display, function, -1);
+        display.setColor(color);
+        registry.register(block, display, null, lifeTime);
         return display;
     }
 
+    /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display until manually removed. */
+    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, function);
+    }
+
+    /**
+     * Highlights {@code block} until manually removed with {@link #unhighlightBlock}.
+     *
+     * @param type     which kind of cuboid display to spawn
+     * @param function called every {@link IHighlighterFunction#getInherentCycleDuration()} ticks to
+     *                  drive the visual effect; may be {@code null} for a static (non-animated) highlight
+     * @return the display backing this highlight
+     */
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function) {
+        return highlightBlock(block, type, function, -1);
+    }
+
     /** Highlights {@code block} with a {@link HighlightDisplayType#CUBE} display that auto-removes itself after {@code lifeTime} ticks. */
-    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
-        return highlightBlock(block, HighlightDisplayType.CUBE, function, lifeTime, duration);
+    public static ICuboidDisplay highlightBlock(Block block, IHighlighterFunction<ICuboidDisplay> function, int lifeTime) {
+        return highlightBlock(block, HighlightDisplayType.CUBE, function, lifeTime);
     }
 
     /**
@@ -83,14 +123,13 @@ public class BlockHighlighter {
      * highlight's remaining lifetime once per tick; that task self-cancels once no highlight is left.
      *
      * @param type     which kind of cuboid display to spawn
-     * @param function called every {@code duration} ticks to drive the visual effect; may be
-     *                  {@code null} for a static (non-animated) highlight
+     * @param function called every {@link IHighlighterFunction#getInherentCycleDuration()} ticks to
+     *                  drive the visual effect; may be {@code null} for a static (non-animated) highlight
      * @param lifeTime ticks until this highlight is automatically removed; a value {@code <= 0}
      *                  disables auto-removal for this highlight (but still starts the checker task)
-     * @param duration animation cycle length in ticks, passed to {@link IHighlighterFunction#onAnimationRestart}
      * @return the display backing this highlight
      */
-    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int lifeTime, int duration) {
+    public static ICuboidDisplay highlightBlock(Block block, HighlightDisplayType type, IHighlighterFunction<ICuboidDisplay> function, int lifeTime) {
         unhighlightBlock(block);
         ICuboidDisplay display = createDisplay(block, type);
         try {
@@ -98,18 +137,16 @@ public class BlockHighlighter {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        registry.register(block, duration, display, function, lifeTime);
+        registry.register(block, display, function, lifeTime);
         return display;
     }
 
-    /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that expires after {@code lifeTime} ticks. */
-    public static ICuboidDisplay highlightBlock(Block block, int lifeTime) {
-        return highlightBlock(block, HighlightDisplayType.CUBE, null, lifeTime, 20);
-    }
-
-    /** Highlights {@code block} with a plain, non-animated {@link HighlightDisplayType#CUBE} display that never expires on its own. */
-    public static ICuboidDisplay highlightBlock(Block block) {
-        return highlightBlock(block, -1);
+    /**
+     * Swaps the driving {@link IHighlighterFunction} on an already-highlighted block without
+     * removing and recreating its display. No-ops if {@code block} isn't currently highlighted.
+     */
+    public static void setBlockAnimation(Block block, IHighlighterFunction<ICuboidDisplay> function) {
+        registry.setAnimation(block, function);
     }
 
     /** Removes the highlight from {@code block}, if any, stopping its animation and despawning its display. */

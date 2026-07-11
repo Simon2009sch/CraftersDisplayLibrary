@@ -24,16 +24,16 @@ public class GlowingHighlighter implements IHighlighterFunction<ICuboidDisplay> 
 
     /** Same as the 4-argument constructor with {@code minBrightness = 100} and {@code maxBrightness = 255}. */
     public GlowingHighlighter(Color baseColor, int cycleDuration) {
-        this(baseColor, cycleDuration, 100, 255);
+        this(baseColor, 100, 255, cycleDuration);
     }
 
     /**
      * @param baseColor      the colour to glow towards each cycle
-     * @param cycleDuration  ticks per glow cycle
      * @param minBrightness  0-255 brightness of {@code baseColor} at the start of each cycle
      * @param maxBrightness  accepted for symmetry but currently unused - see class docs
+     * @param cycleDuration  ticks per glow cycle
      */
-    public GlowingHighlighter(Color baseColor, int cycleDuration, int minBrightness, int maxBrightness) {
+    public GlowingHighlighter(Color baseColor, int minBrightness, int maxBrightness, int cycleDuration) {
         this.baseColor = baseColor;
         this.cycleDuration = cycleDuration;
         this.minBrightness = minBrightness;
@@ -61,5 +61,10 @@ public class GlowingHighlighter implements IHighlighterFunction<ICuboidDisplay> 
                 obj.setColor(interpolated);
             }
         });
+    }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
     }
 }

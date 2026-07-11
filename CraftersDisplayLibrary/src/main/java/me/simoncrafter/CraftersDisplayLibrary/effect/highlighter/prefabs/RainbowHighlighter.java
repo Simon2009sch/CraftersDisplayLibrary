@@ -25,10 +25,26 @@ public class RainbowHighlighter implements IHighlighterFunction<ICuboidDisplay> 
     };
 
     private int currentColorIndex = 0;
+    private final int cycleDuration;
+
+    /** @param cycleDuration ticks between colour steps */
+    public RainbowHighlighter(int cycleDuration) {
+        this.cycleDuration = cycleDuration;
+    }
+
+    /** Same as the 1-argument constructor with {@code cycleDuration = 20} (the prior implicit cadence). */
+    public RainbowHighlighter() {
+        this(20);
+    }
 
     @Override
     public void onAnimationRestart(ICuboidDisplay object) {
         object.setColor(RAINBOW_COLORS[currentColorIndex]);
         currentColorIndex = (currentColorIndex + 1) % RAINBOW_COLORS.length;
+    }
+
+    @Override
+    public int getInherentCycleDuration() {
+        return cycleDuration;
     }
 }

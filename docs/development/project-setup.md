@@ -76,7 +76,7 @@ me.simoncrafter.CraftersDisplayLibrary/
 │   ├── AbstractEntityBackedDisplay.java   shared base for the four single-entity display types
 │   ├── BlockScale.java             the one version-dependent constant the whole library depends on
 │   ├── Tags.java                   the one NamespacedKey used to tag every entity this library spawns
-│   └── interfaces/                 IDisplayable, IColorableDisplay, ICuboidDisplay, IHidable
+│   └── interfaces/                 IDisplayable (now also owns hide/show), IColorableDisplay (now also owns see-through), ICuboidDisplay
 ├── display/                   every concrete display type, grouped by what it renders
 │   ├── panel/                      ColorDisplay, TextDisplay, BlockDisplayObject, ItemDisplayObject
 │   ├── line/                       LineColorDisplay, RawLineDisplay
@@ -89,11 +89,16 @@ me.simoncrafter.CraftersDisplayLibrary/
 │   ├── spi/                        the generic interpolation-function base classes
 │   ├── easing/                     EasingCurve — the easing strategies, shared by every animation kind
 │   └── functions/                  one concrete animation class per kind (translation, rotation, scale, color)
-└── effect/                    higher-level, ready-to-use gameplay utilities built on the above
-    ├── highlighter/                BlockHighlighter and its prefab pulse/glow/rainbow effects
-    ├── viewtinter/                 ViewTinter and its prefab fade/pulse effects
-    └── internal/                   TimedEffectRegistry, EffectFunction — shared plumbing behind both
+├── effect/                    higher-level, ready-to-use gameplay utilities built on the above
+│   ├── highlighter/                BlockHighlighter and its prefab pulse/glow/rainbow effects
+│   ├── viewtinter/                 ViewTinter and its prefab fade/pulse effects
+│   └── internal/                   TimedEffectRegistry, EffectFunction — shared plumbing behind both
+└── persistence/                DisplayPersistence — tag a display tree, read it back after a restart (see persistence.md)
 ```
+
+`IHidable` (per-player visibility) no longer exists as its own interface — its methods were folded directly
+into `IDisplayable`, since every display in the library ended up implementing it anyway. Same story for
+see-through, folded into `IColorableDisplay`.
 
 This replaces the old `def`/`def.active`/`def.util` layout, where package names described nothing (`def` of
 *what*?) and several subpackages were mixed-case (`Cube`, `WireframeCube`, `viewTinter`), which is invalid

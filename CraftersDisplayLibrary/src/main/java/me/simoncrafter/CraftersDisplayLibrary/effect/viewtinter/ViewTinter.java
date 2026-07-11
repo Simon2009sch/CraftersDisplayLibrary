@@ -58,15 +58,30 @@ public class ViewTinter {
     };
 
     /**
-     * Tints {@code player}'s screen with {@code color}, driven by the optional {@code function}.
+     * Tints {@code player}'s screen with {@code color}, driven by the optional {@code function}, and
+     * automatically calling {@link #untintPlayer} once {@code lifeTime} ticks have elapsed (a value
+     * {@code <= 0} disables auto-removal).
+     * <p>
+     * If {@code player} is already tinted, the existing tint cube is reused in place instead of being
+     * respawned - {@code color} is applied via {@link CubeColorDisplay#setColor}, {@code function} is
+     * swapped in via {@link TimedEffectRegistry#setAnimation}, and {@code lifeTime} is updated via
+     * {@link TimedEffectRegistry#updateLifeTime} - so switching e.g. a fade-in to a fade-out on an
+     * already-tinted player is a seamless in-place swap with no flicker/respawn.
      *
      * @param color    the tint colour (its alpha controls opacity)
-     * @param duration ticks per animation cycle, passed to {@link IViewTinterFunction#onAnimationRestart}
      * @param function called to animate the tint; may be {@code null} for a static tint
+     * @param lifeTime ticks until this tint is automatically removed; a value {@code <= 0} disables
+     *                 auto-removal for this tint (but still starts the checker task)
      * @return the tint cube backing this tint, or {@code null} if spawning it failed
      */
-    public static CubeColorDisplay tintPlayer(Player player, Color color, int duration, IViewTinterFunction function) {
-        untintPlayer(player);
+    public static CubeColorDisplay tintPlayer(Player player, Color color, IViewTinterFunction function, int lifeTime) {
+        if (registry.isActive(player)) {
+            CubeColorDisplay existing = registry.getDisplay(player);
+            existing.setColor(color);
+            registry.setAnimation(player, function);
+            registry.updateLifeTime(player, lifeTime);
+            return existing;
+        }
 
         Location playerHead = player.getEyeLocation().toVector().toLocation(player.getWorld());
         // Negative scale on X/Y/Z turns the cube "inside-out" so its faces point inward, wrapping
@@ -107,18 +122,27 @@ public class ViewTinter {
             return null;
         }
 
-        registry.register(player, duration, display, function, -1);
+        registry.register(player, display, function, lifeTime);
         return display;
     }
 
-    /** Tints {@code player}'s screen with a static (non-animated) {@code color}. */
-    public static CubeColorDisplay tintPlayer(Player player, Color color, int duration) {
-        return tintPlayer(player, color, duration, null);
+    /**
+     * Tints {@code player}'s screen with {@code color}, driven by {@code function}, until manually
+     * removed. See {@link #tintPlayer(Player, Color, IViewTinterFunction, int)} for the reuse-in-place
+     * behaviour when {@code player} is already tinted.
+     */
+    public static CubeColorDisplay tintPlayer(Player player, Color color, IViewTinterFunction function) {
+        return tintPlayer(player, color, function, -1);
     }
 
-    /** Tints {@code player}'s screen with a static (non-animated) {@code color} using a default 20-tick cycle length. */
+    /** Tints {@code player}'s screen with a static (non-animated) {@code color} that expires after {@code lifeTime} ticks. */
+    public static CubeColorDisplay tintPlayer(Player player, Color color, int lifeTime) {
+        return tintPlayer(player, color, null, lifeTime);
+    }
+
+    /** Tints {@code player}'s screen with a static (non-animated) {@code color} until manually removed. */
     public static CubeColorDisplay tintPlayer(Player player, Color color) {
-        return tintPlayer(player, color, 20, null);
+        return tintPlayer(player, color, null, -1);
     }
 
     /** Removes {@code player}'s tint, if any, stopping its animation and despawning the tint cube. */
@@ -144,8 +168,8 @@ public class ViewTinter {
      * Swaps the active {@link IViewTinterFunction} on an already-tinted player without removing
      * and recreating the tint cube. No-ops if {@code player} isn't currently tinted.
      */
-    public static void setPlayerAnimation(Player player, IViewTinterFunction animation, int duration) {
-        registry.setAnimation(player, animation, duration);
+    public static void setPlayerAnimation(Player player, IViewTinterFunction animation) {
+        registry.setAnimation(player, animation);
     }
 
 }

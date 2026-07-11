@@ -10,11 +10,17 @@ camera. Only the tinted player sees their own box (it's hidden by default and sh
 ```java
 import me.simoncrafter.CraftersDisplayLibrary.effect.viewtinter.ViewTinter;
 
-// Solid red tint, applied over 20 ticks
-ViewTinter.tintPlayer(player, Color.RED, 20);
+// Static red tint, no animation, until manually removed
+ViewTinter.tintPlayer(player, Color.RED);
 
-// With a built-in animation
-ViewTinter.tintPlayer(player, Color.RED, 20, new FadeInTinter(Color.RED, 20));
+// Static red tint, expires after 100 ticks
+ViewTinter.tintPlayer(player, Color.RED, 100);
+
+// With a built-in animation, until manually removed
+ViewTinter.tintPlayer(player, Color.RED, new FadeInTinter(Color.RED, 20));
+
+// With a built-in animation, expires after 100 ticks
+ViewTinter.tintPlayer(player, Color.RED, new FadeInTinter(Color.RED, 20), 100);
 
 // Query / clear
 ViewTinter.isPlayerTinted(player);
@@ -25,30 +31,38 @@ ViewTinter.untintAllPlayers();
 ViewTinter.getTintDisplay(player).setColor(Color.fromARGB(120, 255, 0, 0));
 
 // Swap the running animation on an already-tinted player, without re-tinting
-ViewTinter.setPlayerAnimation(player, new PulsingTinter(Color.RED, 20), 20);
+ViewTinter.setPlayerAnimation(player, new PulsingTinter(Color.RED, 20));
 ```
 
-A player can only have one active tint at a time — calling `tintPlayer` again replaces the previous one.
+A player can only have one active tint at a time. Calling `tintPlayer` again on an already-tinted player no
+longer means "remove the old tint and spawn a new one" — the **existing** tint cube is now reused in place:
+the new `color` is applied via `setColor`, the driving function is swapped the same way `setPlayerAnimation`
+does it, and `lifeTime` (if given) is updated on the existing entry. In practice this means switching e.g. a
+running fade-in to a fade-out on an already-tinted player is a seamless in-place color/animation swap — no
+flicker, no despawn/respawn pop. `setPlayerAnimation` remains the narrower entry point for "just swap the
+function, leave the current color alone."
 
 ## Built-in animations (`IViewTinterFunction`)
 
-`IViewTinterFunction` has one required method, `onAnimationRestart(CubeColorDisplay)`, plus a
-`default boolean isRepeating() { return true; }`:
+`IViewTinterFunction` requires two methods: `onAnimationRestart(CubeColorDisplay)` and
+`getInherentCycleDuration()` (the number of ticks between restarts — this is now the *only* place a
+duration is specified; `ViewTinter` no longer takes a separate duration argument, it just asks the function
+for its own), plus a `default boolean isRepeating() { return true; }`:
 
-- **Repeating** functions (`isRepeating() == true`) fire every `animationDuration` ticks, indefinitely — like
-  a pulsing status overlay.
+- **Repeating** functions (`isRepeating() == true`) fire every `getInherentCycleDuration()` ticks,
+  indefinitely — like a pulsing status overlay.
 - **One-shot** functions (`isRepeating() == false`) fire exactly once and never again unless you call
   `setPlayerAnimation` to reset them — like a transition that plays once and holds.
 
 | Class | Repeating? | Effect |
 |---|---|---|
-| `FadeInTinter(color, fadeDuration)` | No | Alpha 0 → `color`'s own alpha |
-| `FadeOutTinter(color, fadeDuration)` | No | `color`'s own alpha → 0 |
+| `FadeInTinter(color, cycleDuration)` | No | Alpha 0 → `color`'s own alpha |
+| `FadeOutTinter(color, cycleDuration)` | No | `color`'s own alpha → 0 |
 | `ColorShiftTinter(startColor, endColor, cycleDuration)` | No | Full ARGB transition between two colors |
 | `PulsingTinter(color, cycleDuration)` | Yes | Smooth sine-wave alpha breathing |
 
 ```java
-ViewTinter.tintPlayer(player, Color.BLACK, 0, new FadeInTinter(Color.fromARGB(180, 0, 0, 0), 30));
+ViewTinter.tintPlayer(player, Color.fromARGB(180, 0, 0, 0), new FadeInTinter(Color.fromARGB(180, 0, 0, 0), 30));
 ```
 
 Write your own by implementing `IViewTinterFunction` directly — see [Animations](animations.md) for the

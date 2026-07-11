@@ -2,7 +2,6 @@ package me.simoncrafter.CraftersDisplayLibrary.core;
 
 import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -46,21 +45,18 @@ import java.util.List;
  * {@link org.bukkit.entity.Display} has no yaw/pitch of its own, so it does not go through
  * {@link #applyEntityRotation()}).
  * <p>
- * Also provides the {@link IHidable} delegation (default-hidden flag, per-player show/hide),
- * {@link #setLocation(Location)} (teleports the entity by the same delta, null-checked), and
- * {@link #rebaseEntity(Location)} (re-anchors the entity's raw coordinates without moving the
- * visible display) shared by every concrete subclass.
+ * Also provides the {@link IDisplayable} per-player-visibility delegation (default-hidden flag,
+ * per-player show/hide), {@link #setLocation(Location)} (teleports the entity by the same delta,
+ * null-checked), and {@link #rebaseEntity(Location)} (re-anchors the entity's raw coordinates
+ * without moving the visible display) shared by every concrete subclass.
  *
  * @param <E> the concrete Bukkit {@link Entity} subtype backing this object
  */
-public abstract class AbstractEntityBackedPositionObject<E extends Entity> extends PositionObject implements IHidable {
+public abstract class AbstractEntityBackedPositionObject<E extends Entity> extends PositionObject {
 
 
     /** The backing entity, or {@code null} if not yet spawned (or after {@link #remove()}). */
     protected E entity = null;
-
-    /** Whether this display is hidden from players by default. See {@link IHidable}. */
-    protected boolean hiddenByDefault = false;
 
     protected AbstractEntityBackedPositionObject(List<IDisplayable> children, Transformation localTransform, Location location) {
         super(children, localTransform, location);
@@ -266,24 +262,13 @@ public abstract class AbstractEntityBackedPositionObject<E extends Entity> exten
         moveRelative(delta.negate(), 0);
     }
 
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
     /** {@inheritDoc} Applies immediately to the live entity if already spawned and valid; if {@code recursive}, also to every child. */
     @Override
     public IDisplayable hideByDefault(boolean hide, boolean recursive) {
-        hiddenByDefault = hide;
         if (entity != null && entity.isValid()) {
             entity.setVisibleByDefault(!hide);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
-            });
-        }
-        return this;
+        return super.hideByDefault(hide, recursive);
     }
 
     /** {@inheritDoc} If {@code recursive}, also applies to every child. */
@@ -292,12 +277,7 @@ public abstract class AbstractEntityBackedPositionObject<E extends Entity> exten
         if (entity != null && entity.isValid()) {
             player.showEntity(PluginHolder.getPlugin(), entity);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
-            });
-        }
-        return this;
+        return super.showForPlayer(player, recursive);
     }
 
     /** {@inheritDoc} If {@code recursive}, also applies to every child. */
@@ -306,12 +286,7 @@ public abstract class AbstractEntityBackedPositionObject<E extends Entity> exten
         if (entity != null && entity.isValid()) {
             player.hideEntity(PluginHolder.getPlugin(), entity);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
-            });
-        }
-        return this;
+        return super.hideForPlayer(player, recursive);
     }
 
     /** {@inheritDoc} Also removes the backing entity from the world, if spawned. */

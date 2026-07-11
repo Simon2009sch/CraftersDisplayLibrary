@@ -7,8 +7,10 @@ import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.entity.Display;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -57,6 +59,7 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 
 		entity = getLocation().getWorld().spawn(getLocation(), org.bukkit.entity.TextDisplay.class);
 		entity.setBillboard(billboard);
+		applyGenericDisplayProperties(entity);
 		entity.text(textContent);
 		entity.setTextOpacity((byte) 255);
 		entity.setLineWidth(lineWidth);
@@ -95,6 +98,39 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 	/** Creates a text display with default settings (fixed billboard, no background), no right rotation. */
 	public static TextDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation) {
 		return new TextDisplay(loc, scale, translation, leftRotation, new Quaternionf(0, 0, 0, 1));
+	}
+
+	/**
+	 * Wraps an <strong>already-spawned</strong> {@link org.bukkit.entity.TextDisplay} entity as a
+	 * {@code TextDisplay}, instead of spawning a new one - used by
+	 * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+	 * live wrapper object around an entity found already sitting in the world (e.g. after a
+	 * restart), from a previously-serialized blob. Not part of the public creation API - use
+	 * {@link #create} to spawn a brand new display.
+	 */
+	@ApiStatus.Internal
+	public static TextDisplay adopt(org.bukkit.entity.TextDisplay entity, Location loc, Transformation localTransform, Component text, Color textColor,
+									 boolean hasBackground, Color backgroundColor, int lineWidth, org.bukkit.entity.TextDisplay.TextAlignment alignment, boolean seeThrough,
+									 Display.Billboard billboard, int teleportDuration, float viewRange, float shadowRadius, float shadowStrength, Color glowColorOverride, Display.Brightness brightness) {
+		TextDisplay obj = new TextDisplay(loc, new Vector3f(localTransform.getScale()), new Vector3f(localTransform.getTranslation()),
+				new Quaternionf(localTransform.getLeftRotation()), new Quaternionf(localTransform.getRightRotation()));
+		obj.textContent = text;
+		obj.textColor = textColor;
+		obj.hasBackground = hasBackground;
+		obj.backgroundColor = backgroundColor;
+		obj.lineWidth = lineWidth;
+		obj.alignment = alignment;
+		obj.seeThrough = seeThrough;
+		obj.billboard = billboard;
+		obj.teleportDuration = teleportDuration;
+		obj.viewRange = viewRange;
+		obj.shadowRadius = shadowRadius;
+		obj.shadowStrength = shadowStrength;
+		obj.glowColorOverride = glowColorOverride;
+		obj.brightness = brightness;
+		obj.hiddenByDefault = !entity.isVisibleByDefault();
+		obj.entity = entity;
+		return obj;
 	}
 
 	/** The backing entity, or {@code null} if {@link #spawnDisplay()} has not been called yet. */
@@ -145,6 +181,11 @@ public class TextDisplay extends AbstractEntityBackedDisplay<org.bukkit.entity.T
 	/** Gets the current text color. */
 	public Color getColor() {
 		return textColor;
+	}
+
+	/** Whether this display currently has a background colour set (see {@link #setHasBackground}/{@link #setBackgroundColor}). */
+	public boolean hasBackground() {
+		return hasBackground;
 	}
 
 	/** Enables or disables the background; applies immediately to the live entity if spawned. */

@@ -4,6 +4,7 @@ import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -69,6 +70,25 @@ public class RawLineDisplay {
                 case 3 -> display3 = display;
             }
         }
+    }
+
+    /**
+     * Wires already-reconstructed panel displays (e.g. adopted from already-spawned entities) into
+     * this geometry engine instead of building fresh ones via {@link #spawn()} - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live {@link LineColorDisplay} from entities found already sitting in the world. Immediately
+     * resyncs all 4 panels' local transforms from the current {@code startPoint}/{@code direction}/
+     * {@code thickness} via {@link #updateDisplays} - since those fields were restored from the same
+     * blob that originally produced the panels' current on-screen position, this is a same-value,
+     * no-visible-change push, not a jump.
+     */
+    @ApiStatus.Internal
+    void adoptDisplays(ColorDisplay d0, ColorDisplay d1, ColorDisplay d2, ColorDisplay d3) {
+        this.display0 = d0;
+        this.display1 = d1;
+        this.display2 = d2;
+        this.display3 = d3;
+        updateDisplays(0);
     }
 
     /** Removes all 4 backing panel entities that have been spawned. */

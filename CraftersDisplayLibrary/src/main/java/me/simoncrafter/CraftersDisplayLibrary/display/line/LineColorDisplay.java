@@ -3,13 +3,15 @@ package me.simoncrafter.CraftersDisplayLibrary.display.line;
 import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
+import me.simoncrafter.CraftersDisplayLibrary.display.panel.ColorDisplay;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -35,12 +37,11 @@ import java.util.function.Consumer;
  * few of them ({@link #setLocation}, {@link #moveEntityStatic}, {@link #updateChildren}) and Java
  * doesn't allow overriding just some members of an inherited API surface without listing the rest.
  */
-public class LineColorDisplay extends PositionObject implements IHidable, IColorableDisplay {
+public class LineColorDisplay extends PositionObject implements IColorableDisplay {
 
     private RawLineDisplay rawLine;
     private Vector3f baseStartPoint;
     private Vector3f baseDirection;
-    private boolean hiddenByDefault = false;
     private Transformation lastAppliedTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf());
 
     private LineColorDisplay(Vector3f startPoint, Vector3f direction, Color color, Location location, float thickness) {
@@ -71,6 +72,45 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     /** Alias for {@link #create}. */
     public static LineColorDisplay createFromDirection(Vector3f startPoint, Vector3f direction, Color color, Location origin, float thickness) {
         return new LineColorDisplay(startPoint, direction, color, origin, thickness);
+    }
+
+    /**
+     * Wraps 4 <strong>already-spawned</strong> panel {@link org.bukkit.entity.TextDisplay} entities
+     * as a {@code LineColorDisplay}, instead of spawning new ones via {@link #spawnDisplay()} - used
+     * by {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct
+     * a live wrapper object around entities found already sitting in the world (e.g. after a
+     * restart), from a previously-serialized blob. Not part of the public creation API - use
+     * {@link #create}/{@link #createFromDirection} to spawn a brand new line.
+     * <p>
+     * Each panel entity is wrapped as a plain {@link ColorDisplay} via {@link ColorDisplay#adopt}
+     * with a placeholder identity local transform, then immediately handed to
+     * {@link RawLineDisplay#adoptDisplays}, which recomputes and re-pushes the correct per-panel
+     * transform from {@code baseStartPoint}/{@code baseDirection}/{@code thickness} - the same
+     * computation {@link RawLineDisplay#spawn()} used originally, so this is a same-value resync, not
+     * a visible jump.
+     */
+    @ApiStatus.Internal
+    public static LineColorDisplay adopt(org.bukkit.entity.TextDisplay panel0, org.bukkit.entity.TextDisplay panel1, org.bukkit.entity.TextDisplay panel2, org.bukkit.entity.TextDisplay panel3,
+                                          Location loc, Transformation localTransform, Vector3f baseStartPoint, Vector3f baseDirection, Color color, boolean seeThrough, float thickness) {
+        LineColorDisplay obj = new LineColorDisplay(baseStartPoint, baseDirection, color, loc, thickness);
+        obj.setLocalTransformNoUpdate(localTransform);
+
+        Transformation identity = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(), new Vector3f(1, 1, 1), new Quaternionf());
+        ColorDisplay d0 = ColorDisplay.adopt(panel0, loc, identity, color, seeThrough, Display.Billboard.FIXED, 0, 1f, 0f, 1f, null, null);
+        ColorDisplay d1 = ColorDisplay.adopt(panel1, loc, identity, color, seeThrough, Display.Billboard.FIXED, 0, 1f, 0f, 1f, null, null);
+        ColorDisplay d2 = ColorDisplay.adopt(panel2, loc, identity, color, seeThrough, Display.Billboard.FIXED, 0, 1f, 0f, 1f, null, null);
+        ColorDisplay d3 = ColorDisplay.adopt(panel3, loc, identity, color, seeThrough, Display.Billboard.FIXED, 0, 1f, 0f, 1f, null, null);
+        obj.rawLine.adoptDisplays(d0, d1, d2, d3);
+        return obj;
+    }
+
+    /**
+     * One of the 4 backing panel displays, indexed 0-3, or {@code null} if {@code index} is out of
+     * range or {@link #spawnDisplay()}/{@link #adopt} hasn't been called yet.
+     */
+    @ApiStatus.Internal
+    public ColorDisplay getPanel(int index) {
+        return rawLine.getDisplay(index);
     }
 
     /** Spawns the 4 backing panel entities and applies any {@link #hideByDefault} state set before this call. */
@@ -127,6 +167,25 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
     /** The line's direction vector (end minus start), in this object's local space. */
     public Vector3f getDirection() {
         return rawLine.getDirection();
+    }
+
+    /**
+     * This line's start point in its own <em>pre-transform</em> local space, as originally passed to
+     * {@link #create}/{@link #createFromDirection} (or last updated via {@link #setStartPoint}) -
+     * distinct from {@link #getStartPoint()}, which returns {@link #rawLine}'s current, already-transformed
+     * value. Used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to serialize the
+     * value {@link #updateRawLineTransform} actually treats as the source of truth.
+     */
+    @ApiStatus.Internal
+    public Vector3f getBaseStartPoint() {
+        return new Vector3f(baseStartPoint);
+    }
+
+    /** Pre-transform counterpart to {@link #getDirection()}. See {@link #getBaseStartPoint()}. */
+    @ApiStatus.Internal
+    public Vector3f getBaseDirection() {
+        return new Vector3f(baseDirection);
     }
 
     /** The line's length, i.e. the magnitude of {@link #getDirection()}. */
@@ -413,11 +472,6 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
         return super.scaleToBlock(transformation);
     }
 
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
     /**
      * {@inheritDoc} Always applies to all 4 backing panels (panels not yet spawned are skipped) -
      * they are this line's own rendering, not "children" in the {@link #getChildren()} sense. If
@@ -425,17 +479,11 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
      */
     @Override
     public IDisplayable hideByDefault(boolean hide, boolean recursive) {
-        hiddenByDefault = hide;
         for (int i = 0; i < 4; i++) {
             var display = rawLine.getDisplay(i);
             if (display != null) display.hideByDefault(hide, true);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
-            });
-        }
-        return this;
+        return super.hideByDefault(hide, recursive);
     }
 
     /**
@@ -449,12 +497,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
             var display = rawLine.getDisplay(i);
             if (display != null) display.showForPlayer(player, true);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
-            });
-        }
-        return this;
+        return super.showForPlayer(player, recursive);
     }
 
     /**
@@ -468,12 +511,7 @@ public class LineColorDisplay extends PositionObject implements IHidable, IColor
             var display = rawLine.getDisplay(i);
             if (display != null) display.hideForPlayer(player, true);
         }
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
-            });
-        }
-        return this;
+        return super.hideForPlayer(player, recursive);
     }
 
     /**

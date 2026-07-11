@@ -5,6 +5,7 @@ import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
@@ -69,6 +70,9 @@ public class PositionObject implements IDisplayable {
     private Transformation localTransform = new Transformation(new Vector3f(0, 0, 0), new Quaternionf(0, 0, 0, 1), new Vector3f(1, 1, 1), new Quaternionf(0, 0, 0, 1));
     private Location location;
     private PropertyLock propertyLock;
+
+    /** Whether this display is hidden from players by default. See {@link IDisplayable#isHiddenByDefault()}. */
+    protected boolean hiddenByDefault = false;
 
     /** Default parent/local transform composition: scale, then rotate, then translate. */
     private BiFunction<Transformation, Transformation, Transformation> parentApplierFunction = (parent, local) -> {
@@ -560,6 +564,51 @@ public class PositionObject implements IDisplayable {
         if (recursive) {
             forEveryChild(child -> child.setPersistentData(key, type, value, true));
         }
+    }
+
+    @Override
+    public boolean isHiddenByDefault() {
+        return hiddenByDefault;
+    }
+
+    /**
+     * {@inheritDoc} A no-op on a plain {@code PositionObject} (which owns no entity of its own)
+     * beyond the {@code recursive} descent - entity-backed subclasses (see
+     * {@link AbstractEntityBackedPositionObject}) override this to actually resync their entity.
+     */
+    @Override
+    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
+        hiddenByDefault = hide;
+        if (recursive) {
+            forEveryChild(child -> child.hideByDefault(hide, true));
+        }
+        return this;
+    }
+
+    /**
+     * {@inheritDoc} A no-op on a plain {@code PositionObject} (which owns no entity of its own)
+     * beyond the {@code recursive} descent - entity-backed subclasses (see
+     * {@link AbstractEntityBackedPositionObject}) override this to actually resync their entity.
+     */
+    @Override
+    public IDisplayable showForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> child.showForPlayer(player, true));
+        }
+        return this;
+    }
+
+    /**
+     * {@inheritDoc} A no-op on a plain {@code PositionObject} (which owns no entity of its own)
+     * beyond the {@code recursive} descent - entity-backed subclasses (see
+     * {@link AbstractEntityBackedPositionObject}) override this to actually resync their entity.
+     */
+    @Override
+    public IDisplayable hideForPlayer(Player player, boolean recursive) {
+        if (recursive) {
+            forEveryChild(child -> child.hideForPlayer(player, true));
+        }
+        return this;
     }
 
     /** Combines {@link #getParentTransform()} and {@link #getLocalTransform()} via the current {@link #getParentApplierFunction() applier function} into this object's resolved transform. */

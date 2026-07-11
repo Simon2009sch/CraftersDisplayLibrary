@@ -4,19 +4,18 @@ import me.simoncrafter.CraftersDisplayLibrary.core.PositionObject;
 import me.simoncrafter.CraftersDisplayLibrary.display.line.LineColorDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IDisplayable;
-import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IHidable;
 import org.bukkit.Color;
 import org.bukkit.Location;
-import org.bukkit.entity.Player;
 import org.bukkit.util.Transformation;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.ApiStatus;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A wireframe cube whose 12 edges are {@link LineColorDisplay}s and whose faces are not drawn.
@@ -30,10 +29,9 @@ import java.util.List;
  * Edge colours can be set individually ({@link #setEdgeColor}), per face
  * ({@link #setFaceColor}, colours all 4 edges of that face) or all at once ({@link #setColor}).
  */
-public class WireframeCubeColorDisplay extends PositionObject implements IHidable, IColorableDisplay, ICuboidDisplay {
+public class WireframeCubeColorDisplay extends PositionObject implements IColorableDisplay, ICuboidDisplay {
 
     private boolean seeThrough;
-    private boolean hiddenByDefault = false;
     private float thickness;
     private WireframeCubeColorInformation colorInformation;
 
@@ -60,6 +58,25 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
 
     public static WireframeCubeColorDisplay create(Location loc, Vector3f scale, Vector3f translation, Quaternionf leftRotation, Quaternionf rightRotation, WireframeCubeColorInformation colorInformation, boolean seeThrough, float thickness) {
         return new WireframeCubeColorDisplay(new Transformation(translation, leftRotation, scale, rightRotation), loc, colorInformation, seeThrough, thickness);
+    }
+
+    /**
+     * Assembles a {@code WireframeCubeColorDisplay} out of 12 already-reconstructed
+     * {@link LineColorDisplay} edges (e.g. adopted from already-spawned entities), instead of
+     * building new ones via {@link #spawnDisplay()} - used by
+     * {@code me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence} to reconstruct a
+     * live tree from entities found already sitting in the world. Wires the edges up via the normal
+     * public {@link #addChild} rather than reaching into private state.
+     */
+    @ApiStatus.Internal
+    public static WireframeCubeColorDisplay assemble(Location loc, Transformation localTransform, WireframeCubeColorInformation colorInformation, boolean seeThrough, float thickness,
+                                                       Map<CubeEdge, LineColorDisplay> adoptedEdges) {
+        WireframeCubeColorDisplay obj = new WireframeCubeColorDisplay(localTransform, loc, colorInformation, seeThrough, thickness);
+        for (Map.Entry<CubeEdge, LineColorDisplay> entry : adoptedEdges.entrySet()) {
+            obj.edges.put(entry.getKey(), entry.getValue());
+            obj.addChild(entry.getValue());
+        }
+        return obj;
     }
 
     public void spawnDisplay() {
@@ -163,45 +180,6 @@ public class WireframeCubeColorDisplay extends PositionObject implements IHidabl
         for (LineColorDisplay line : edges.values()) {
             line.moveEntityStatic(location);
         }
-    }
-
-    @Override
-    public boolean isHiddenByDefault() {
-        return hiddenByDefault;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
-    @Override
-    public IDisplayable hideByDefault(boolean hide, boolean recursive) {
-        hiddenByDefault = hide;
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideByDefault(hide, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
-    @Override
-    public IDisplayable showForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.showForPlayer(player, true);
-            });
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} If {@code recursive}, applies to all 12 edges. */
-    @Override
-    public IDisplayable hideForPlayer(Player player, boolean recursive) {
-        if (recursive) {
-            forEveryChild(child -> {
-                if (child instanceof IHidable hidable) hidable.hideForPlayer(player, true);
-            });
-        }
-        return this;
     }
 
     @Override
