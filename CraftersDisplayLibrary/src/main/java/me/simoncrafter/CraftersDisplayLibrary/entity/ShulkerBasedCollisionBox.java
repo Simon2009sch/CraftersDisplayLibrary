@@ -17,6 +17,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Shulker;
 import org.bukkit.loot.LootTables;
+import org.bukkit.loot.Lootable;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Transformation;
 import org.jetbrains.annotations.ApiStatus;
@@ -141,7 +142,7 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
         shulker.setInvisible(true);
         shulker.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(999999999999999999d);
         shulker.getAttribute(Attribute.GENERIC_ARMOR).setBaseValue(999999999999999999d);
-        shulker.setLootTable(LootTables.EMPTY.getLootTable());
+        shulker.setLootTable(LootTables.BAT.getLootTable());
         shulker.setVisibleByDefault(!hiddenByDefault);
         shulker.getPersistentDataContainer().set(Tags.CDL_ENTITY, PersistentDataType.BOOLEAN, true);
 
