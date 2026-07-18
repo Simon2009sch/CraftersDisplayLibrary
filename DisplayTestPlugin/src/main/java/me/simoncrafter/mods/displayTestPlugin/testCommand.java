@@ -15,6 +15,7 @@ import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCub
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.TextDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.BlockDisplayObject;
 import me.simoncrafter.CraftersDisplayLibrary.entity.ShulkerBasedCollisionBox;
+import me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence;
 import me.simoncrafter.CraftersDisplayLibrary.animation.AnimationFactory;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.ICuboidDisplay;
@@ -77,7 +78,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length < 1) {
-            sender.sendMessage(Component.text("Usage: /test <create|edit|remove|spawn|despawn> <id> [type] [properties...]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /test <create|edit|remove|spawn|despawn|persist|restore|listiterations|removeiteration|clearpersisted> <id> [type] [properties...]", NamedTextColor.RED));
             return false;
         }
 
@@ -100,6 +101,11 @@ public class testCommand implements CommandExecutor, TabExecutor {
             case "assemble" -> handleAssemble(sender, args);
             case "disassemble" -> handleDisassemble(sender, args);
             case "propertylock" -> handlePropertyLock(sender, args);
+            case "persist" -> handlePersist(sender, args);
+            case "restore" -> handleRestore(sender, args);
+            case "listiterations" -> handleListIterations(sender, args);
+            case "removeiteration" -> handleRemoveIteration(sender, args);
+            case "clearpersisted" -> handleClearPersisted(sender, args);
             default -> sender.sendMessage(Component.text("Unknown action: " + action, NamedTextColor.RED));
         }
 
@@ -400,6 +406,120 @@ public class testCommand implements CommandExecutor, TabExecutor {
         } catch (Exception e) {
             sender.sendMessage(Component.text("Error disassembling structure: " + e.getMessage(), NamedTextColor.RED));
         }
+    }
+
+    private void handlePersist(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /test persist <id>", NamedTextColor.RED));
+            return;
+        }
+
+        String id = args[1];
+        PositionObject obj = objectMap.get(id);
+        if (obj == null) {
+            sender.sendMessage(Component.text("\"" + id + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        DisplayPersistence.tag(obj);
+        sender.sendMessage(Component.text("Tagged \"" + id + "\" for persistence - it will survive a restart/chunk reload. Use /test restore to read it back later.", NamedTextColor.GREEN));
+    }
+
+    private void handleRestore(CommandSender sender, String[] args) {
+        String scope = args.length > 1 ? args[1].toLowerCase() : "chunk";
+        if (!scope.equals("chunk") && !scope.equals("world")) {
+            sender.sendMessage(Component.text("Usage: /test restore <chunk|world> [idPrefix]", NamedTextColor.RED));
+            return;
+        }
+        String idPrefix = args.length > 2 ? args[2] : "restored";
+
+        Location loc = getCommandLocation(sender);
+        List<PositionObject> roots = scope.equals("world")
+                ? DisplayPersistence.readWorld(loc.getWorld())
+                : DisplayPersistence.readChunk(loc.getChunk());
+
+        if (roots.isEmpty()) {
+            sender.sendMessage(Component.text("No persisted displays found in this " + scope, NamedTextColor.YELLOW));
+            return;
+        }
+
+        List<String> ids = new ArrayList<>();
+        for (PositionObject root : roots) {
+            String id = idPrefix;
+            int suffix = 0;
+            while (objectMap.containsKey(id)) {
+                id = idPrefix + "_" + suffix++;
+            }
+            objectMap.put(id, root);
+            ids.add(id);
+        }
+
+        sender.sendMessage(Component.text("Restored " + roots.size() + " persisted display(s) from " + scope + ": " + String.join(", ", ids), NamedTextColor.GREEN));
+    }
+
+    private void handleListIterations(CommandSender sender, String[] args) {
+        String scope = args.length > 1 ? args[1].toLowerCase() : "chunk";
+        if (!scope.equals("chunk") && !scope.equals("world")) {
+            sender.sendMessage(Component.text("Usage: /test listiterations <chunk|world>", NamedTextColor.RED));
+            return;
+        }
+
+        Location loc = getCommandLocation(sender);
+        List<Long> iterations = scope.equals("world")
+                ? DisplayPersistence.listIterationTimestamps(loc.getWorld())
+                : DisplayPersistence.listIterationTimestamps(loc.getChunk());
+
+        if (iterations.isEmpty()) {
+            sender.sendMessage(Component.text("No persisted iterations found in this " + scope, NamedTextColor.YELLOW));
+            return;
+        }
+
+        sender.sendMessage(Component.text("Iterations in this " + scope + ": " + iterations.stream().map(String::valueOf).reduce((a, b) -> a + ", " + b).orElse(""), NamedTextColor.GREEN));
+    }
+
+    private void handleRemoveIteration(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /test removeiteration <timestamp> [chunk|world]", NamedTextColor.RED));
+            return;
+        }
+
+        long timestamp;
+        try {
+            timestamp = Long.parseLong(args[1]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid timestamp: " + args[1], NamedTextColor.RED));
+            return;
+        }
+
+        String scope = args.length > 2 ? args[2].toLowerCase() : "chunk";
+        if (!scope.equals("chunk") && !scope.equals("world")) {
+            sender.sendMessage(Component.text("Usage: /test removeiteration <timestamp> [chunk|world]", NamedTextColor.RED));
+            return;
+        }
+
+        Location loc = getCommandLocation(sender);
+        if (scope.equals("world")) {
+            DisplayPersistence.removeIteration(loc.getWorld(), timestamp);
+        } else {
+            DisplayPersistence.removeIteration(loc.getChunk(), timestamp);
+        }
+        sender.sendMessage(Component.text("Removed iteration " + timestamp + " from this " + scope, NamedTextColor.GREEN));
+    }
+
+    private void handleClearPersisted(CommandSender sender, String[] args) {
+        String scope = args.length > 1 ? args[1].toLowerCase() : "chunk";
+        if (!scope.equals("chunk") && !scope.equals("world")) {
+            sender.sendMessage(Component.text("Usage: /test clearpersisted <chunk|world>", NamedTextColor.RED));
+            return;
+        }
+
+        Location loc = getCommandLocation(sender);
+        if (scope.equals("world")) {
+            DisplayPersistence.removeAllIterations(loc.getWorld());
+        } else {
+            DisplayPersistence.removeAllIterations(loc.getChunk());
+        }
+        sender.sendMessage(Component.text("Cleared all persisted displays in this " + scope, NamedTextColor.GREEN));
     }
 
     private static final List<String> PROPERTY_LOCK_NAMES = List.of(
@@ -738,7 +858,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if (args.length == 1) {
-            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble", "propertylock"), args[0]);
+            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble", "propertylock", "persist", "restore", "listiterations", "removeiteration", "clearpersisted"), args[0]);
         }
 
         if (args[0].equalsIgnoreCase("create") && args.length == 3) {
@@ -755,6 +875,18 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
         if (args[0].equalsIgnoreCase("propertylock") && args.length == 2) {
             return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("persist") && args.length == 2) {
+            return recommendListThatContainsObject(objectMap.keySet(), args[1]);
+        }
+
+        if ((args[0].equalsIgnoreCase("restore") || args[0].equalsIgnoreCase("listiterations") || args[0].equalsIgnoreCase("clearpersisted")) && args.length == 2) {
+            return recommendListThatContainsObject(List.of("chunk", "world"), args[1]);
+        }
+
+        if (args[0].equalsIgnoreCase("removeiteration") && args.length == 3) {
+            return recommendListThatContainsObject(List.of("chunk", "world"), args[2]);
         }
 
         if (args[0].equalsIgnoreCase("propertylock") && args.length == 3) {
