@@ -43,3 +43,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Local dev-only deploy scripts (per-developer, not shared) ###
+/DisplayTestPlugin/deploy-local.sh

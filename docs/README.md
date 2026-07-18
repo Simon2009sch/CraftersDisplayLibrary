@@ -39,3 +39,9 @@ player's whole screen to a color, like a damage flash or a status effect).
 - A [Paper](https://papermc.io) server, API version 1.20–1.21
 - The library is added as a **shaded dependency** of your plugin, not installed as its own plugin — see
   [Getting Started](getting-started.md).
+
+> [!NOTE]
+> This project was inspired by [Cymaera](https://www.youtube.com/@heledron). Specifically
+> [this Video of his](https://www.youtube.com/@heledron). <br>
+> Also because I currently don't possess the Mathematical knowledge thanks a lot to Claude
+> for helping me out on that one. (Also for making my code a bit more readable and organized into sensible packages)
