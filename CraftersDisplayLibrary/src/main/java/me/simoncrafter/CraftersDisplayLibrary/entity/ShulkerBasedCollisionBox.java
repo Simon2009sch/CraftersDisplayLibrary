@@ -220,6 +220,9 @@ public class ShulkerBasedCollisionBox extends AbstractEntityBackedPositionObject
 
 
     private void teleportEntities(Location location) {
+        if (entity == null || shulker == null) {
+            return;
+        }
         entity.removePassenger(shulker);
         entity.teleport(location);
         if (shulker != null && shulker.isValid()) {
