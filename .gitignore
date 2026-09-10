@@ -46,3 +46,5 @@ build/
 
 ### Local dev-only deploy scripts (per-developer, not shared) ###
 /DisplayTestPlugin/deploy-local.sh
+/DisplayTestPlugin/deploy-local.py
+/DisplayTestPlugin/__pycache__/

@@ -1,7 +1,10 @@
 package me.simoncrafter.CraftersDisplayLibrary.core;
 
 public class PropertyLock implements Cloneable {
-    
+
+    // hell of a byte waste here, but should cause a problem really.
+    // TODO: (Low Priority) Turn into long to preserve memory space
+
     private boolean leftXRot = false;
     private boolean leftYRot = false;
     private boolean leftZRot = false;
@@ -17,7 +20,7 @@ public class PropertyLock implements Cloneable {
     private boolean yTranslation = false;
     private boolean zTranslation = false;
 
-    public PropertyLock(boolean leftXRot, boolean leftYRot, boolean leftZRot, boolean rightXRot, boolean rightYRot, boolean rightZRot, boolean xScale, boolean yScale, boolean zScale, boolean xTranslation, boolean yTranslation, boolean zTranslation) {
+    private PropertyLock(boolean leftXRot, boolean leftYRot, boolean leftZRot, boolean rightXRot, boolean rightYRot, boolean rightZRot, boolean xScale, boolean yScale, boolean zScale, boolean xTranslation, boolean yTranslation, boolean zTranslation) {
         this.leftXRot = leftXRot;
         this.leftYRot = leftYRot;
         this.leftZRot = leftZRot;
@@ -32,11 +35,31 @@ public class PropertyLock implements Cloneable {
         this.zTranslation = zTranslation;
     }
 
+    public static PropertyLock create(boolean leftXRot, boolean leftYRot, boolean leftZRot, boolean rightXRot, boolean rightYRot, boolean rightZRot, boolean xScale, boolean yScale, boolean zScale, boolean xTranslation, boolean yTranslation, boolean zTranslation) {
+        return new PropertyLock(leftXRot, leftYRot, leftZRot, rightXRot, rightYRot, rightZRot, xScale, yScale, zScale, xTranslation, yTranslation, zTranslation);
+    }
+
+    public static PropertyLock createScaleLock() {
+        return create(false, false, false, false, false, false, true, true, true, false, false, false);
+    }
+
+    public static PropertyLock createRotationLock() {
+        return create(true, true, true ,true, true, true, false, false, false, false, false, false);
+    }
+
+    public static PropertyLock createTranslationLock() {
+        return create(false, false, false, false, false, false, false, false, false, true, true ,true);
+    }
+
+    public static PropertyLock createAllLock() {
+        return create(true, true, true, true, true, true, true, true, true, true, true, true);
+    }
+
 
     @Override
     protected PropertyLock clone() throws CloneNotSupportedException {
         super.clone();
-        return new PropertyLock(leftXRot, leftYRot, leftZRot, rightXRot, rightYRot, rightZRot,  xScale, yScale, zScale, xTranslation, yTranslation, zTranslation);
+        return PropertyLock.create(leftXRot, leftYRot, leftZRot, rightXRot, rightYRot, rightZRot,  xScale, yScale, zScale, xTranslation, yTranslation, zTranslation);
     }
     
     public void leftXRot(boolean leftXRot) {

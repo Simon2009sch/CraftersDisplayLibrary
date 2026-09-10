@@ -15,6 +15,8 @@ import me.simoncrafter.CraftersDisplayLibrary.display.wireframecube.WireframeCub
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.TextDisplay;
 import me.simoncrafter.CraftersDisplayLibrary.display.panel.BlockDisplayObject;
 import me.simoncrafter.CraftersDisplayLibrary.entity.ShulkerBasedCollisionBox;
+import me.simoncrafter.CraftersDisplayLibrary.entity.InteractionBox;
+import me.simoncrafter.CraftersDisplayLibrary.PluginHolder;
 import me.simoncrafter.CraftersDisplayLibrary.persistence.DisplayPersistence;
 import me.simoncrafter.CraftersDisplayLibrary.animation.AnimationFactory;
 import me.simoncrafter.CraftersDisplayLibrary.core.interfaces.IColorableDisplay;
@@ -72,6 +74,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         typeHandlers.put("text", new TextDisplayHandler());
         typeHandlers.put("blockdisplay", new BlockDisplayHandler());
         typeHandlers.put("collision", new CollisionBoxHandler());
+        typeHandlers.put("interaction", new InteractionBoxHandler());
         typeHandlers.put("structure", new StructureHandler());
     }
 
@@ -97,6 +100,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             case "cleartints" -> handleClearTints(sender, args);
             case "setanimation" -> handleSetAnimation(sender, args);
             case "addcollision" -> handleAddCollision(sender, args);
+            case "addinteraction" -> handleAddInteraction(sender, args);
             case "addchild" -> handleAddChild(sender, args);
             case "assemble" -> handleAssemble(sender, args);
             case "disassemble" -> handleDisassemble(sender, args);
@@ -132,7 +136,22 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return;
         }
 
-        PositionObject obj = handler.create(loc);
+        PositionObject obj;
+        if (type.equals("interaction")) {
+            if (args.length < 4) {
+                sender.sendMessage(Component.text("Usage: /cdl create <id> interaction <command>", NamedTextColor.RED));
+                return;
+            }
+
+            String interactionCommand = String.join(" ", Arrays.copyOfRange(args, 3, args.length));
+            InteractionBox interactionBox = InteractionBox.create(
+                    loc, new Vector3f(1, 1, 1), new Vector3f(), PluginHolder.getPlugin());
+            interactionBox.setOnRightClick(event -> dispatchInteractionCommand(event.getPlayer(), interactionCommand));
+            interactionBox.setOnLeftClick(event -> dispatchInteractionCommand(event.getPlayer(), interactionCommand));
+            obj = interactionBox;
+        } else {
+            obj = handler.create(loc);
+        }
         if (obj != null) {
             objectMap.put(id, obj);
             sender.sendMessage(Component.text("Created " + type + " with id \"" + id + "\"", NamedTextColor.GREEN));
@@ -272,6 +291,59 @@ public class testCommand implements CommandExecutor, TabExecutor {
         parent.addChild(collisionBox);
 
         sender.sendMessage(Component.text("Added collision box \"" + childId + "\" as a child of \"" + parentId + "\" - use /test spawn " + childId + " to spawn it", NamedTextColor.GREEN));
+    }
+
+    private void handleAddInteraction(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /cdl addinteraction <parentId> [scale] [translation] <command>", NamedTextColor.RED));
+            return;
+        }
+
+        String parentId = args[1];
+        PositionObject parent = objectMap.get(parentId);
+        if (parent == null) {
+            sender.sendMessage(Component.text("\"" + parentId + "\" doesn't exist!", NamedTextColor.RED));
+            return;
+        }
+
+        String childId = parentId + "/interaction";
+        if (objectMap.containsKey(childId)) {
+            sender.sendMessage(Component.text("\"" + childId + "\" already exists!", NamedTextColor.RED));
+            return;
+        }
+
+        Vector3f scale = new Vector3f(1, 1, 1);
+        Vector3f translation = new Vector3f(0, 0, 0);
+        int commandIndex = 2;
+
+        Vector3f parsedScale = parseVector(args[commandIndex]);
+        if (parsedScale != null) {
+            scale = parsedScale;
+            commandIndex++;
+            if (commandIndex < args.length) {
+                Vector3f parsedTranslation = parseVector(args[commandIndex]);
+                if (parsedTranslation != null) {
+                    translation = parsedTranslation;
+                    commandIndex++;
+                }
+            }
+        }
+
+        if (commandIndex >= args.length) {
+            sender.sendMessage(Component.text("Missing command. Usage: /cdl addinteraction <parentId> [scale] [translation] <command>", NamedTextColor.RED));
+            return;
+        }
+
+        String interactionCommand = String.join(" ", Arrays.copyOfRange(args, commandIndex, args.length));
+        InteractionBox interactionBox = InteractionBox.create(
+                parent.getLocation(), scale, translation, PluginHolder.getPlugin());
+        interactionBox.setOnRightClick(event -> dispatchInteractionCommand(event.getPlayer(), interactionCommand));
+        interactionBox.setOnLeftClick(event -> dispatchInteractionCommand(event.getPlayer(), interactionCommand));
+
+        objectMap.put(childId, interactionBox);
+        parent.addChild(interactionBox);
+        sender.sendMessage(Component.text("Added interaction box \"" + childId + "\" as a child of \"" + parentId
+                + "\" - use /cdl spawn " + childId + " to spawn it", NamedTextColor.GREEN));
     }
 
     private void handleAddChild(CommandSender sender, String[] args) {
@@ -576,10 +648,10 @@ public class testCommand implements CommandExecutor, TabExecutor {
 
     private PropertyLock parsePropertyLock(String arg) {
         if (arg.equalsIgnoreCase("none")) {
-            return new PropertyLock(false, false, false, false, false, false, false, false, false, false, false, false);
+            return PropertyLock.create(false, false, false, false, false, false, false, false, false, false, false, false);
         }
         if (arg.equalsIgnoreCase("all")) {
-            return new PropertyLock(true, true, true, true, true, true, true, true, true, true, true, true);
+            return  PropertyLock.create(true, true, true, true, true, true, true, true, true, true, true, true);
         }
 
         Set<String> locked = new HashSet<>();
@@ -595,7 +667,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             locked.add(name);
         }
 
-        return new PropertyLock(
+        return PropertyLock.create(
                 locked.contains("leftxrot"), locked.contains("leftyrot"), locked.contains("leftzrot"),
                 locked.contains("rightxrot"), locked.contains("rightyrot"), locked.contains("rightzrot"),
                 locked.contains("xscale"), locked.contains("yscale"), locked.contains("zscale"),
@@ -854,11 +926,16 @@ public class testCommand implements CommandExecutor, TabExecutor {
         return loc;
     }
 
+    private void dispatchInteractionCommand(Player player, String command) {
+        String normalizedCommand = command.startsWith("/") ? command.substring(1) : command;
+        Bukkit.dispatchCommand(player, normalizedCommand);
+    }
+
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
 
         if (args.length == 1) {
-            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addchild", "assemble", "disassemble", "propertylock", "persist", "restore", "listiterations", "removeiteration", "clearpersisted"), args[0]);
+            return recommendListThatContainsObject(List.of("create", "edit", "remove", "spawn", "despawn", "highlight", "clearhighlights", "tint", "cleartints", "setanimation", "addcollision", "addinteraction", "addchild", "assemble", "disassemble", "propertylock", "persist", "restore", "listiterations", "removeiteration", "clearpersisted"), args[0]);
         }
 
         if (args[0].equalsIgnoreCase("create") && args.length == 3) {
@@ -869,7 +946,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return recommendListThatContainsObject(objectMap.keySet(), args[1]);
         }
 
-        if ((args[0].equalsIgnoreCase("addcollision") || args[0].equalsIgnoreCase("addchild")) && args.length == 2) {
+        if ((args[0].equalsIgnoreCase("addcollision") || args[0].equalsIgnoreCase("addinteraction") || args[0].equalsIgnoreCase("addchild")) && args.length == 2) {
             return recommendListThatContainsObject(objectMap.keySet(), args[1]);
         }
 
@@ -910,7 +987,7 @@ public class testCommand implements CommandExecutor, TabExecutor {
         if (args[0].equalsIgnoreCase("edit") && args.length == 3) {
             return recommendListThatContainsObject(List.of("position", "rotation", "rrotation", "scale", "color", "randomcolor", "direction", "thickness", "seethrough", "startpoint", "endpoint",
                     "facecolor", "edgecolor", "facescolor", "edgescolor", "faceedgecolor", "facesseethrough", "edgesseethrough",
-                    "text", "billboard", "background", "backgroundcolor", "linewidth", "block"), args[2]);
+                    "text", "billboard", "background", "backgroundcolor", "linewidth", "block", "width", "height"), args[2]);
         }
 
         if (args[0].equalsIgnoreCase("edit") && args.length == 4 && args[2].equalsIgnoreCase("billboard")) {
@@ -2910,6 +2987,85 @@ public class testCommand implements CommandExecutor, TabExecutor {
         }
     }
 
+    class InteractionBoxHandler implements DisplayTypeHandler {
+        @Override
+        public PositionObject create(Location loc) {
+            return InteractionBox.create(loc, new Vector3f(1, 1, 1), new Vector3f(), PluginHolder.getPlugin());
+        }
+
+        @Override
+        public boolean canHandle(PositionObject obj) {
+            return obj instanceof InteractionBox;
+        }
+
+        @Override
+        public boolean spawn(PositionObject obj, CommandSender sender) {
+            try {
+                ((InteractionBox) obj).spawnEntity();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error spawning interaction box: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean despawn(PositionObject obj, CommandSender sender) {
+            try {
+                ((InteractionBox) obj).remove();
+                return true;
+            } catch (Exception e) {
+                sender.sendMessage(Component.text("Error despawning interaction box: " + e.getMessage(), NamedTextColor.RED));
+                return false;
+            }
+        }
+
+        @Override
+        public boolean edit(PositionObject obj, String property, String[] values, CommandSender sender) {
+            InteractionBox box = (InteractionBox) obj;
+            if (!property.equals("width") && !property.equals("height") && !property.equals("scale")) {
+                sender.sendMessage(Component.text("Interaction boxes support editing width, height, and scale", NamedTextColor.RED));
+                return false;
+            }
+            if (values.length < 1) {
+                sender.sendMessage(Component.text("Usage: /cdl edit <id> <width|height|scale> <value>", NamedTextColor.RED));
+                return false;
+            }
+
+            if (property.equals("scale")) {
+                Vector3f scale = parseVector(values[0]);
+                if (scale == null) {
+                    sender.sendMessage(Component.text("Invalid scale format. Use x,y,z", NamedTextColor.RED));
+                    return false;
+                }
+                if (values.length > 1 && values[1].equalsIgnoreCase("relative")) {
+                    box.scaleRelative(scale, 0);
+                } else {
+                    box.scaleAbsolute(scale, 0);
+                }
+                sender.sendMessage(Component.text("Updated interaction box scale", NamedTextColor.GREEN));
+                return true;
+            }
+
+            try {
+                float value = Float.parseFloat(values[0]);
+                if (!Float.isFinite(value) || value < 0) {
+                    throw new NumberFormatException();
+                }
+                if (property.equals("width")) {
+                    box.setWidth(value, 0);
+                } else {
+                    box.setHeight(value, 0);
+                }
+                sender.sendMessage(Component.text("Updated interaction box " + property + " to " + value, NamedTextColor.GREEN));
+                return true;
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Invalid " + property + ". Use a non-negative number", NamedTextColor.RED));
+                return false;
+            }
+        }
+    }
+
     class StructureHandler implements DisplayTypeHandler {
         @Override
         public PositionObject create(Location loc) {
@@ -2921,7 +3077,8 @@ public class testCommand implements CommandExecutor, TabExecutor {
             return obj instanceof PositionObject && !(obj instanceof ColorDisplay) && !(obj instanceof CubeColorDisplay)
                     && !(obj instanceof LineColorDisplay) && !(obj instanceof WireframeCubeColorDisplay)
                     && !(obj instanceof FilledWireframeCubeColorDisplay) && !(obj instanceof TextDisplay)
-                    && !(obj instanceof BlockDisplayObject) && !(obj instanceof ShulkerBasedCollisionBox);
+                    && !(obj instanceof BlockDisplayObject) && !(obj instanceof ShulkerBasedCollisionBox)
+                    && !(obj instanceof InteractionBox);
         }
 
         @Override
