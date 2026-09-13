@@ -369,17 +369,29 @@ public class CubeColorDisplay extends PositionObject implements IColorableDispla
     @Override
     public void remove() {
         super.remove();
-        top.remove();
-        top = null;
-        bottom.remove();
-        bottom = null;
-        left.remove();
-        left = null;
-        right.remove();
-        right = null;
-        front.remove();
-        front = null;
-        back.remove();
-        back = null;
+        if (top != null) {
+            top.remove();
+            top = null;
+        }
+        if (bottom != null) {
+            bottom.remove();
+            bottom = null;
+        }
+        if (left != null) {
+            left.remove();
+            left = null;
+        }
+        if (right != null) {
+            right.remove();
+            right = null;
+        }
+        if (front != null) {
+            front.remove();
+            front = null;
+        }
+        if (back != null) {
+            back.remove();
+            back = null;
+        }
     }
 }

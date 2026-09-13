@@ -443,7 +443,7 @@ public class LineColorDisplay extends PositionObject implements IColorableDispla
     @Override
     public void remove() {
         super.remove();
-        rawLine.remove();
+        if (rawLine != null) rawLine.remove();
     }
 
     /**

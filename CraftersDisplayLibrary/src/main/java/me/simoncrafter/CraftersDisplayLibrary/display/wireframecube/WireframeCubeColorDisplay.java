@@ -186,7 +186,7 @@ public class WireframeCubeColorDisplay extends PositionObject implements IColora
     public void remove() {
         super.remove();
         for (LineColorDisplay line : edges.values()) {
-            line.remove();
+            if (line != null) line.remove();
         }
         edges.clear();
     }
