@@ -17,15 +17,15 @@ the workflow's `GITHUB_TOKEN` with `contents: write` permission.
 3. Create and push a matching tag, for example for the current library version:
 
    ```sh
-   git tag v1.1.1
-   git push origin v1.1.1
+   git tag v1.2.5b
+   git push origin v1.2.5b
    ```
 
 4. Check the **Release** run in GitHub Actions and the resulting entry under
    **Releases**.
 
 The tag must exactly match `v` plus the library's POM version. Versions such as
-`1.2.0-rc.1` produce prereleases that are not marked as latest. Snapshot versions
+`1.2.5b` or `1.2.0-rc.1` produce prereleases that are not marked as latest. Snapshot versions
 and mismatched tags fail before the build. Existing releases are not overwritten;
 rerun a failed workflow only after checking whether publication already succeeded.
 Do not move a published tag to a different commit.
