@@ -9,6 +9,7 @@ rather than a textbook example.
 | Page | Covers |
 |---|---|
 | [Project Setup](project-setup.md) | Module layout, Maven profiles, versioning, the package tour, build constraints |
+| [GitHub Releases](releases.md) | Release tags, automated library builds, and downloadable release assets |
 | [Design Patterns](design-patterns.md) | The patterns introduced during the restructure — what each one is, why it was chosen here, and where to find it in the source |
 
 > [!NOTE]
